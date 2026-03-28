@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'app/app.dart';
+
+void main() {
+  runApp(const HospitalBookingApp());
+}
 import 'package:shared_preferences/shared_preferences.dart';
 import 'onboarding_screen.dart';
 
