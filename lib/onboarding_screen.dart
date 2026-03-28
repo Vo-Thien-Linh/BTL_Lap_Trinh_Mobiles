@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'app/routes/app_routes.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -9,7 +9,8 @@ class OnboardingScreen extends StatefulWidget {
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> with TickerProviderStateMixin {
+class _OnboardingScreenState extends State<OnboardingScreen>
+    with TickerProviderStateMixin {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   late AnimationController _rotationController;
@@ -29,8 +30,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
     super.dispose();
   }
 
-  final Color _bgDark = const Color(0xFFE6EDF5); // Xám xanh bạc (Frost Silver) - Rất dịu mắt, không bị chói
-  final Color _neonGreen = const Color(0xFF0F766E); // Xanh Teal đậm (Tính y tế, chuyên môn cao)
+  final Color _bgDark = const Color(
+    0xFFE6EDF5,
+  ); // Xám xanh bạc (Frost Silver) - Rất dịu mắt, không bị chói
+  final Color _neonGreen = const Color(
+    0xFF0F766E,
+  ); // Xanh Teal đậm (Tính y tế, chuyên môn cao)
   final Color _accentGold = const Color(0xFF0369A1); // Xanh dương sậm (AI)
   final Color _textGrey = const Color(0xFF475569); // Xám đậm chữ phụ
   final Color _cardDark = const Color(0xFFFFFFFF); // Khối nền nổi bật màu trắng
@@ -42,75 +47,99 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
       "icon": Icons.medical_services_outlined,
       "titlePart1": "Trải nghiệm",
       "titlePart2": "Hiện đại",
-      "metric1": "HIS", "metric1Label": "Tích hợp",
-      "metric2": "24/7", "metric2Label": "Hỗ trợ y tế",
-      "metric3": "98%", "metric3Label": "Chính xác",
+      "metric1": "HIS",
+      "metric1Label": "Tích hợp",
+      "metric2": "24/7",
+      "metric2Label": "Hỗ trợ y tế",
+      "metric3": "98%",
+      "metric3Label": "Chính xác",
       "cardTitle": "Hệ thống Quản lý Y tế Toàn diện",
-      "cardDesc": "Khám chữa bệnh nhanh chóng với hệ thống quản lý hiện đại, hỗ trợ chẩn đoán và quản lý hiệu quả.",
-      "feature1Icon": Icons.dashboard_outlined, "feature1Label": "Quản lý tập trung",
-      "feature2Icon": Icons.security, "feature2Label": "Bảo mật cao",
-      "feature3Icon": Icons.speed, "feature3Label": "Tốc độ xử lý",
+      "cardDesc":
+          "Khám chữa bệnh nhanh chóng với hệ thống quản lý hiện đại, hỗ trợ chẩn đoán và quản lý hiệu quả.",
+      "feature1Icon": Icons.dashboard_outlined,
+      "feature1Label": "Quản lý tập trung",
+      "feature2Icon": Icons.security,
+      "feature2Label": "Bảo mật cao",
+      "feature3Icon": Icons.speed,
+      "feature3Label": "Tốc độ xử lý",
     },
     {
       "badge": "CHUYÊN MÔN CAO CẤP",
       "icon": Icons.favorite_border_rounded,
       "titlePart1": "Chăm sóc",
       "titlePart2": "Tận tâm",
-      "metric1": "100+", "metric1Label": "Bác sĩ chuyên gia",
-      "metric2": "98%", "metric2Label": "Bệnh nhân hài lòng",
-      "metric3": "24/7", "metric3Label": "Hỗ trợ trực tuyến",
+      "metric1": "100+",
+      "metric1Label": "Bác sĩ chuyên gia",
+      "metric2": "98%",
+      "metric2Label": "Bệnh nhân hài lòng",
+      "metric3": "24/7",
+      "metric3Label": "Hỗ trợ trực tuyến",
       "cardTitle": "Quy trình chuẩn quốc tế WHO",
-      "cardDesc": "Toàn bộ quy trình thăm khám diễn ra riêng tư, nhanh chóng và đề cao sự thoải mái của bạn.",
-      "feature1Icon": Icons.person_outline, "feature1Label": "Bác sĩ đầu ngành",
-      "feature2Icon": Icons.access_time, "feature2Label": "Phản hồi nhanh",
-      "feature3Icon": Icons.star_border, "feature3Label": "Chất lượng 5 sao",
+      "cardDesc":
+          "Toàn bộ quy trình thăm khám diễn ra riêng tư, nhanh chóng và đề cao sự thoải mái của bạn.",
+      "feature1Icon": Icons.person_outline,
+      "feature1Label": "Bác sĩ đầu ngành",
+      "feature2Icon": Icons.access_time,
+      "feature2Label": "Phản hồi nhanh",
+      "feature3Icon": Icons.star_border,
+      "feature3Label": "Chất lượng 5 sao",
     },
     {
       "badge": "TIẾT KIỆM THỜI GIAN",
       "icon": Icons.edit_calendar_rounded,
       "titlePart1": "Đặt lịch",
       "titlePart2": "Thông minh",
-      "metric1": "10s", "metric1Label": "Thời gian chờ",
-      "metric2": "3", "metric2Label": "Chạm đặt",
-      "metric3": "99%", "metric3Label": "Chủ động",
+      "metric1": "10s",
+      "metric1Label": "Thời gian chờ",
+      "metric2": "3",
+      "metric2Label": "Chạm đặt",
+      "metric3": "99%",
+      "metric3Label": "Chủ động",
       "cardTitle": "Chọn bác sĩ theo yêu cầu",
-      "cardDesc": "Xem chi tiết hồ sơ các y bác sĩ đầu ngành và chủ động đặt ca khám phù hợp nhất với bạn.",
-      "feature1Icon": Icons.calendar_month, "feature1Label": "Đa dạng giờ",
-      "feature2Icon": Icons.notifications_active_outlined, "feature2Label": "Nhắc nhở khám",
-      "feature3Icon": Icons.history, "feature3Label": "Lịch sử khám",
+      "cardDesc":
+          "Xem chi tiết hồ sơ các y bác sĩ đầu ngành và chủ động đặt ca khám phù hợp nhất với bạn.",
+      "feature1Icon": Icons.calendar_month,
+      "feature1Label": "Đa dạng giờ",
+      "feature2Icon": Icons.notifications_active_outlined,
+      "feature2Label": "Nhắc nhở khám",
+      "feature3Icon": Icons.history,
+      "feature3Label": "Lịch sử khám",
     },
     {
       "badge": "BẢO MẬT TUYỆT ĐỐI",
       "icon": Icons.shield_outlined,
       "titlePart1": "Hồ sơ",
       "titlePart2": "Thống nhất",
-      "metric1": "RSA", "metric1Label": "Mã hóa 2 lớp",
-      "metric2": "Cloud", "metric2Label": "Lưu trữ số",
-      "metric3": "99.9%", "metric3Label": "Bảo mật",
+      "metric1": "RSA",
+      "metric1Label": "Mã hóa 2 lớp",
+      "metric2": "Cloud",
+      "metric2Label": "Lưu trữ số",
+      "metric3": "99.9%",
+      "metric3Label": "Bảo mật",
       "cardTitle": "Bảo mật Hồ sơ bệnh án",
-      "cardDesc": "Toàn bộ thông tin cá nhân và hồ sơ bệnh án của bạn được mã hóa và bảo mật tuyệt đối trên hệ thống.",
-      "feature1Icon": Icons.shield_outlined, "feature1Label": "Mã hóa thông tin",
-      "feature2Icon": Icons.folder_shared_outlined, "feature2Label": "Dễ chia sẻ",
-      "feature3Icon": Icons.data_usage, "feature3Label": "Lưu trữ trọn đời",
-    }
+      "cardDesc":
+          "Toàn bộ thông tin cá nhân và hồ sơ bệnh án của bạn được mã hóa và bảo mật tuyệt đối trên hệ thống.",
+      "feature1Icon": Icons.shield_outlined,
+      "feature1Label": "Mã hóa thông tin",
+      "feature2Icon": Icons.folder_shared_outlined,
+      "feature2Label": "Dễ chia sẻ",
+      "feature3Icon": Icons.data_usage,
+      "feature3Label": "Lưu trữ trọn đời",
+    },
   ];
 
-  _completeOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('has_seen_onboarding', true);
+  Future<void> _completeOnboarding() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('has_seen_onboarding', true);
+    } catch (_) {
+      // Continue navigation even if persisting flag fails.
+    }
+
     if (!mounted) return;
-    
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 800),
-        pageBuilder: (_, __, ___) => const Scaffold(
-          body: Center(child: Text('Màn hình chính')),
-        ),
-        transitionsBuilder: (_, animation, __, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-      ),
-    );
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
   }
 
   @override
@@ -122,7 +151,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
           children: [
             // Top App Bar
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 12.0,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -138,8 +170,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                               color: _neonGreen.withOpacity(0.2),
                               blurRadius: 15,
                               spreadRadius: 2,
-                            )
-                          ]
+                            ),
+                          ],
                         ),
                         child: Icon(Icons.add, color: _neonGreen, size: 22),
                       ),
@@ -157,9 +189,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                   ),
                   TextButton(
                     onPressed: _completeOnboarding,
-                    style: TextButton.styleFrom(
-                      foregroundColor: _textGrey,
-                    ),
+                    style: TextButton.styleFrom(foregroundColor: _textGrey),
                     child: const Text(
                       "Bỏ qua",
                       style: TextStyle(
@@ -171,7 +201,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                 ],
               ),
             ),
-            
+
             // Expanded PageView
             Expanded(
               child: PageView.builder(
@@ -209,7 +239,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(height: 10),
-                            
+
                             // Glowing Circular Radar Graphic
                             Center(
                               child: SizedBox(
@@ -240,14 +270,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                                       reverse: false,
                                       speedMultiplier: 2.0,
                                     ),
-                                    
+
                                     // Inner glowing rounded square
                                     Container(
-                                      width: 80, height: 80,
+                                      width: 80,
+                                      height: 80,
                                       decoration: BoxDecoration(
-                                        color: Colors.white, // Pristine clean white
+                                        color: Colors
+                                            .white, // Pristine clean white
                                         borderRadius: BorderRadius.circular(24),
-                                        border: Border.all(color: _neonGreen.withOpacity(0.3), width: 1.5),
+                                        border: Border.all(
+                                          color: _neonGreen.withOpacity(0.3),
+                                          width: 1.5,
+                                        ),
                                         boxShadow: [
                                           BoxShadow(
                                             color: _neonGreen.withOpacity(0.15),
@@ -255,7 +290,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                                             spreadRadius: 2,
                                           ),
                                           BoxShadow(
-                                            color: Colors.black.withOpacity(0.05),
+                                            color: Colors.black.withOpacity(
+                                              0.05,
+                                            ),
                                             blurRadius: 10,
                                             offset: const Offset(0, 5),
                                           ),
@@ -267,27 +304,50 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
                                             color: _neonGreen.withOpacity(0.15),
-                                            border: Border.all(color: _neonGreen, width: 2),
+                                            border: Border.all(
+                                              color: _neonGreen,
+                                              width: 2,
+                                            ),
                                           ),
-                                          child: Icon(data["icon"] ?? Icons.check, color: _neonGreen, size: 22),
+                                          child: Icon(
+                                            data["icon"] ?? Icons.check,
+                                            color: _neonGreen,
+                                            size: 22,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                    
+
                                     // Badge Pill at bottom of graphic
                                     Positioned(
                                       bottom: 0,
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFFF0FDFA), // Teal 50
-                                          borderRadius: BorderRadius.circular(20),
-                                          border: Border.all(color: const Color(0xFF99F6E4)), // Teal 200
+                                          color: const Color(
+                                            0xFFF0FDFA,
+                                          ), // Teal 50
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                          border: Border.all(
+                                            color: const Color(0xFF99F6E4),
+                                          ), // Teal 200
                                         ),
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            Container(width: 5, height: 5, decoration: BoxDecoration(shape: BoxShape.circle, color: _neonGreen)),
+                                            Container(
+                                              width: 5,
+                                              height: 5,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: _neonGreen,
+                                              ),
+                                            ),
                                             const SizedBox(width: 6),
                                             Text(
                                               data["badge"]!,
@@ -301,18 +361,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                                           ],
                                         ),
                                       ),
-                                    )
+                                    ),
                                   ],
                                 ),
                               ),
                             ),
-                            
+
                             const SizedBox(height: 16),
-                            
+
                             // Line + Small Badge
                             Row(
                               children: [
-                                Container(width: 30, height: 1.5, color: _accentGold),
+                                Container(
+                                  width: 30,
+                                  height: 1.5,
+                                  color: _accentGold,
+                                ),
                                 const SizedBox(width: 10),
                                 Text(
                                   data["badge"]!,
@@ -326,7 +390,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                               ],
                             ),
                             const SizedBox(height: 16),
-                            
+
                             // Large Title
                             Text(
                               data["titlePart1"]!,
@@ -348,22 +412,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                                 color: _neonGreen,
                               ),
                             ),
-                            
+
                             const SizedBox(height: 24),
-                            
+
                             // Metrics Grid (Row of 3)
                             Row(
                               children: [
-                                _buildMetricCard(data["metric1"], data["metric1Label"]),
+                                _buildMetricCard(
+                                  data["metric1"],
+                                  data["metric1Label"],
+                                ),
                                 const SizedBox(width: 10),
-                                _buildMetricCard(data["metric2"], data["metric2Label"]),
+                                _buildMetricCard(
+                                  data["metric2"],
+                                  data["metric2Label"],
+                                ),
                                 const SizedBox(width: 10),
-                                _buildMetricCard(data["metric3"], data["metric3Label"]),
+                                _buildMetricCard(
+                                  data["metric3"],
+                                  data["metric3Label"],
+                                ),
                               ],
                             ),
-                            
+
                             const SizedBox(height: 16),
-                            
+
                             // Large Feature Description Card
                             Container(
                               padding: const EdgeInsets.all(18), // Increased
@@ -381,17 +454,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                                       color: const Color(0xFFF0FDFA), // Teal 50
                                       borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: Icon(Icons.check_circle_outline, color: _neonGreen.withOpacity(0.8), size: 16),
+                                    child: Icon(
+                                      Icons.check_circle_outline,
+                                      color: _neonGreen.withOpacity(0.8),
+                                      size: 16,
+                                    ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           data["cardTitle"]!,
                                           style: const TextStyle(
-                                            color: Color(0xFF0F172A), // Slate 900
+                                            color: Color(
+                                              0xFF0F172A,
+                                            ), // Slate 900
                                             fontSize: 16,
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -404,27 +484,36 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                                             fontSize: 13,
                                             height: 1.5,
                                           ),
-                                        )
+                                        ),
                                       ],
                                     ),
-                                  )
+                                  ),
                                 ],
                               ),
                             ),
-                            
+
                             const SizedBox(height: 20),
-                            
+
                             // 3 Mini Features Row
                             Row(
                               children: [
-                                _buildMiniFeatureCard(data["feature1Icon"], data["feature1Label"]),
+                                _buildMiniFeatureCard(
+                                  data["feature1Icon"],
+                                  data["feature1Label"],
+                                ),
                                 const SizedBox(width: 10),
-                                _buildMiniFeatureCard(data["feature2Icon"], data["feature2Label"]),
+                                _buildMiniFeatureCard(
+                                  data["feature2Icon"],
+                                  data["feature2Label"],
+                                ),
                                 const SizedBox(width: 10),
-                                _buildMiniFeatureCard(data["feature3Icon"], data["feature3Label"]),
+                                _buildMiniFeatureCard(
+                                  data["feature3Icon"],
+                                  data["feature3Label"],
+                                ),
                               ],
                             ),
-                            
+
                             const SizedBox(height: 40),
                           ],
                         ),
@@ -434,10 +523,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                 },
               ),
             ),
-            
+
             // Bottom Navigation
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 16.0,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -460,7 +552,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: const Color(0xFFF0FDFA),
-                            border: Border.all(color: _neonGreen.withOpacity(0.3)),
+                            border: Border.all(
+                              color: _neonGreen.withOpacity(0.3),
+                            ),
                           ),
                           child: Icon(
                             Icons.arrow_back_rounded,
@@ -471,7 +565,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                       ),
                     ),
                   ),
-                  
+
                   // Next / Finish Button
                   GestureDetector(
                     onTap: () {
@@ -493,7 +587,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                         border: Border.all(color: _neonGreen.withOpacity(0.3)),
                       ),
                       child: Icon(
-                        _currentPage == onboardingData.length - 1 ? Icons.check : Icons.arrow_forward_rounded,
+                        _currentPage == onboardingData.length - 1
+                            ? Icons.check
+                            : Icons.arrow_forward_rounded,
                         color: _neonGreen,
                         size: 22,
                       ),
@@ -501,7 +597,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                   ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -600,10 +696,7 @@ class RotatingOrbit extends StatelessWidget {
       animation: animation,
       builder: (context, child) {
         final angle = animation.value * 2 * 3.14159265359 * speedMultiplier;
-        return Transform.rotate(
-          angle: reverse ? -angle : angle,
-          child: child,
-        );
+        return Transform.rotate(angle: reverse ? -angle : angle, child: child);
       },
       child: SizedBox(
         width: size,
@@ -612,9 +705,7 @@ class RotatingOrbit extends StatelessWidget {
           children: [
             // Sweep Gradient Trail
             Positioned.fill(
-              child: CustomPaint(
-                painter: OrbitPainter(color: color),
-              ),
+              child: CustomPaint(painter: OrbitPainter(color: color)),
             ),
             // Glowing Dot at angle 0 (right edge vertically centered)
             Align(
@@ -632,8 +723,8 @@ class RotatingOrbit extends StatelessWidget {
                         color: color.withOpacity(0.9),
                         blurRadius: 10,
                         spreadRadius: 2,
-                      )
-                    ]
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -652,7 +743,7 @@ class OrbitPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Rect.fromLTWH(0, 0, size.width, size.height);
-    
+
     // Draw the faint full circle track
     final trackPaint = Paint()
       ..style = PaintingStyle.stroke
