@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../features/auth/screens/login_screen.dart';
-import '../../features/auth/screens/register_screen.dart';
-import '../../features/home/screens/home_screen.dart';
+import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/register_page.dart';
+import '../../features/home/presentation/pages/home_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -11,13 +11,13 @@ class AppRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case login:
-        return _buildRoute(const LoginScreen());
+        return _buildRoute(const LoginPage());
       case register:
-        return _buildRoute(const RegisterScreen());
+        return _buildRoute(const RegisterPage());
       case home:
-        return _buildRoute(const HomeScreen());
+        return _buildRoute(const HomePage());
       default:
-        return _buildRoute(const LoginScreen());
+        return _buildRoute(const LoginPage());
     }
   }
 
@@ -27,25 +27,19 @@ class AppRoutes {
       reverseTransitionDuration: const Duration(milliseconds: 280),
       pageBuilder: (_, animation, __) => page,
       transitionsBuilder: (_, animation, __, child) {
-        final fade = CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOut,
-        );
+        final fade = CurvedAnimation(parent: animation, curve: Curves.easeOut);
 
-        final slide = Tween<Offset>(
-          begin: const Offset(0.08, 0),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutCubic,
-        ));
+        final slide =
+            Tween<Offset>(
+              begin: const Offset(0.08, 0),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            );
 
         return FadeTransition(
           opacity: fade,
-          child: SlideTransition(
-            position: slide,
-            child: child,
-          ),
+          child: SlideTransition(position: slide, child: child),
         );
       },
     );

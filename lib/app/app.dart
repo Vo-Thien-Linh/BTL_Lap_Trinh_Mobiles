@@ -11,7 +11,7 @@ class HospitalBookingApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Hospital Booking App',
       theme: AppTheme.lightTheme,
-      initialRoute: AppRoutes.login,
+      initialRoute: AppRoutes.home,
       onGenerateRoute: AppRoutes.generateRoute,
     );
   }
