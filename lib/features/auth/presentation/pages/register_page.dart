@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import '../../../app/routes/app_routes.dart';
-import '../../../app/theme/app_colors.dart';
-import '../../../shared/utils/validators.dart';
-import '../../../shared/widgets/app_logo_header.dart';
-import '../../../shared/widgets/custom_button.dart';
-import '../../../shared/widgets/custom_text_field.dart';
-import '../../../shared/widgets/form_switch_text.dart';
+import '../../../../app/routes/app_routes.dart';
+import '../../../../app/theme/app_colors.dart';
+import '../../../../shared/utils/validators.dart';
+import '../../../../shared/widgets/app_logo_header.dart';
+import '../../../../shared/widgets/custom_button.dart';
+import '../../../../shared/widgets/custom_text_field.dart';
+import '../../../../shared/widgets/form_switch_text.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _RegisterPageState extends State<RegisterPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final TextEditingController _fullNameController = TextEditingController();
@@ -22,7 +22,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
-  TextEditingController();
+      TextEditingController();
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -42,7 +42,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     FocusScope.of(context).unfocus();
 
     if (!_formKey.currentState!.validate()) {
-      _showMessage('Thông tin đăng ký chưa hợp lệ.');
+      _showMessage('Thong tin dang ky chua hop le.');
       return;
     }
 
@@ -58,10 +58,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _isLoading = false;
     });
 
-    _showMessage(
-      'Đăng ký thành công!',
-      isError: false,
-    );
+    _showMessage('Dang ky thanh cong!', isError: false);
 
     Future.delayed(const Duration(milliseconds: 800), () {
       if (!mounted) return;
@@ -82,16 +79,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tạo tài khoản'),
-      ),
+      appBar: AppBar(title: const Text('Tao tai khoan')),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFFF7FCFF),
-              Color(0xFFEAF7FF),
-            ],
+            colors: [Color(0xFFF7FCFF), Color(0xFFEAF7FF)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -100,10 +92,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           top: false,
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 22,
-                vertical: 18,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 430),
                 padding: const EdgeInsets.all(22),
@@ -123,23 +112,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Column(
                     children: [
                       const AppLogoHeader(
-                        title: 'Đăng ký tài khoản',
+                        title: 'Dang ky tai khoan',
                         subtitle:
-                        'Điền đầy đủ thông tin để bắt đầu sử dụng hệ thống đặt lịch khám bệnh.',
+                            'Dien day du thong tin de bat dau su dung he thong dat lich kham benh.',
                       ),
                       const SizedBox(height: 28),
                       CustomTextField(
                         controller: _fullNameController,
-                        label: 'Họ và tên',
-                        hintText: 'Nhập vào họ và tên của bạn',
+                        label: 'Ho va ten',
+                        hintText: 'Nhap vao ho va ten cua ban',
                         prefixIcon: Icons.person_outline,
                         validator: Validators.validateFullName,
                       ),
                       const SizedBox(height: 16),
                       CustomTextField(
                         controller: _phoneController,
-                        label: 'Số điện thoại',
-                        hintText: 'Nhập số điện thoại',
+                        label: 'So dien thoai',
+                        hintText: 'Nhap so dien thoai',
                         prefixIcon: Icons.phone_outlined,
                         keyboardType: TextInputType.phone,
                         validator: Validators.validatePhone,
@@ -148,7 +137,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       CustomTextField(
                         controller: _emailController,
                         label: 'Email',
-                        hintText: 'Nhập email',
+                        hintText: 'Nhap email',
                         prefixIcon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
                         validator: Validators.validateEmail,
@@ -156,8 +145,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: 16),
                       CustomTextField(
                         controller: _passwordController,
-                        label: 'Mật khẩu',
-                        hintText: 'Tối thiểu 6 ký tự',
+                        label: 'Mat khau',
+                        hintText: 'Toi thieu 6 ky tu',
                         prefixIcon: Icons.lock_outline,
                         obscureText: _obscurePassword,
                         validator: Validators.validatePassword,
@@ -177,20 +166,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: 16),
                       CustomTextField(
                         controller: _confirmPasswordController,
-                        label: 'Xác nhận mật khẩu',
-                        hintText: 'Nhập lại mật khẩu',
+                        label: 'Xac nhan mat khau',
+                        hintText: 'Nhap lai mat khau',
                         prefixIcon: Icons.lock_reset_outlined,
                         obscureText: _obscureConfirmPassword,
                         textInputAction: TextInputAction.done,
-                        validator: (value) => Validators.validateConfirmPassword(
-                          value,
-                          _passwordController.text,
-                        ),
+                        validator: (value) =>
+                            Validators.validateConfirmPassword(
+                              value,
+                              _passwordController.text,
+                            ),
                         suffixIcon: IconButton(
                           onPressed: () {
                             setState(() {
                               _obscureConfirmPassword =
-                              !_obscureConfirmPassword;
+                                  !_obscureConfirmPassword;
                             });
                           },
                           icon: Icon(
@@ -202,14 +192,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: 24),
                       CustomButton(
-                        text: 'Đăng ký',
+                        text: 'Dang ky',
                         isLoading: _isLoading,
                         onPressed: _handleRegister,
                       ),
                       const SizedBox(height: 18),
                       FormSwitchText(
-                        normalText: 'Bạn đã có tài khoản? ',
-                        actionText: 'Đăng nhập',
+                        normalText: 'Ban da co tai khoan? ',
+                        actionText: 'Dang nhap',
                         onTap: () {
                           Navigator.pushReplacementNamed(
                             context,

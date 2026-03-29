@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import '../../../app/routes/app_routes.dart';
-import '../../../app/theme/app_colors.dart';
-import '../../../shared/utils/validators.dart';
-import '../../../shared/widgets/app_logo_header.dart';
-import '../../../shared/widgets/custom_button.dart';
-import '../../../shared/widgets/custom_text_field.dart';
-import '../../../shared/widgets/form_switch_text.dart';
+import '../../../../app/routes/app_routes.dart';
+import '../../../../app/theme/app_colors.dart';
+import '../../../../shared/utils/validators.dart';
+import '../../../../shared/widgets/app_logo_header.dart';
+import '../../../../shared/widgets/custom_button.dart';
+import '../../../../shared/widgets/custom_text_field.dart';
+import '../../../../shared/widgets/form_switch_text.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final TextEditingController _emailController = TextEditingController();
@@ -34,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
     FocusScope.of(context).unfocus();
 
     if (!_formKey.currentState!.validate()) {
-      _showMessage('Vui lòng kiểm tra lại thông tin đăng nhập.');
+      _showMessage('Vui long kiem tra lai thong tin dang nhap.');
       return;
     }
 
@@ -70,10 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFFF7FCFF),
-              Color(0xFFEAF7FF),
-            ],
+            colors: [Color(0xFFF7FCFF), Color(0xFFEAF7FF)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -81,10 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 22,
-                vertical: 18,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 430),
                 padding: const EdgeInsets.all(22),
@@ -104,15 +98,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     children: [
                       const AppLogoHeader(
-                        title: 'Đăng nhập',
+                        title: 'Dang nhap',
                         subtitle:
-                        'Chào mừng bạn đến với hệ thống đặt lịch khám bệnh.\nVui lòng đăng nhập để tiếp tục.',
+                            'Chao mung ban den voi he thong dat lich kham benh.\nVui long dang nhap de tiep tuc.',
                       ),
                       const SizedBox(height: 28),
                       CustomTextField(
                         controller: _emailController,
                         label: 'Email',
-                        hintText: 'Nhập email của bạn',
+                        hintText: 'Nhap email cua ban',
                         prefixIcon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
                         validator: Validators.validateEmail,
@@ -120,8 +114,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 16),
                       CustomTextField(
                         controller: _passwordController,
-                        label: 'Mật khẩu',
-                        hintText: 'Nhập mật khẩu',
+                        label: 'Mat khau',
+                        hintText: 'Nhap mat khau',
                         prefixIcon: Icons.lock_outline,
                         obscureText: _obscurePassword,
                         validator: Validators.validatePassword,
@@ -141,14 +135,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 24),
                       CustomButton(
-                        text: 'Đăng nhập',
+                        text: 'Dang nhap',
                         isLoading: _isLoading,
                         onPressed: _handleLogin,
                       ),
                       const SizedBox(height: 18),
                       FormSwitchText(
-                        normalText: 'Bạn chưa có tài khoản? ',
-                        actionText: 'Đăng ký ngay',
+                        normalText: 'Ban chua co tai khoan? ',
+                        actionText: 'Dang ky ngay',
                         onTap: () {
                           Navigator.pushNamed(context, AppRoutes.register);
                         },
