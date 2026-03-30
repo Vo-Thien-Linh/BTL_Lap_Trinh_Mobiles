@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../app/routes/app_routes.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/utils/validators.dart';
@@ -50,7 +51,59 @@ class _RegisterPageState extends State<RegisterPage> {
       _isLoading = true;
     });
 
-    await Future.delayed(const Duration(milliseconds: 1000));
+    final client = Supabase.instance.client;
+
+    try {
+      await client.auth.signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        data: {
+          'full_name': _fullNameController.text.trim(),
+          'phone': _phoneController.text.trim(),
+        },
+      );
+
+      final email = _emailController.text.trim();
+      final existingUser = await client
+          .from('users')
+          .select('user_id')
+          .eq('email', email)
+          .maybeSingle();
+
+      if (existingUser == null) {
+        await client.from('users').insert({
+          'username': email.split('@').first,
+          'email': email,
+          'phone': _phoneController.text.trim(),
+          'full_name': _fullNameController.text.trim(),
+          'role': 'patient',
+          'status': 'active',
+        });
+      }
+    } on AuthException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+      _showMessage(_mapAuthError(error));
+      return;
+    } on PostgrestException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+      _showMessage(
+        'Tao tai khoan Auth thanh cong, nhung ghi users loi: ${error.message}',
+      );
+      return;
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+      _showMessage('Dang ky that bai. Vui long thu lai.');
+      return;
+    }
 
     if (!mounted) return;
 
@@ -58,12 +111,33 @@ class _RegisterPageState extends State<RegisterPage> {
       _isLoading = false;
     });
 
-    _showMessage('Dang ky thanh cong!', isError: false);
+    _showMessage(
+      'Dang ky thanh cong! Vui long dang nhap de tiep tuc.',
+      isError: false,
+    );
 
     Future.delayed(const Duration(milliseconds: 800), () {
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, AppRoutes.login);
     });
+  }
+
+  String _mapAuthError(AuthException error) {
+    final message = error.message.toLowerCase();
+
+    if (message.contains('email rate limit exceeded')) {
+      return 'Ban da gui qua nhieu yeu cau dang ky. Vui long doi it phut roi thu lai.';
+    }
+
+    if (message.contains('user already registered')) {
+      return 'Email nay da ton tai. Vui long dang nhap hoac dung email khac.';
+    }
+
+    if (message.contains('invalid email')) {
+      return 'Email khong hop le.';
+    }
+
+    return error.message;
   }
 
   void _showMessage(String message, {bool isError = true}) {
