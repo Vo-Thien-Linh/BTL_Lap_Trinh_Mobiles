@@ -139,7 +139,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     if (!mounted) return;
     Navigator.of(
       context,
-    ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+    ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
   }
 
   @override

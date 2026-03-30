@@ -3,7 +3,9 @@ import 'routes/app_routes.dart';
 import 'theme/app_theme.dart';
 
 class HospitalBookingApp extends StatelessWidget {
-  const HospitalBookingApp({super.key});
+  const HospitalBookingApp({super.key, required this.initialRoute});
+
+  final String initialRoute;
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +13,7 @@ class HospitalBookingApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Hospital Booking App',
       theme: AppTheme.lightTheme,
-      initialRoute: AppRoutes.home,
+      initialRoute: initialRoute,
       onGenerateRoute: AppRoutes.generateRoute,
     );
   }

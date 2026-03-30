@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../features/home/data/datasources/home_local_datasource.dart';
 import '../features/home/data/repositories/home_repository_impl.dart';
 import '../features/home/domain/repositories/home_repository.dart';
@@ -8,6 +9,10 @@ import '../features/home/presentation/bloc/home_bloc.dart';
 final getIt = GetIt.instance;
 
 Future<void> setupServiceLocator() async {
+  if (!getIt.isRegistered<SupabaseClient>()) {
+    getIt.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
+  }
+
   if (!getIt.isRegistered<HomeLocalDatasource>()) {
     getIt.registerLazySingleton<HomeLocalDatasource>(
       () => HomeLocalDatasourceImpl(),
