@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "225134272952",
+    "project_id": "hospital-booking-app-b3ee6",
+    "storage_bucket": "hospital-booking-app-b3ee6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:225134272952:android:ca17b3b6500c20d1d0af4d",
+        "android_client_info": {
+          "package_name": "com.example.baitaplon"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6pfT2H8ehbZyfo3qdQfiwneTtnShJJPg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

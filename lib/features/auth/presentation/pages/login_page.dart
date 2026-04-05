@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../app/routes/app_routes.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../config/service_locator.dart';
+import '../../domain/usecases/login_usecase.dart';
 import '../../../../shared/utils/validators.dart';
 import '../../../../shared/widgets/app_logo_header.dart';
 import '../../../../shared/widgets/custom_button.dart';
@@ -17,6 +19,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final LoginUsecase _loginUsecase = getIt<LoginUsecase>();
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -44,16 +47,16 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      await Supabase.instance.client.auth.signInWithPassword(
+      await _loginUsecase(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-    } on AuthException catch (error) {
+    } on FirebaseAuthException catch (error) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
-      _showMessage(error.message);
+      _showMessage(_mapAuthError(error));
       return;
     } catch (_) {
       if (!mounted) return;
@@ -72,6 +75,23 @@ class _LoginPageState extends State<LoginPage> {
 
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     Navigator.pushReplacementNamed(context, AppRoutes.home);
+  }
+
+  String _mapAuthError(FirebaseAuthException error) {
+    switch (error.code) {
+      case 'invalid-email':
+        return 'Email khong hop le.';
+      case 'invalid-credential':
+      case 'user-not-found':
+      case 'wrong-password':
+        return 'Email hoac mat khau khong dung.';
+      case 'user-disabled':
+        return 'Tai khoan da bi vo hieu hoa.';
+      case 'too-many-requests':
+        return 'Ban da thu qua nhieu lan. Vui long doi it phut roi thu lai.';
+      default:
+        return error.message ?? 'Dang nhap that bai. Vui long thu lai.';
+    }
   }
 
   void _showMessage(String message, {bool isError = true}) {

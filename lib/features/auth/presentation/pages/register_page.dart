@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../app/routes/app_routes.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../config/service_locator.dart';
+import '../../domain/entities/register_request_entity.dart';
+import '../../domain/usecases/register_usecase.dart';
 import '../../../../shared/utils/validators.dart';
 import '../../../../shared/widgets/app_logo_header.dart';
 import '../../../../shared/widgets/custom_button.dart';
@@ -17,6 +20,7 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final RegisterUsecase _registerUsecase = getIt<RegisterUsecase>();
 
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
@@ -51,49 +55,29 @@ class _RegisterPageState extends State<RegisterPage> {
       _isLoading = true;
     });
 
-    final client = Supabase.instance.client;
-
     try {
-      await client.auth.signUp(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        data: {
-          'full_name': _fullNameController.text.trim(),
-          'phone': _phoneController.text.trim(),
-        },
+      await _registerUsecase(
+        RegisterRequestEntity(
+          fullName: _fullNameController.text.trim(),
+          phone: _phoneController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        ),
       );
-
-      final email = _emailController.text.trim();
-      final existingUser = await client
-          .from('users')
-          .select('user_id')
-          .eq('email', email)
-          .maybeSingle();
-
-      if (existingUser == null) {
-        await client.from('users').insert({
-          'username': email.split('@').first,
-          'email': email,
-          'phone': _phoneController.text.trim(),
-          'full_name': _fullNameController.text.trim(),
-          'role': 'patient',
-          'status': 'active',
-        });
-      }
-    } on AuthException catch (error) {
+    } on FirebaseAuthException catch (error) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
       _showMessage(_mapAuthError(error));
       return;
-    } on PostgrestException catch (error) {
+    } on FirebaseException catch (error) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
       _showMessage(
-        'Tao tai khoan Auth thanh cong, nhung ghi users loi: ${error.message}',
+        'Dang ky thanh cong nhung luu du lieu loi: ${error.message}',
       );
       return;
     } catch (_) {
@@ -122,22 +106,19 @@ class _RegisterPageState extends State<RegisterPage> {
     });
   }
 
-  String _mapAuthError(AuthException error) {
-    final message = error.message.toLowerCase();
-
-    if (message.contains('email rate limit exceeded')) {
-      return 'Ban da gui qua nhieu yeu cau dang ky. Vui long doi it phut roi thu lai.';
+  String _mapAuthError(FirebaseAuthException error) {
+    switch (error.code) {
+      case 'email-already-in-use':
+        return 'Email nay da ton tai. Vui long dang nhap hoac dung email khac.';
+      case 'invalid-email':
+        return 'Email khong hop le.';
+      case 'weak-password':
+        return 'Mat khau qua yeu. Vui long chon mat khau manh hon.';
+      case 'too-many-requests':
+        return 'Ban da gui qua nhieu yeu cau dang ky. Vui long doi it phut roi thu lai.';
+      default:
+        return error.message ?? 'Dang ky that bai. Vui long thu lai.';
     }
-
-    if (message.contains('user already registered')) {
-      return 'Email nay da ton tai. Vui long dang nhap hoac dung email khac.';
-    }
-
-    if (message.contains('invalid email')) {
-      return 'Email khong hop le.';
-    }
-
-    return error.message;
   }
 
   void _showMessage(String message, {bool isError = true}) {

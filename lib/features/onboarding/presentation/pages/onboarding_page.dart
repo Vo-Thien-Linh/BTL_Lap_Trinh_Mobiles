@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../app/routes/app_routes.dart';
+import '../../../../config/service_locator.dart';
+import '../../domain/usecases/complete_onboarding_usecase.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -11,6 +12,8 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen>
     with TickerProviderStateMixin {
+  final CompleteOnboardingUsecase _completeOnboardingUsecase =
+      getIt<CompleteOnboardingUsecase>();
   final PageController _pageController = PageController();
   int _currentPage = 0;
   late AnimationController _rotationController;
@@ -130,8 +133,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   Future<void> _completeOnboarding() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('has_seen_onboarding', true);
+      await _completeOnboardingUsecase();
     } catch (_) {
       // Continue navigation even if persisting flag fails.
     }
