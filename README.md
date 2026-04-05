@@ -2,25 +2,18 @@
 
 A new Flutter project.
 
-## Supabase Setup
+## Firebase Setup
 
-1. Create a Supabase project and copy:
-- Project URL
-- Project API anon key
-
-2. Run the app with `dart-define` values:
-
-```bash
-flutter run --dart-define=SUPABASE_URL=https://your-project-ref.supabase.co --dart-define=SUPABASE_ANON_KEY=your-anon-key
-```
-
-3. Build commands also need the same values, for example:
+1. Create a Firebase project.
+2. Add Android app with package name `com.example.baitaplon`.
+3. Download `google-services.json` and place it in `android/app/`.
+4. In Firebase Console, enable Firestore Database (test mode for development).
+5. Run the app:
 
 ```bash
-flutter build apk --dart-define=SUPABASE_URL=https://your-project-ref.supabase.co --dart-define=SUPABASE_ANON_KEY=your-anon-key
+flutter pub get
+flutter run
 ```
-
-The app validates these values on startup. If missing, it throws a `StateError` with setup instructions.
 
 ## Getting Started
 
