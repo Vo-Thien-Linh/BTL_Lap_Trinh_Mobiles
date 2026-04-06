@@ -9,7 +9,10 @@ class LoginUsecase {
   Future<AppUserEntity> call({
     required String email,
     required String password,
-  }) async {
-    return repository.login(email: email, password: password);
+  }) {
+    return repository.login(
+      email: email,
+      password: password,
+    );
   }
 }

@@ -7,7 +7,7 @@ class RegisterUsecase {
 
   RegisterUsecase({required this.repository});
 
-  Future<AppUserEntity> call(RegisterRequestEntity request) async {
+  Future<AppUserEntity> call(RegisterRequestEntity request) {
     return repository.register(request);
   }
 }
