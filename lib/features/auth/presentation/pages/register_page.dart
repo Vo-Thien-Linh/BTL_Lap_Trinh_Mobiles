@@ -23,11 +23,12 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  TextEditingController();
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
+  bool _acceptedTerms = true;
 
   @override
   void dispose() {
@@ -42,8 +43,15 @@ class _RegisterPageState extends State<RegisterPage> {
   Future<void> _handleRegister() async {
     FocusScope.of(context).unfocus();
 
+    if (_isLoading) return;
+
     if (!_formKey.currentState!.validate()) {
-      _showMessage('Thong tin dang ky chua hop le.');
+      _showMessage('Thông tin đăng ký chưa hợp lệ. Vui lòng kiểm tra lại.');
+      return;
+    }
+
+    if (!_acceptedTerms) {
+      _showMessage('Bạn cần đồng ý với điều khoản để tiếp tục.');
       return;
     }
 
@@ -51,93 +59,49 @@ class _RegisterPageState extends State<RegisterPage> {
       _isLoading = true;
     });
 
-    final client = Supabase.instance.client;
-
     try {
-      await client.auth.signUp(
+      final response = await Supabase.instance.client.auth.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
-        data: {
-          'full_name': _fullNameController.text.trim(),
-          'phone': _phoneController.text.trim(),
-        },
       );
 
-      final email = _emailController.text.trim();
-      final existingUser = await client
-          .from('users')
-          .select('user_id')
-          .eq('email', email)
-          .maybeSingle();
+      final user = response.user;
 
-      if (existingUser == null) {
-        await client.from('users').insert({
-          'username': email.split('@').first,
-          'email': email,
+      if (user != null) {
+        await Supabase.instance.client.from('users').insert({
+          'user_id': user.id,
+          'username': _emailController.text.trim(),
+          'email': _emailController.text.trim(),
           'phone': _phoneController.text.trim(),
           'full_name': _fullNameController.text.trim(),
           'role': 'patient',
-          'status': 'active',
         });
       }
-    } on AuthException catch (error) {
+
       if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-      });
-      _showMessage(_mapAuthError(error));
-      return;
-    } on PostgrestException catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-      });
+
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
       _showMessage(
-        'Tao tai khoan Auth thanh cong, nhung ghi users loi: ${error.message}',
+        'Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản nếu hệ thống yêu cầu.',
+        isError: false,
       );
-      return;
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-      });
-      _showMessage('Dang ky that bai. Vui long thu lai.');
-      return;
-    }
 
-    if (!mounted) return;
+      await Future.delayed(const Duration(milliseconds: 800));
 
-    setState(() {
-      _isLoading = false;
-    });
-
-    _showMessage(
-      'Dang ky thanh cong! Vui long dang nhap de tiep tuc.',
-      isError: false,
-    );
-
-    Future.delayed(const Duration(milliseconds: 800), () {
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, AppRoutes.login);
-    });
-  }
-
-  String _mapAuthError(AuthException error) {
-    final message = error.message.toLowerCase();
-
-    if (message.contains('email rate limit exceeded')) {
-      return 'Ban da gui qua nhieu yeu cau dang ky. Vui long doi it phut roi thu lai.';
+    } on AuthException catch (error) {
+      if (!mounted) return;
+      _showMessage(error.message);
+    } catch (_) {
+      if (!mounted) return;
+      _showMessage('Đăng ký thất bại. Vui lòng thử lại.');
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
     }
-
-    if (message.contains('user already registered')) {
-      return 'Email nay da ton tai. Vui long dang nhap hoac dung email khac.';
-    }
-
-    if (message.contains('invalid email')) {
-      return 'Email khong hop le.';
-    }
-
-    return error.message;
   }
 
   void _showMessage(String message, {bool isError = true}) {
@@ -150,10 +114,21 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  String _passwordHint() {
+    final password = _passwordController.text;
+
+    if (password.isEmpty) return 'Mật khẩu nên có ít nhất 6 ký tự.';
+    if (password.length < 6) return 'Mật khẩu còn quá ngắn.';
+    if (password.length < 8) return 'Mật khẩu ở mức chấp nhận được.';
+    return 'Mật khẩu khá tốt.';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Tao tai khoan')),
+      appBar: AppBar(
+        title: const Text('Tạo tài khoản'),
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -186,23 +161,23 @@ class _RegisterPageState extends State<RegisterPage> {
                   child: Column(
                     children: [
                       const AppLogoHeader(
-                        title: 'Dang ky tai khoan',
+                        title: 'Đăng ký tài khoản',
                         subtitle:
-                            'Dien day du thong tin de bat dau su dung he thong dat lich kham benh.',
+                        'Điền đầy đủ thông tin để bắt đầu sử dụng hệ thống đặt lịch khám bệnh.',
                       ),
                       const SizedBox(height: 28),
                       CustomTextField(
                         controller: _fullNameController,
-                        label: 'Ho va ten',
-                        hintText: 'Nhap vao ho va ten cua ban',
+                        label: 'Họ và tên',
+                        hintText: 'Ví dụ: Nguyễn Quốc Việt',
                         prefixIcon: Icons.person_outline,
                         validator: Validators.validateFullName,
                       ),
                       const SizedBox(height: 16),
                       CustomTextField(
                         controller: _phoneController,
-                        label: 'So dien thoai',
-                        hintText: 'Nhap so dien thoai',
+                        label: 'Số điện thoại',
+                        hintText: 'Nhập số điện thoại',
                         prefixIcon: Icons.phone_outlined,
                         keyboardType: TextInputType.phone,
                         validator: Validators.validatePhone,
@@ -211,7 +186,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       CustomTextField(
                         controller: _emailController,
                         label: 'Email',
-                        hintText: 'Nhap email',
+                        hintText: 'Nhập email',
                         prefixIcon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
                         validator: Validators.validateEmail,
@@ -219,8 +194,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       const SizedBox(height: 16),
                       CustomTextField(
                         controller: _passwordController,
-                        label: 'Mat khau',
-                        hintText: 'Toi thieu 6 ky tu',
+                        label: 'Mật khẩu',
+                        hintText: 'Tối thiểu 6 ký tự',
                         prefixIcon: Icons.lock_outline,
                         obscureText: _obscurePassword,
                         validator: Validators.validatePassword,
@@ -237,24 +212,34 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 6),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          _passwordHint(),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.hint,
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 16),
                       CustomTextField(
                         controller: _confirmPasswordController,
-                        label: 'Xac nhan mat khau',
-                        hintText: 'Nhap lai mat khau',
+                        label: 'Xác nhận mật khẩu',
+                        hintText: 'Nhập lại mật khẩu',
                         prefixIcon: Icons.lock_reset_outlined,
                         obscureText: _obscureConfirmPassword,
                         textInputAction: TextInputAction.done,
-                        validator: (value) =>
-                            Validators.validateConfirmPassword(
-                              value,
-                              _passwordController.text,
-                            ),
+                        validator: (value) => Validators.validateConfirmPassword(
+                          value,
+                          _passwordController.text,
+                        ),
                         suffixIcon: IconButton(
                           onPressed: () {
                             setState(() {
                               _obscureConfirmPassword =
-                                  !_obscureConfirmPassword;
+                              !_obscureConfirmPassword;
                             });
                           },
                           icon: Icon(
@@ -264,17 +249,36 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 12),
+                      CheckboxListTile(
+                        value: _acceptedTerms,
+                        onChanged: _isLoading
+                            ? null
+                            : (value) {
+                          setState(() {
+                            _acceptedTerms = value ?? false;
+                          });
+                        },
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        title: const Text(
+                          'Tôi đồng ý với điều khoản sử dụng của hệ thống.',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       CustomButton(
-                        text: 'Dang ky',
+                        text: 'Đăng ký',
                         isLoading: _isLoading,
                         onPressed: _handleRegister,
                       ),
                       const SizedBox(height: 18),
                       FormSwitchText(
-                        normalText: 'Ban da co tai khoan? ',
-                        actionText: 'Dang nhap',
-                        onTap: () {
+                        normalText: 'Bạn đã có tài khoản? ',
+                        actionText: 'Đăng nhập',
+                        onTap: _isLoading
+                            ? () {}
+                            : () {
                           Navigator.pushReplacementNamed(
                             context,
                             AppRoutes.login,

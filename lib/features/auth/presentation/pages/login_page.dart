@@ -20,6 +20,7 @@ class _LoginPageState extends State<LoginPage> {
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final FocusNode _passwordFocusNode = FocusNode();
 
   bool _obscurePassword = true;
   bool _isLoading = false;
@@ -28,14 +29,17 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
   Future<void> _handleLogin() async {
     FocusScope.of(context).unfocus();
 
+    if (_isLoading) return;
+
     if (!_formKey.currentState!.validate()) {
-      _showMessage('Vui long kiem tra lai thong tin dang nhap.');
+      _showMessage('Vui lòng kiểm tra lại email hoặc mật khẩu.');
       return;
     }
 
@@ -48,30 +52,28 @@ class _LoginPageState extends State<LoginPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      _showMessage('Đăng nhập thành công.', isError: false);
+
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
     } on AuthException catch (error) {
       if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-      });
       _showMessage(error.message);
-      return;
     } catch (_) {
+      if (!mounted) return;
+      _showMessage('Đăng nhập thất bại. Vui lòng thử lại.');
+    } finally {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
-      _showMessage('Dang nhap that bai. Vui long thu lai.');
-      return;
     }
-
-    if (!mounted) return;
-
-    setState(() {
-      _isLoading = false;
-    });
-
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    Navigator.pushReplacementNamed(context, AppRoutes.home);
   }
 
   void _showMessage(String message, {bool isError = true}) {
@@ -118,24 +120,25 @@ class _LoginPageState extends State<LoginPage> {
                   child: Column(
                     children: [
                       const AppLogoHeader(
-                        title: 'Dang nhap',
+                        title: 'Đăng nhập',
                         subtitle:
-                            'Chao mung ban den voi he thong dat lich kham benh.\nVui long dang nhap de tiep tuc.',
+                        'Chào mừng bạn đến với hệ thống đặt lịch khám bệnh.\nVui lòng đăng nhập để tiếp tục.',
                       ),
                       const SizedBox(height: 28),
                       CustomTextField(
                         controller: _emailController,
                         label: 'Email',
-                        hintText: 'Nhap email cua ban',
+                        hintText: 'Nhập email của bạn',
                         prefixIcon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
                         validator: Validators.validateEmail,
+                        textInputAction: TextInputAction.next,
                       ),
                       const SizedBox(height: 16),
                       CustomTextField(
                         controller: _passwordController,
-                        label: 'Mat khau',
-                        hintText: 'Nhap mat khau',
+                        label: 'Mật khẩu',
+                        hintText: 'Nhập mật khẩu',
                         prefixIcon: Icons.lock_outline,
                         obscureText: _obscurePassword,
                         validator: Validators.validatePassword,
@@ -153,17 +156,34 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _isLoading
+                              ? null
+                              : () {
+                            Navigator.pushNamed(
+                              context,
+                              AppRoutes.forgotPassword,
+                            );
+                          },
+                          child: const Text('Quên mật khẩu?'),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
                       CustomButton(
-                        text: 'Dang nhap',
+                        text: 'Đăng nhập',
                         isLoading: _isLoading,
                         onPressed: _handleLogin,
                       ),
                       const SizedBox(height: 18),
                       FormSwitchText(
-                        normalText: 'Ban chua co tai khoan? ',
-                        actionText: 'Dang ky ngay',
-                        onTap: () {
+                        normalText: 'Bạn chưa có tài khoản? ',
+                        actionText: 'Đăng ký ngay',
+                        onTap: _isLoading
+                            ? () {}
+                            : () {
                           Navigator.pushNamed(context, AppRoutes.register);
                         },
                       ),
