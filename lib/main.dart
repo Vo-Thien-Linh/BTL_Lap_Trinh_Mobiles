@@ -1,33 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'onboarding_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'config/service_locator.dart' as sl;
+import 'app/app.dart';
+import 'app/routes/app_routes.dart';
+import 'features/onboarding/domain/usecases/has_seen_onboarding_usecase.dart';
 
-
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final prefs = await SharedPreferences.getInstance();
-  // Đóng dòng báo trạng thái cũ để lúc nào chạy cũng vào Onboarding (tiện Test UI)
-  // final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
-  final hasSeenOnboarding = false;
+  await initializeDateFormatting();
+  await Firebase.initializeApp();
 
-  runApp(MyApp(hasSeenOnboarding: hasSeenOnboarding));
-}
+  await sl.setupServiceLocator();
 
-class MyApp extends StatelessWidget {
-  final bool hasSeenOnboarding;
+  final hasSeenOnboarding = await sl.getIt<HasSeenOnboardingUsecase>()();
+  final hasSession = FirebaseAuth.instance.currentUser != null;
 
-  const MyApp({super.key, required this.hasSeenOnboarding});
+  final initialRoute = hasSeenOnboarding
+      ? (hasSession ? AppRoutes.home : AppRoutes.login)
+      : AppRoutes.onboarding;
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Hospital Management',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0F766E)), // Elegant deep Teal
-        useMaterial3: true,
-      ),
-      home: hasSeenOnboarding ? const Scaffold(body: Center(child: Text('Màn hình chính'))) : const OnboardingScreen(),
-      debugShowCheckedModeBanner: false,
-    );
-  }
+  runApp(HospitalBookingApp(initialRoute: initialRoute));
 }

@@ -2,6 +2,19 @@
 
 A new Flutter project.
 
+## Firebase Setup
+
+1. Create a Firebase project.
+2. Add Android app with package name `com.example.baitaplon`.
+3. Download `google-services.json` and place it in `android/app/`.
+4. In Firebase Console, enable Firestore Database (test mode for development).
+5. Run the app:
+
+```bash
+flutter pub get
+flutter run
+```
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.

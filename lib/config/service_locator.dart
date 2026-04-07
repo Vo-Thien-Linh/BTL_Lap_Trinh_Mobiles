@@ -8,19 +8,18 @@ import '../features/auth/data/repositories/auth_repository_impl.dart';
 import '../features/auth/domain/repositories/auth_repository.dart';
 import '../features/auth/domain/usecases/login_usecase.dart';
 import '../features/auth/domain/usecases/logout_usecase.dart';
+import '../features/auth/domain/usecases/forgot_password_usecase.dart';
 import '../features/auth/domain/usecases/register_usecase.dart';
-
-import '../features/onboarding/data/datasources/onboarding_local_datasource.dart';
-import '../features/onboarding/data/repositories/onboarding_repository_impl.dart';
-import '../features/onboarding/domain/repositories/onboarding_repository.dart';
-import '../features/onboarding/domain/usecases/complete_onboarding_usecase.dart';
-import '../features/onboarding/domain/usecases/has_seen_onboarding_usecase.dart';
-
 import '../features/home/data/datasources/home_local_datasource.dart';
 import '../features/home/data/repositories/home_repository_impl.dart';
 import '../features/home/domain/repositories/home_repository.dart';
 import '../features/home/domain/usecases/get_appointments_usecase.dart';
 import '../features/home/presentation/bloc/home_bloc.dart';
+import '../features/onboarding/data/datasources/onboarding_local_datasource.dart';
+import '../features/onboarding/data/repositories/onboarding_repository_impl.dart';
+import '../features/onboarding/domain/repositories/onboarding_repository.dart';
+import '../features/onboarding/domain/usecases/complete_onboarding_usecase.dart';
+import '../features/onboarding/domain/usecases/has_seen_onboarding_usecase.dart';
 
 import '../features/appointment/data/datasources/appointment_remote_datasource.dart';
 import '../features/appointment/data/repositories/appointment_repository_impl.dart';
@@ -72,6 +71,12 @@ Future<void> setupServiceLocator() async {
   if (!getIt.isRegistered<RegisterUsecase>()) {
     getIt.registerLazySingleton<RegisterUsecase>(
       () => RegisterUsecase(repository: getIt<AuthRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<ForgotPasswordUsecase>()) {
+    getIt.registerLazySingleton<ForgotPasswordUsecase>(
+      () => ForgotPasswordUsecase(repository: getIt<AuthRepository>()),
     );
   }
 

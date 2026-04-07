@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../../../../app/routes/app_routes.dart';
 import '../../../../config/service_locator.dart';
 import '../../../auth/domain/usecases/logout_usecase.dart';
@@ -11,10 +14,82 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  bool _isCreatingDemoData = false;
   bool _isLoggingOut = false;
 
   final LogoutUsecase _logoutUsecase = getIt<LogoutUsecase>();
 
+  Future<void> _createDemoAppointment() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      _showMessage('Ban can dang nhap de tao du lieu mau.');
+      return;
+    }
+
+    setState(() {
+      _isCreatingDemoData = true;
+    });
+
+    try {
+      final db = FirebaseFirestore.instance;
+
+      await db.collection('Departments').doc('tim_mach').set({
+        'name': 'Tim mach',
+        'description': 'Khoa chuyen khoa tim mach',
+        'location': 'Tang 2 - Phong 201',
+        'phone': '0123456789',
+      }, SetOptions(merge: true));
+
+      await db.collection('Doctors').doc('dr_nguyen_van_b').set({
+        'name': 'Bac si Nguyen Van B',
+        'specialization': 'Tim mach',
+        'departmentId': 'tim_mach',
+        'yearsOfExperience': 8,
+        'consultationFee': 500000,
+        'isActive': true,
+        'licenseNumber': 'BS12345',
+      }, SetOptions(merge: true));
+
+      await db
+          .collection('DoctorSchedules')
+          .doc('dr_b_2026_04_05_morning')
+          .set({
+            'doctorId': 'dr_nguyen_van_b',
+            'departmentId': 'tim_mach',
+            'scheduleDate': Timestamp.fromDate(DateTime(2026, 4, 5)),
+            'shift': 'morning',
+            'availableSlots': 5,
+            'isActive': true,
+          }, SetOptions(merge: true));
+
+      await db.collection('Appointments').add({
+        'patientId': user.uid,
+        'doctorId': 'dr_nguyen_van_b',
+        'departmentId': 'tim_mach',
+        'appointmentDate': Timestamp.fromDate(
+          DateTime.now().add(const Duration(days: 2)),
+        ),
+        'shift': 'morning',
+        'symptoms': 'Dau nguc, kho tho nhe',
+        'status': 'pending',
+        'doctorName': 'Bac si Nguyen Van B',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      if (!mounted) return;
+      _showMessage('Da tao du lieu mau thanh cong.', isError: false);
+    } on FirebaseException catch (error) {
+      if (!mounted) return;
+      _showMessage(error.message ?? 'Khong the tao du lieu mau.');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCreatingDemoData = false;
+        });
+      }
+    }
+  }
 
   void _showMessage(String message, {bool isError = true}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -73,6 +148,8 @@ class _HomePageState extends State<HomePage> {
               _buildUpcomingCard(),
               const SizedBox(height: 22),
               _buildActionGrid(),
+              const SizedBox(height: 22),
+              _buildFirestoreDemo(),
               const SizedBox(height: 26),
               _buildCategorySection(),
               const SizedBox(height: 26),
@@ -432,7 +509,7 @@ class _HomePageState extends State<HomePage> {
                 'Chuyên khoa',
                 style: TextStyle(
                   color: Color(0xFF131826),
-                  fontSize: 38 / 1.65,
+                  fontSize: 19,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -491,6 +568,165 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildFirestoreDemo() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEDEFF6),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Firestore Demo',
+            style: TextStyle(
+              color: Color(0xFF131826),
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Bam de tao 1 lich hen mau va xem du lieu vua tao.',
+            style: TextStyle(
+              color: Color(0xFF4A5164),
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _isCreatingDemoData ? null : _createDemoAppointment,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0E47B5),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              icon: _isCreatingDemoData
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.cloud_upload_rounded),
+              label: Text(
+                _isCreatingDemoData
+                    ? 'Dang tao du lieu...'
+                    : 'Them du lieu mau',
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          if (uid == null)
+            const Text(
+              'Chua dang nhap, khong the doc danh sach lich hen.',
+              style: TextStyle(color: Color(0xFF7E869A), fontSize: 12),
+            )
+          else
+            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: FirebaseFirestore.instance
+                  .collection('Appointments')
+                  .where('patientId', isEqualTo: uid)
+                  .limit(5)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: LinearProgressIndicator(minHeight: 2),
+                  );
+                }
+
+                if (snapshot.hasError) {
+                  return const Text(
+                    'Khong tai duoc lich hen.',
+                    style: TextStyle(color: Color(0xFFB3261E), fontSize: 12),
+                  );
+                }
+
+                final docs = snapshot.data?.docs ?? [];
+                if (docs.isEmpty) {
+                  return const Text(
+                    'Chua co du lieu lich hen. Bam nut ben tren de tao mau.',
+                    style: TextStyle(color: Color(0xFF6C7387), fontSize: 12),
+                  );
+                }
+
+                return Column(
+                  children: docs.map((doc) {
+                    final data = doc.data();
+                    final doctorName =
+                        (data['doctorName'] ?? 'Bac si') as String;
+                    final status = (data['status'] ?? 'pending') as String;
+                    final appointmentDate = data['appointmentDate'];
+
+                    String dateText = 'Chua co ngay';
+                    if (appointmentDate is Timestamp) {
+                      final dt = appointmentDate.toDate();
+                      dateText =
+                          '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+                    }
+
+                    return Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.event_available_rounded,
+                            color: Color(0xFF0E47B5),
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '$doctorName - $dateText',
+                              style: const TextStyle(
+                                color: Color(0xFF232838),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            status,
+                            style: const TextStyle(
+                              color: Color(0xFF0A3DA8),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildDoctorSection() {
     return Column(
@@ -686,7 +922,7 @@ class _DoctorCard extends StatelessWidget {
                             style: const TextStyle(
                               color: Color(0xFF056968),
                               fontWeight: FontWeight.w800,
-                              fontSize: 28 / 1.8,
+                              fontSize: 15.5,
                             ),
                           ),
                         ],
@@ -697,7 +933,7 @@ class _DoctorCard extends StatelessWidget {
                         style: const TextStyle(
                           color: Color(0xFF131826),
                           fontWeight: FontWeight.w800,
-                          fontSize: 20 / 1.15,
+                          fontSize: 17.3,
                         ),
                       ),
                       const SizedBox(height: 5),
@@ -706,7 +942,7 @@ class _DoctorCard extends StatelessWidget {
                         style: const TextStyle(
                           color: Color(0xFF454B5C),
                           fontWeight: FontWeight.w600,
-                          fontSize: 18 / 1.45,
+                          fontSize: 12.4,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -740,7 +976,7 @@ class _DoctorCard extends StatelessWidget {
                       style: TextStyle(
                         color: Color(0xFF0A3DA8),
                         fontWeight: FontWeight.w700,
-                        fontSize: 24 / 1.7,
+                        fontSize: 14.1,
                       ),
                     ),
                   ),
@@ -760,7 +996,7 @@ class _DoctorCard extends StatelessWidget {
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
-                        fontSize: 24 / 1.7,
+                        fontSize: 14.1,
                       ),
                     ),
                   ),
