@@ -433,36 +433,44 @@ class _HomePageState extends State<HomePage> {
         mainAxisSpacing: 16,
         childAspectRatio: 0.86,
       ),
-      itemBuilder: (_, index) {
+      itemBuilder: (context, index) {
         final item = items[index];
-        return Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFFEDEFF6),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 62,
-                height: 62,
-                decoration: BoxDecoration(
-                  color: item.bg,
-                  shape: BoxShape.circle,
+        return InkWell(
+          onTap: () {
+            if (item.label == 'Đặt lịch khám') {
+              Navigator.pushNamed(context, AppRoutes.booking);
+            }
+          },
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFEDEFF6),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 62,
+                  height: 62,
+                  decoration: BoxDecoration(
+                    color: item.bg,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(item.icon, color: item.fg, size: 30),
                 ),
-                child: Icon(item.icon, color: item.fg, size: 30),
-              ),
-              const SizedBox(height: 13),
-              Text(
-                item.label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF232838),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
+                const SizedBox(height: 13),
+                Text(
+                  item.label,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF232838),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -501,7 +509,7 @@ class _HomePageState extends State<HomePage> {
                 'Chuyên khoa',
                 style: TextStyle(
                   color: Color(0xFF131826),
-                  fontSize: 38 / 1.65,
+                  fontSize: 19,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -914,7 +922,7 @@ class _DoctorCard extends StatelessWidget {
                             style: const TextStyle(
                               color: Color(0xFF056968),
                               fontWeight: FontWeight.w800,
-                              fontSize: 28 / 1.8,
+                              fontSize: 15.5,
                             ),
                           ),
                         ],
@@ -925,7 +933,7 @@ class _DoctorCard extends StatelessWidget {
                         style: const TextStyle(
                           color: Color(0xFF131826),
                           fontWeight: FontWeight.w800,
-                          fontSize: 20 / 1.15,
+                          fontSize: 17.3,
                         ),
                       ),
                       const SizedBox(height: 5),
@@ -934,7 +942,7 @@ class _DoctorCard extends StatelessWidget {
                         style: const TextStyle(
                           color: Color(0xFF454B5C),
                           fontWeight: FontWeight.w600,
-                          fontSize: 18 / 1.45,
+                          fontSize: 12.4,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -968,7 +976,7 @@ class _DoctorCard extends StatelessWidget {
                       style: TextStyle(
                         color: Color(0xFF0A3DA8),
                         fontWeight: FontWeight.w700,
-                        fontSize: 24 / 1.7,
+                        fontSize: 14.1,
                       ),
                     ),
                   ),
@@ -988,7 +996,7 @@ class _DoctorCard extends StatelessWidget {
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
-                        fontSize: 24 / 1.7,
+                        fontSize: 14.1,
                       ),
                     ),
                   ),

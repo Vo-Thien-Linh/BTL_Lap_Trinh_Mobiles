@@ -5,6 +5,7 @@ import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/verify_email_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
+import '../../features/appointment/presentation/pages/booking_flow_page.dart';
 
 class AppRoutes {
   static const String onboarding = '/onboarding';
@@ -13,6 +14,7 @@ class AppRoutes {
   static const String forgotPassword = '/forgot-password';
   static const String verifyEmail = '/verify-email';
   static const String home = '/home';
+  static const String booking = '/booking';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -28,6 +30,8 @@ class AppRoutes {
         return _buildRoute(const VerifyEmailPage());
       case home:
         return _buildRoute(const HomePage());
+      case booking:
+        return _buildRoute(const BookingFlowPage());
       default:
         return _buildRoute(const LoginPage());
     }
@@ -39,27 +43,19 @@ class AppRoutes {
       reverseTransitionDuration: const Duration(milliseconds: 280),
       pageBuilder: (_, animation, __) => page,
       transitionsBuilder: (_, animation, __, child) {
-        final fade = CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOut,
-        );
+        final fade = CurvedAnimation(parent: animation, curve: Curves.easeOut);
 
-        final slide = Tween<Offset>(
-          begin: const Offset(0.08, 0),
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutCubic,
-          ),
-        );
+        final slide =
+            Tween<Offset>(
+              begin: const Offset(0.08, 0),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            );
 
         return FadeTransition(
           opacity: fade,
-          child: SlideTransition(
-            position: slide,
-            child: child,
-          ),
+          child: SlideTransition(position: slide, child: child),
         );
       },
     );
