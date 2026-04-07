@@ -1,16 +1,24 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-import '../../domain/entities/app_user_entity.dart';
+import '../../../../data/models/patient_model.dart';
+import '../../../../data/models/user_model.dart';
 import '../../domain/entities/register_request_entity.dart';
+import '../../../../core/enums/app_role.dart';
+import '../../../../core/enums/user_status.dart';
 
 abstract class AuthRemoteDatasource {
-  Future<AppUserEntity> login({
+  Future<UserModel> register(RegisterRequestEntity request);
+
+  Future<UserModel> login({
     required String email,
     required String password,
   });
-  Future<AppUserEntity> register(RegisterRequestEntity request);
+
   Future<void> logout();
+
+  Future<void> forgotPassword(String email);
+
+  Future<UserModel?> getCurrentUser();
 }
 
 class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
@@ -23,94 +31,96 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
   });
 
   @override
-  Future<AppUserEntity> login({
-    required String email,
-    required String password,
-  }) async {
-    final credential = await firebaseAuth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-
-    final user = credential.user;
-    if (user == null) {
-      throw FirebaseAuthException(
-        code: 'user-missing',
-        message: 'Cannot find signed-in user.',
-      );
-    }
-
-    return _readOrBuildProfile(user);
-  }
-
-  @override
-  Future<AppUserEntity> register(RegisterRequestEntity request) async {
-    final normalizedEmail = request.email.trim().toLowerCase();
-    final normalizedFullName = request.fullName.trim();
-    final normalizedPhone = request.phone.trim();
-
+  Future<UserModel> register(RegisterRequestEntity request) async {
     final credential = await firebaseAuth.createUserWithEmailAndPassword(
-      email: normalizedEmail,
+      email: request.email.trim(),
       password: request.password,
     );
 
     final user = credential.user;
     if (user == null) {
-      throw FirebaseAuthException(
-        code: 'user-missing',
-        message: 'Cannot create account.',
-      );
+      throw Exception('Không thể tạo tài khoản.');
     }
 
-    final userDocRef = firestore.collection('Users').doc(user.uid);
+    await user.updateDisplayName(request.fullName);
+    await user.sendEmailVerification();
 
-    final appUser = AppUserEntity(
+    final now = DateTime.now();
+
+    final userModel = UserModel(
       uid: user.uid,
-      email: normalizedEmail,
-      fullName: normalizedFullName,
-      phone: normalizedPhone,
-      role: 'patient',
-      status: 'active',
+      username: request.email.trim(),
+      email: request.email.trim(),
+      phone: request.phone.trim(),
+      fullName: request.fullName.trim(),
+      cccd: request.cccd.trim(),
+      role: AppRole.patient,
+      status: UserStatus.active,
+      emailVerified: user.emailVerified,
+      createdAt: now,
+      updatedAt: now,
     );
 
-    try {
-      final existing = await userDocRef.get();
-      final payload = {
-        'username': normalizedEmail.split('@').first,
-        'email': appUser.email,
-        'phone': appUser.phone,
-        'fullName': appUser.fullName,
-        'role': appUser.role,
-        'status': appUser.status,
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
+    final patientModel = PatientModel.empty(user.uid);
 
-      if (!existing.exists) {
-        payload['createdAt'] = FieldValue.serverTimestamp();
-      }
+    final batch = firestore.batch();
 
-      await userDocRef.set(payload, SetOptions(merge: true));
-    } catch (error) {
-      // Roll back auth account if profile creation fails.
-      await user.delete();
+    batch.set(
+      firestore.collection('users').doc(user.uid),
+      userModel.toMap(),
+    );
 
-      if (error is FirebaseException) {
-        throw FirebaseException(
-          plugin: error.plugin,
-          code: error.code,
-          message: error.message,
-        );
-      }
+    batch.set(
+      firestore.collection('patients').doc(user.uid),
+      patientModel.toMap(),
+    );
 
-      throw FirebaseException(
-        plugin: 'cloud_firestore',
-        code: 'profile-write-failed',
-        message: 'Khong the tao ho so nguoi dung.',
+    await batch.commit();
+
+    return userModel;
+  }
+
+  @override
+  Future<UserModel> login({
+    required String email,
+    required String password,
+  }) async {
+    final credential = await firebaseAuth.signInWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+
+    final user = credential.user;
+    if (user == null) {
+      throw Exception('Không tìm thấy người dùng.');
+    }
+
+    await user.reload();
+    final currentUser = firebaseAuth.currentUser;
+
+    if (currentUser == null) {
+      throw Exception('Không thể tải thông tin người dùng.');
+    }
+
+    if (!currentUser.emailVerified) {
+      throw FirebaseAuthException(
+        code: 'email-not-verified',
+        message: 'Email chưa được xác thực.',
       );
     }
 
-    await firebaseAuth.signOut();
-    return appUser;
+    await firestore.collection('users').doc(currentUser.uid).update({
+      'emailVerified': true,
+      'updatedAt': Timestamp.now(),
+    });
+
+    final doc = await firestore.collection('users').doc(currentUser.uid).get();
+
+    if (!doc.exists) {
+      throw Exception('Không tìm thấy hồ sơ người dùng.');
+    }
+
+    return UserModel.fromDocument(doc);
   }
 
   @override
@@ -118,17 +128,19 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
     await firebaseAuth.signOut();
   }
 
-  Future<AppUserEntity> _readOrBuildProfile(User user) async {
-    final snapshot = await firestore.collection('Users').doc(user.uid).get();
-    final data = snapshot.data();
+  @override
+  Future<void> forgotPassword(String email) async {
+    await firebaseAuth.sendPasswordResetEmail(email: email.trim());
+  }
 
-    return AppUserEntity(
-      uid: user.uid,
-      email: user.email ?? (data?['email'] as String? ?? ''),
-      fullName: data?['fullName'] as String? ?? '',
-      phone: data?['phone'] as String? ?? '',
-      role: data?['role'] as String? ?? 'patient',
-      status: data?['status'] as String? ?? 'active',
-    );
+  @override
+  Future<UserModel?> getCurrentUser() async {
+    final currentUser = firebaseAuth.currentUser;
+    if (currentUser == null) return null;
+
+    final doc = await firestore.collection('users').doc(currentUser.uid).get();
+    if (!doc.exists) return null;
+
+    return UserModel.fromDocument(doc);
   }
 }

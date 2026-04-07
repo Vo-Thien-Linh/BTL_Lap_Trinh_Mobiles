@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import '../../widgets/register_form.dart';
+import '../../widgets/forgot_password_form.dart';
 
-class RegisterPage extends StatelessWidget {
-  const RegisterPage({super.key});
+class ForgotPasswordPage extends StatelessWidget {
+  const ForgotPasswordPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tạo tài khoản'),
+        title: const Text('Quên mật khẩu'),
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -19,10 +19,11 @@ class RegisterPage extends StatelessWidget {
           ),
         ),
         child: const SafeArea(
+          top: false,
           child: Center(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: 22, vertical: 18),
-              child: RegisterForm(),
+              child: ForgotPasswordForm(),
             ),
           ),
         ),
