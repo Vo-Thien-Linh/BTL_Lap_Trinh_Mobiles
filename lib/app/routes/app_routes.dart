@@ -3,6 +3,7 @@ import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/verify_email_page.dart';
+import '../../features/doctor/presentation/pages/doctor_home_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/appointment/presentation/pages/booking_flow_page.dart';
@@ -14,6 +15,7 @@ class AppRoutes {
   static const String forgotPassword = '/forgot-password';
   static const String verifyEmail = '/verify-email';
   static const String home = '/home';
+  static const String doctorHome = '/doctor-home';
   static const String booking = '/booking';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -30,6 +32,8 @@ class AppRoutes {
         return _buildRoute(const VerifyEmailPage());
       case home:
         return _buildRoute(const HomePage());
+      case doctorHome:
+        return _buildRoute(const DoctorHomePage());
       case booking:
         return _buildRoute(const BookingFlowPage());
       default:
