@@ -51,7 +51,7 @@ class _LoginFormState extends State<LoginForm> {
     setState(() => _isLoading = true);
 
     try {
-      await _loginUsecase.call(
+      final appUser = await _loginUsecase.call(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
@@ -76,8 +76,8 @@ class _LoginFormState extends State<LoginForm> {
       // đã verify
       _showMessage('Đăng nhập thành công.', isError: false);
 
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
-
+      final targetRoute = _resolveHomeRouteByRole(appUser.role);
+      Navigator.pushReplacementNamed(context, targetRoute);
     } on FirebaseAuthException catch (error) {
       if (!mounted) return;
       _showMessage(_mapAuthError(error));
@@ -87,6 +87,18 @@ class _LoginFormState extends State<LoginForm> {
     } finally {
       if (!mounted) return;
       setState(() => _isLoading = false);
+    }
+  }
+
+  String _resolveHomeRouteByRole(String role) {
+    switch (role.toLowerCase()) {
+      case 'doctor':
+        return AppRoutes.doctorHome;
+      case 'admin':
+        return AppRoutes.home;
+      case 'patient':
+      default:
+        return AppRoutes.home;
     }
   }
 
@@ -143,7 +155,7 @@ class _LoginFormState extends State<LoginForm> {
             const AppLogoHeader(
               title: 'Đăng nhập',
               subtitle:
-              'Chào mừng bạn đến với hệ thống đặt lịch khám bệnh.\nVui lòng đăng nhập để tiếp tục.',
+                  'Chào mừng bạn đến với hệ thống đặt lịch khám bệnh.\nVui lòng đăng nhập để tiếp tục.',
             ),
             const SizedBox(height: 28),
             CustomTextField(
@@ -189,11 +201,8 @@ class _LoginFormState extends State<LoginForm> {
                 onPressed: _isLoading
                     ? null
                     : () {
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.forgotPassword,
-                  );
-                },
+                        Navigator.pushNamed(context, AppRoutes.forgotPassword);
+                      },
                 child: const Text('Quên mật khẩu?'),
               ),
             ),
@@ -210,8 +219,8 @@ class _LoginFormState extends State<LoginForm> {
               onTap: _isLoading
                   ? () {}
                   : () {
-                Navigator.pushNamed(context, AppRoutes.register);
-              },
+                      Navigator.pushNamed(context, AppRoutes.register);
+                    },
             ),
           ],
         ),

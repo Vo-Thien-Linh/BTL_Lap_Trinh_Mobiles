@@ -1,9 +1,12 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 import '../../../../app/routes/app_routes.dart';
 import '../../../../config/service_locator.dart';
+import '../../../appointment/data/models/appointment_models.dart';
+import '../../../appointment/domain/entities/appointment_entities.dart';
+import '../../../appointment/domain/usecases/appointment_usecases.dart';
 import '../../../auth/domain/usecases/logout_usecase.dart';
 
 class HomePage extends StatefulWidget {
@@ -14,81 +17,365 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  bool _isCreatingDemoData = false;
+  final LogoutUsecase _logoutUsecase = getIt<LogoutUsecase>();
+  late final Future<String> _userNameFuture;
+  late final Future<List<DepartmentEntity>> _departmentsFuture;
+  late final Future<List<DoctorEntity>> _featuredDoctorsFuture;
+
   bool _isLoggingOut = false;
 
-  final LogoutUsecase _logoutUsecase = getIt<LogoutUsecase>();
+  @override
+  void initState() {
+    super.initState();
+    _userNameFuture = _loadUserName();
+    _departmentsFuture = _loadDepartments();
+    _featuredDoctorsFuture = _loadFeaturedDoctors();
+  }
 
-  Future<void> _createDemoAppointment() async {
+  Future<String> _loadUserName() async {
     final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return 'Khách';
 
-    if (user == null) {
-      _showMessage('Ban can dang nhap de tao du lieu mau.');
-      return;
+    final displayName = user.displayName?.trim();
+    if (displayName != null && displayName.isNotEmpty) {
+      return displayName;
     }
-
-    setState(() {
-      _isCreatingDemoData = true;
-    });
 
     try {
-      final db = FirebaseFirestore.instance;
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      final data = doc.data();
+      final fullName = (data?['fullName'] as String?)?.trim();
+      if (fullName != null && fullName.isNotEmpty) return fullName;
 
-      await db.collection('Departments').doc('tim_mach').set({
-        'name': 'Tim mach',
-        'description': 'Khoa chuyen khoa tim mach',
-        'location': 'Tang 2 - Phong 201',
-        'phone': '0123456789',
-      }, SetOptions(merge: true));
-
-      await db.collection('Doctors').doc('dr_nguyen_van_b').set({
-        'name': 'Bac si Nguyen Van B',
-        'specialization': 'Tim mach',
-        'departmentId': 'tim_mach',
-        'yearsOfExperience': 8,
-        'consultationFee': 500000,
-        'isActive': true,
-        'licenseNumber': 'BS12345',
-      }, SetOptions(merge: true));
-
-      await db
-          .collection('DoctorSchedules')
-          .doc('dr_b_2026_04_05_morning')
-          .set({
-            'doctorId': 'dr_nguyen_van_b',
-            'departmentId': 'tim_mach',
-            'scheduleDate': Timestamp.fromDate(DateTime(2026, 4, 5)),
-            'shift': 'morning',
-            'availableSlots': 5,
-            'isActive': true,
-          }, SetOptions(merge: true));
-
-      await db.collection('Appointments').add({
-        'patientId': user.uid,
-        'doctorId': 'dr_nguyen_van_b',
-        'departmentId': 'tim_mach',
-        'appointmentDate': Timestamp.fromDate(
-          DateTime.now().add(const Duration(days: 2)),
-        ),
-        'shift': 'morning',
-        'symptoms': 'Dau nguc, kho tho nhe',
-        'status': 'pending',
-        'doctorName': 'Bac si Nguyen Van B',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      if (!mounted) return;
-      _showMessage('Da tao du lieu mau thanh cong.', isError: false);
-    } on FirebaseException catch (error) {
-      if (!mounted) return;
-      _showMessage(error.message ?? 'Khong the tao du lieu mau.');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isCreatingDemoData = false;
-        });
-      }
+      final username = (data?['username'] as String?)?.trim();
+      if (username != null && username.isNotEmpty) return username;
+    } catch (_) {
+      // fallback below
     }
+
+    return user.email?.split('@').first ?? 'Người dùng';
+  }
+
+  Future<List<DepartmentEntity>> _loadDepartments() async {
+    final departments = await getIt<GetDepartmentsUsecase>()();
+    return departments.take(4).toList();
+  }
+
+  Future<List<DoctorEntity>> _loadFeaturedDoctors() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('Doctors')
+        .where('isActive', isEqualTo: true)
+        .limit(4)
+        .get();
+
+    return snapshot.docs.map(DoctorModel.fromFirestore).toList();
+  }
+
+  _DepartmentVisual _departmentVisual(int index) {
+    switch (index % 6) {
+      case 0:
+        return const _DepartmentVisual(
+          icon: Icons.favorite_rounded,
+          colors: [Color(0xFFEC5D5D), Color(0xFFB91C1C)],
+        );
+      case 1:
+        return const _DepartmentVisual(
+          icon: Icons.biotech_rounded,
+          colors: [Color(0xFF2DD4BF), Color(0xFF0F766E)],
+        );
+      case 2:
+        return const _DepartmentVisual(
+          icon: Icons.child_care_rounded,
+          colors: [Color(0xFF60A5FA), Color(0xFF2563EB)],
+        );
+      case 3:
+        return const _DepartmentVisual(
+          icon: Icons.medical_services_rounded,
+          colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+        );
+      case 4:
+        return const _DepartmentVisual(
+          icon: Icons.visibility_rounded,
+          colors: [Color(0xFF818CF8), Color(0xFF4F46E5)],
+        );
+      default:
+        return const _DepartmentVisual(
+          icon: Icons.healing_rounded,
+          colors: [Color(0xFF34D399), Color(0xFF059669)],
+        );
+    }
+  }
+
+  void _showDepartmentsSheet(List<DepartmentEntity> departments) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.78,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD7DCE6),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 18, 20, 6),
+                child: Text(
+                  'Tất cả chuyên khoa',
+                  style: TextStyle(
+                    color: Color(0xFF131826),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'Chọn chuyên khoa để xem bác sĩ phù hợp.',
+                  style: TextStyle(
+                    color: Color(0xFF5C6477),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Expanded(
+                child: ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  itemCount: departments.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final department = departments[index];
+                    final visual = _departmentVisual(index);
+
+                    return Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7F8FC),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFE8EBF4)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 62,
+                            height: 62,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: visual.colors,
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: visual.colors.first.withOpacity(0.22),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              visual.icon,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  department.name,
+                                  style: const TextStyle(
+                                    color: Color(0xFF131826),
+                                    fontSize: 15.5,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  department.location.isNotEmpty
+                                      ? department.location
+                                      : department.description,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Color(0xFF5C6477),
+                                    fontSize: 12.5,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            color: Color(0xFF8B92A6),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showDoctorsSheet(List<DoctorEntity> doctors) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.82,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD7DCE6),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 18, 20, 6),
+                child: Text(
+                  'Bác sĩ nổi bật',
+                  style: TextStyle(
+                    color: Color(0xFF131826),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'Danh sách bác sĩ đang hoạt động trong hệ thống.',
+                  style: TextStyle(
+                    color: Color(0xFF5C6477),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Expanded(
+                child: ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  itemCount: doctors.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final doctor = doctors[index];
+                    return Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7F8FC),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFE8EBF4)),
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 28,
+                            backgroundImage: doctor.imageUrl == null
+                                ? null
+                                : NetworkImage(doctor.imageUrl!),
+                            backgroundColor: const Color(0xFFE4ECFF),
+                            child: doctor.imageUrl == null
+                                ? const Icon(
+                                    Icons.person_rounded,
+                                    color: Color(0xFF0A3DA8),
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  doctor.name,
+                                  style: const TextStyle(
+                                    color: Color(0xFF131826),
+                                    fontSize: 15.5,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  doctor.departmentName.isNotEmpty
+                                      ? doctor.departmentName
+                                      : doctor.specialization,
+                                  style: const TextStyle(
+                                    color: Color(0xFF5C6477),
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            '${doctor.yearsOfExperience} năm',
+                            style: const TextStyle(
+                              color: Color(0xFF0A3DA8),
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _showMessage(String message, {bool isError = true}) {
@@ -103,26 +390,19 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _handleLogout() async {
-    setState(() {
-      _isLoggingOut = true;
-    });
+    setState(() => _isLoggingOut = true);
 
     try {
       await _logoutUsecase();
     } catch (_) {
       if (!mounted) return;
-      setState(() {
-        _isLoggingOut = false;
-      });
+      setState(() => _isLoggingOut = false);
       _showMessage('Khong the dang xuat. Vui long thu lai.');
       return;
     }
 
     if (!mounted) return;
-
-    setState(() {
-      _isLoggingOut = false;
-    });
+    setState(() => _isLoggingOut = false);
 
     Navigator.pushNamedAndRemoveUntil(
       context,
@@ -149,8 +429,6 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 22),
               _buildActionGrid(),
               const SizedBox(height: 22),
-              _buildFirestoreDemo(),
-              const SizedBox(height: 26),
               _buildCategorySection(),
               const SizedBox(height: 26),
               _buildDoctorSection(),
@@ -175,29 +453,37 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         const SizedBox(width: 12),
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'CHÀO MỪNG TRỞ LẠI,',
-                style: TextStyle(
-                  color: Color(0xFF222638),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              SizedBox(height: 2),
-              Text(
-                'Alexander',
-                style: TextStyle(
-                  color: Color(0xFF0A3DA8),
-                  fontSize: 38 / 2,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
+        Expanded(
+          child: FutureBuilder<String>(
+            future: _userNameFuture,
+            builder: (context, snapshot) {
+              final userName = snapshot.data ?? '...';
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'CHÀO MỪNG TRỞ LẠI,',
+                    style: TextStyle(
+                      color: Color(0xFF222638),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    userName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF0A3DA8),
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
         const Icon(
@@ -225,10 +511,7 @@ class _HomePageState extends State<HomePage> {
               : const Icon(Icons.logout_rounded, size: 18),
           label: Text(
             _isLoggingOut ? '...' : 'Dang xuat',
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-            ),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
           ),
         ),
       ],
@@ -308,78 +591,180 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'Dr. Sarah Jenkins',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 42 / 1.55,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Bác sĩ Tim mạch Cao cấp • Trung\ntâm Tim mạch & Mạch máu',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.73),
-              fontSize: 34 / 2.35,
-              fontWeight: FontWeight.w600,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Row(
-            children: [
-              Icon(
-                Icons.calendar_month_rounded,
-                color: Color(0xFF8AF7F2),
-                size: 22,
-              ),
-              SizedBox(width: 10),
-              Text(
-                '24 Tháng 10, 2023',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              SizedBox(width: 26),
-              Icon(
-                Icons.access_time_filled_rounded,
-                color: Color(0xFF8AF7F2),
-                size: 21,
-              ),
-              SizedBox(width: 10),
-              Text(
-                '09:30 AM',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Container(
-            height: 58,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF2F4F8),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: const Center(
-              child: Text(
-                'Xem chi tiết',
-                style: TextStyle(
-                  color: Color(0xFF09349E),
-                  fontSize: 19,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
+          StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: FirebaseAuth.instance.currentUser?.uid == null
+                ? null
+                : FirebaseFirestore.instance
+                      .collection('Appointments')
+                      .where(
+                        'patientId',
+                        isEqualTo: FirebaseAuth.instance.currentUser!.uid,
+                      )
+                      .orderBy('appointmentDate', descending: true)
+                      .limit(1)
+                      .snapshots(),
+            builder: (context, snapshot) {
+              if (FirebaseAuth.instance.currentUser?.uid == null) {
+                return _buildEmptyUpcomingCard();
+              }
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: LinearProgressIndicator(minHeight: 2),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return _buildEmptyUpcomingCard(
+                  message: 'Khong tai duoc lich hen.',
+                );
+              }
+
+              final docs = snapshot.data?.docs ?? [];
+              if (docs.isEmpty) {
+                return _buildEmptyUpcomingCard();
+              }
+
+              final data = docs.first.data();
+              final doctorName = (data['doctorName'] ?? 'Bác sĩ') as String;
+              final departmentName =
+                  (data['departmentName'] ?? 'Chuyên khoa') as String;
+              final appointmentDate = (data['appointmentDate'] as Timestamp?)
+                  ?.toDate();
+              final dateText = appointmentDate == null
+                  ? 'Chưa có ngày'
+                  : '${appointmentDate.day.toString().padLeft(2, '0')}/${appointmentDate.month.toString().padLeft(2, '0')}/${appointmentDate.year}';
+              final timeSlot =
+                  (data['timeSlot'] ?? data['shift'] ?? 'Đang cập nhật')
+                      as String;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    doctorName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 27,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '$departmentName • $dateText',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.73),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_month_rounded,
+                        color: Color(0xFF8AF7F2),
+                        size: 22,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        dateText,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 26),
+                      const Icon(
+                        Icons.access_time_filled_rounded,
+                        color: Color(0xFF8AF7F2),
+                        size: 21,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        timeSlot,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF2F4F8),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Xem chi tiết',
+                        style: TextStyle(
+                          color: Color(0xFF09349E),
+                          fontSize: 19,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildEmptyUpcomingCard({
+    String message =
+        'Hãy đặt lịch để hệ thống hiển thị lịch hẹn mới nhất của bạn.',
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Chưa có lịch hẹn',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 27,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          message,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.73),
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            height: 1.35,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Container(
+          height: 58,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF2F4F8),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: const Center(
+            child: Text(
+              'Đặt lịch ngay',
+              style: TextStyle(
+                color: Color(0xFF09349E),
+                fontSize: 19,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -478,27 +863,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildCategorySection() {
-    const categories = [
-      _CategoryItem(
-        'Tim mạch',
-        Icons.favorite,
-        Color(0xFFF5EAEA),
-        Color(0xFFE53935),
-      ),
-      _CategoryItem(
-        'Nội tiết',
-        Icons.biotech_rounded,
-        Color(0xFFE8F6EC),
-        Color(0xFF10A94E),
-      ),
-      _CategoryItem(
-        'Nhi khoa',
-        Icons.sentiment_satisfied_rounded,
-        Color(0xFFEAF0F8),
-        Color(0xFF3A6EE8),
-      ),
-    ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -514,217 +878,144 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            const Text(
-              'Xem tất cả',
-              style: TextStyle(
-                color: Color(0xFF0A3DA8),
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
+            TextButton(
+              onPressed: () async {
+                final departments = await _departmentsFuture;
+                if (!mounted || departments.isEmpty) return;
+                _showDepartmentsSheet(departments);
+              },
+              child: const Text(
+                'Xem thêm',
+                style: TextStyle(
+                  color: Color(0xFF0A3DA8),
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 14),
-        Row(
-          children: List.generate(categories.length, (index) {
-            final item = categories[index];
-            return Expanded(
-              child: Container(
-                margin: EdgeInsets.only(
-                  right: index == categories.length - 1 ? 0 : 12,
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEDEFF6),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 62,
-                      height: 62,
-                      decoration: BoxDecoration(
-                        color: item.bg,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(item.icon, color: item.fg, size: 32),
+        SizedBox(
+          height: 176,
+          child: FutureBuilder<List<DepartmentEntity>>(
+            future: _departmentsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError) {
+                return const Center(child: Text('Không tải được chuyên khoa.'));
+              }
+
+              final departments = snapshot.data ?? [];
+              if (departments.isEmpty) {
+                return const Center(
+                  child: Text('Chưa có dữ liệu chuyên khoa.'),
+                );
+              }
+
+              return ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: departments.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final department = departments[index];
+                  final visual = _departmentVisual(index);
+                  return Container(
+                    width: 148,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFE8EBF4)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 16,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      item.label,
-                      style: const TextStyle(
-                        color: Color(0xFF222739),
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 76,
+                          height: 76,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: visual.colors,
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: visual.colors.first.withOpacity(0.22),
+                                blurRadius: 14,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Stack(
+                            children: [
+                              Positioned(
+                                right: -8,
+                                bottom: -10,
+                                child: Icon(
+                                  visual.icon,
+                                  size: 40,
+                                  color: Colors.white.withOpacity(0.15),
+                                ),
+                              ),
+                              Center(
+                                child: Icon(
+                                  visual.icon,
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          department.name,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF222739),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          department.location.isNotEmpty
+                              ? department.location
+                              : department.description,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF5C6477),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            height: 1.25,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            );
-          }),
+                  );
+                },
+              );
+            },
+          ),
         ),
       ],
-    );
-  }
-
-  Widget _buildFirestoreDemo() {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEDEFF6),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Firestore Demo',
-            style: TextStyle(
-              color: Color(0xFF131826),
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Bam de tao 1 lich hen mau va xem du lieu vua tao.',
-            style: TextStyle(
-              color: Color(0xFF4A5164),
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _isCreatingDemoData ? null : _createDemoAppointment,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0E47B5),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              icon: _isCreatingDemoData
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(Icons.cloud_upload_rounded),
-              label: Text(
-                _isCreatingDemoData
-                    ? 'Dang tao du lieu...'
-                    : 'Them du lieu mau',
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          if (uid == null)
-            const Text(
-              'Chua dang nhap, khong the doc danh sach lich hen.',
-              style: TextStyle(color: Color(0xFF7E869A), fontSize: 12),
-            )
-          else
-            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: FirebaseFirestore.instance
-                  .collection('Appointments')
-                  .where('patientId', isEqualTo: uid)
-                  .limit(5)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: LinearProgressIndicator(minHeight: 2),
-                  );
-                }
-
-                if (snapshot.hasError) {
-                  return const Text(
-                    'Khong tai duoc lich hen.',
-                    style: TextStyle(color: Color(0xFFB3261E), fontSize: 12),
-                  );
-                }
-
-                final docs = snapshot.data?.docs ?? [];
-                if (docs.isEmpty) {
-                  return const Text(
-                    'Chua co du lieu lich hen. Bam nut ben tren de tao mau.',
-                    style: TextStyle(color: Color(0xFF6C7387), fontSize: 12),
-                  );
-                }
-
-                return Column(
-                  children: docs.map((doc) {
-                    final data = doc.data();
-                    final doctorName =
-                        (data['doctorName'] ?? 'Bac si') as String;
-                    final status = (data['status'] ?? 'pending') as String;
-                    final appointmentDate = data['appointmentDate'];
-
-                    String dateText = 'Chua co ngay';
-                    if (appointmentDate is Timestamp) {
-                      final dt = appointmentDate.toDate();
-                      dateText =
-                          '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
-                    }
-
-                    return Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(top: 8),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.event_available_rounded,
-                            color: Color(0xFF0E47B5),
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '$doctorName - $dateText',
-                              style: const TextStyle(
-                                color: Color(0xFF232838),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            status,
-                            style: const TextStyle(
-                              color: Color(0xFF0A3DA8),
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                );
-              },
-            ),
-        ],
-      ),
     );
   }
 
@@ -744,12 +1035,19 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            const Text(
-              'Xem tất cả',
-              style: TextStyle(
-                color: Color(0xFF0A3DA8),
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
+            TextButton(
+              onPressed: () async {
+                final doctors = await _featuredDoctorsFuture;
+                if (!mounted || doctors.isEmpty) return;
+                _showDoctorsSheet(doctors);
+              },
+              child: const Text(
+                'Xem thêm',
+                style: TextStyle(
+                  color: Color(0xFF0A3DA8),
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
@@ -757,27 +1055,42 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(height: 12),
         SizedBox(
           height: 240,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: const [
-              _DoctorCard(
-                name: 'Dr. Elena Rodriguez',
-                spec: 'Bác sĩ Thần kinh',
-                rating: '4.9',
-                experience: '12 năm kinh nghiệm',
-                imageUrl:
-                    'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300',
-              ),
-              SizedBox(width: 14),
-              _DoctorCard(
-                name: 'Dr. Aidan Walker',
-                spec: 'Bác sĩ Tổng quát',
-                rating: '4.8',
-                experience: '9 năm kinh nghiệm',
-                imageUrl:
-                    'https://images.unsplash.com/photo-1612349316228-5942a9b489c2?w=300',
-              ),
-            ],
+          child: FutureBuilder<List<DoctorEntity>>(
+            future: _featuredDoctorsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError) {
+                return const Center(child: Text('Không tải được bác sĩ.'));
+              }
+
+              final doctors = snapshot.data ?? [];
+              if (doctors.isEmpty) {
+                return const Center(child: Text('Chưa có dữ liệu bác sĩ.'));
+              }
+
+              return ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: doctors.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 14),
+                itemBuilder: (context, index) {
+                  final doctor = doctors[index];
+                  return _DoctorCard(
+                    name: doctor.name,
+                    spec: doctor.departmentName.isNotEmpty
+                        ? doctor.departmentName
+                        : doctor.specialization,
+                    rating: '4.8',
+                    experience: '${doctor.yearsOfExperience} năm kinh nghiệm',
+                    imageUrl:
+                        doctor.imageUrl ??
+                        'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300',
+                  );
+                },
+              );
+            },
           ),
         ),
       ],
@@ -860,6 +1173,13 @@ class _ActionItem {
   final IconData icon;
   final Color bg;
   final Color fg;
+}
+
+class _DepartmentVisual {
+  const _DepartmentVisual({required this.icon, required this.colors});
+
+  final IconData icon;
+  final List<Color> colors;
 }
 
 class _DoctorCard extends StatelessWidget {
@@ -1008,13 +1328,4 @@ class _DoctorCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class _CategoryItem {
-  const _CategoryItem(this.label, this.icon, this.bg, this.fg);
-
-  final String label;
-  final IconData icon;
-  final Color bg;
-  final Color fg;
 }
