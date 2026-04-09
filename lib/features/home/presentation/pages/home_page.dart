@@ -18,7 +18,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final LogoutUsecase _logoutUsecase = getIt<LogoutUsecase>();
-  late final Future<String> _userNameFuture;
   late final Future<List<DepartmentEntity>> _departmentsFuture;
   late final Future<List<DoctorEntity>> _featuredDoctorsFuture;
 
@@ -27,36 +26,8 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _userNameFuture = _loadUserName();
     _departmentsFuture = _loadDepartments();
     _featuredDoctorsFuture = _loadFeaturedDoctors();
-  }
-
-  Future<String> _loadUserName() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return 'Khách';
-
-    final displayName = user.displayName?.trim();
-    if (displayName != null && displayName.isNotEmpty) {
-      return displayName;
-    }
-
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-      final data = doc.data();
-      final fullName = (data?['fullName'] as String?)?.trim();
-      if (fullName != null && fullName.isNotEmpty) return fullName;
-
-      final username = (data?['username'] as String?)?.trim();
-      if (username != null && username.isNotEmpty) return username;
-    } catch (_) {
-      // fallback below
-    }
-
-    return user.email?.split('@').first ?? 'Người dùng';
   }
 
   Future<List<DepartmentEntity>> _loadDepartments() async {
@@ -441,29 +412,71 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildHeader() {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 25,
-          backgroundColor: const Color(0xFF0E8B8E),
-          child: CircleAvatar(
-            radius: 22,
-            backgroundColor: const Color(0xFFBEE6EA),
-            child: const Icon(Icons.person, color: Color(0xFF1E3148), size: 24),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: FutureBuilder<String>(
-            future: _userNameFuture,
-            builder: (context, snapshot) {
-              final userName = snapshot.data ?? '...';
-              return Column(
+    final authUser = FirebaseAuth.instance.currentUser;
+    bool isNewUser = false;
+    if (authUser != null) {
+      final cTime = authUser.metadata.creationTime?.millisecondsSinceEpoch ?? 0;
+      final lTime = authUser.metadata.lastSignInTime?.millisecondsSinceEpoch ?? 0;
+      if ((lTime - cTime).abs() < 60000) {
+        isNewUser = true;
+      }
+    }
+    final welcomeStr = isNewUser ? 'CHÀO MỪNG,' : 'CHÀO MỪNG TRỞ LẠI,';
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: authUser != null 
+          ? FirebaseFirestore.instance.collection('users').doc(authUser.uid).snapshots()
+          : const Stream.empty(),
+      builder: (context, snapshot) {
+        String userName = 'Người dùng';
+        String? avatarUrl;
+
+        if (snapshot.hasData && snapshot.data!.exists) {
+          final data = snapshot.data!.data() as Map<String, dynamic>?;
+          if (data != null) {
+            final fName = data['fullName']?.toString().trim();
+            final uName = data['username']?.toString().trim();
+            if (fName != null && fName.isNotEmpty) {
+              userName = fName;
+            } else if (uName != null && uName.isNotEmpty) {
+              userName = uName;
+            }
+            avatarUrl = data['avatarUrl'] as String?;
+          }
+        } else if (authUser?.displayName != null && authUser!.displayName!.trim().isNotEmpty) {
+           userName = authUser.displayName!;
+        }
+
+        return Row(
+          children: [
+            GestureDetector(
+              onTap: () => Navigator.pushNamed(context, AppRoutes.profile),
+              child: CircleAvatar(
+                radius: 25,
+                backgroundColor: const Color(0xFF0E8B8E),
+                child: ClipOval(
+                  child: avatarUrl != null && avatarUrl.isNotEmpty
+                      ? Image.network(avatarUrl, fit: BoxFit.cover, width: 44, height: 44)
+                      : Container(
+                          width: 44,
+                          height: 44,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFBEE6EA),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.person, color: Color(0xFF1E3148), size: 24),
+                        ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'CHÀO MỪNG TRỞ LẠI,',
-                    style: TextStyle(
+                  Text(
+                    welcomeStr,
+                    style: const TextStyle(
                       color: Color(0xFF222638),
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -482,39 +495,39 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ],
-              );
-            },
-          ),
-        ),
-        const Icon(
-          Icons.notifications_none_rounded,
-          color: Color(0xFF202637),
-          size: 28,
-        ),
-        const SizedBox(width: 14),
-        TextButton.icon(
-          onPressed: _isLoggingOut ? null : _handleLogout,
-          style: TextButton.styleFrom(
-            foregroundColor: const Color(0xFFC62828),
-            backgroundColor: const Color(0xFFFFEBEE),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
+              ),
             ),
-          ),
-          icon: _isLoggingOut
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.logout_rounded, size: 18),
-          label: Text(
-            _isLoggingOut ? '...' : 'Dang xuat',
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-          ),
-        ),
-      ],
+            const Icon(
+              Icons.notifications_none_rounded,
+              color: Color(0xFF202637),
+              size: 28,
+            ),
+            const SizedBox(width: 14),
+            TextButton.icon(
+              onPressed: _isLoggingOut ? null : _handleLogout,
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFC62828),
+                backgroundColor: const Color(0xFFFFEBEE),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+              ),
+              icon: _isLoggingOut
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.logout_rounded, size: 18),
+              label: Text(
+                _isLoggingOut ? '...' : 'Dang xuat',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -1126,18 +1139,24 @@ class _HomePageState extends State<HomePage> {
           children: List.generate(labels.length, (index) {
             final selected = index == 0;
             return Expanded(
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                padding: const EdgeInsets.symmetric(vertical: 11),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? const Color(0xFF0E47B5)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+              child: GestureDetector(
+                onTap: () {
+                  if (index == 3) {
+                    Navigator.pushNamed(context, AppRoutes.profile);
+                  }
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? const Color(0xFF0E47B5)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                     Icon(
                       icons[index],
                       size: 24,
@@ -1158,8 +1177,9 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-            );
-          }),
+            ),
+          );
+        }),
         ),
       ),
     );

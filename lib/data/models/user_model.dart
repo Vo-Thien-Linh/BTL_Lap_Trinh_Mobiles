@@ -15,6 +15,10 @@ class UserModel {
   final bool emailVerified;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? dateOfBirth;
+  final String? gender;
+  final String? healthInsuranceNumber;
+  final String? avatarUrl;
 
   const UserModel({
     required this.uid,
@@ -28,6 +32,10 @@ class UserModel {
     required this.emailVerified,
     required this.createdAt,
     required this.updatedAt,
+    this.dateOfBirth,
+    this.gender,
+    this.healthInsuranceNumber,
+    this.avatarUrl,
   });
 
   factory UserModel.empty() {
@@ -59,6 +67,10 @@ class UserModel {
     bool? emailVerified,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? dateOfBirth,
+    String? gender,
+    String? healthInsuranceNumber,
+    String? avatarUrl,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -72,6 +84,10 @@ class UserModel {
       emailVerified: emailVerified ?? this.emailVerified,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      gender: gender ?? this.gender,
+      healthInsuranceNumber: healthInsuranceNumber ?? this.healthInsuranceNumber,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
     );
   }
 
@@ -88,6 +104,10 @@ class UserModel {
       'emailVerified': emailVerified,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
+      'dateOfBirth': dateOfBirth,
+      'gender': gender,
+      'healthInsuranceNumber': healthInsuranceNumber,
+      'avatarUrl': avatarUrl,
     };
   }
 
@@ -104,6 +124,10 @@ class UserModel {
       emailVerified: map['emailVerified'] ?? false,
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      dateOfBirth: map['dateOfBirth'] as String?,
+      gender: map['gender'] as String?,
+      healthInsuranceNumber: map['healthInsuranceNumber'] as String?,
+      avatarUrl: map['avatarUrl'] as String?,
     );
   }
 
@@ -128,6 +152,10 @@ class UserModel {
       emailVerified: emailVerified,
       createdAt: createdAt,
       updatedAt: updatedAt,
+      dateOfBirth: dateOfBirth,
+      gender: gender,
+      healthInsuranceNumber: healthInsuranceNumber,
+      avatarUrl: avatarUrl,
     );
   }
 }
