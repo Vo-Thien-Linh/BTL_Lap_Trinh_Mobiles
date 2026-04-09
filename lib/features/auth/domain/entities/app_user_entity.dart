@@ -10,6 +10,10 @@ class AppUserEntity {
   final bool emailVerified;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? dateOfBirth;
+  final String? gender;
+  final String? healthInsuranceNumber;
+  final String? avatarUrl;
 
   const AppUserEntity({
     required this.uid,
@@ -23,5 +27,9 @@ class AppUserEntity {
     required this.emailVerified,
     required this.createdAt,
     required this.updatedAt,
+    this.dateOfBirth,
+    this.gender,
+    this.healthInsuranceNumber,
+    this.avatarUrl,
   });
 }

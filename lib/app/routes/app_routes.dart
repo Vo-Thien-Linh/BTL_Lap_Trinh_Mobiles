@@ -7,6 +7,9 @@ import '../../features/doctor/presentation/pages/doctor_home_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/appointment/presentation/pages/booking_flow_page.dart';
+import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/profile/presentation/pages/edit_profile_page.dart';
+import '../../data/models/user_model.dart';
 
 class AppRoutes {
   static const String onboarding = '/onboarding';
@@ -17,6 +20,8 @@ class AppRoutes {
   static const String home = '/home';
   static const String doctorHome = '/doctor-home';
   static const String booking = '/booking';
+  static const String profile = '/profile';
+  static const String editProfile = '/edit-profile';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -36,6 +41,11 @@ class AppRoutes {
         return _buildRoute(const DoctorHomePage());
       case booking:
         return _buildRoute(const BookingFlowPage());
+      case profile:
+        return _buildRoute(const ProfilePage());
+      case editProfile:
+        final user = settings.arguments as UserModel;
+        return _buildRoute(EditProfilePage(user: user));
       default:
         return _buildRoute(const LoginPage());
     }
