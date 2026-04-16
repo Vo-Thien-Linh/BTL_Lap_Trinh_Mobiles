@@ -5,14 +5,12 @@ import '../../../../data/models/user_model.dart';
 import '../../domain/entities/register_request_entity.dart';
 import '../../../../core/enums/app_role.dart';
 import '../../../../core/enums/user_status.dart';
+import '../../../../shared/utils/id_formatter.dart';
 
 abstract class AuthRemoteDatasource {
   Future<UserModel> register(RegisterRequestEntity request);
 
-  Future<UserModel> login({
-    required String email,
-    required String password,
-  });
+  Future<UserModel> login({required String email, required String password});
 
   Future<void> logout();
 
@@ -62,18 +60,20 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
     );
 
     final patientModel = PatientModel.empty(user.uid);
+    final userCode = IdFormatter.format(prefix: 'USR', rawId: user.uid);
+    final patientCode = IdFormatter.format(prefix: 'PT', rawId: user.uid);
 
     final batch = firestore.batch();
 
-    batch.set(
-      firestore.collection('users').doc(user.uid),
-      userModel.toMap(),
-    );
+    batch.set(firestore.collection('users').doc(user.uid), {
+      ...userModel.toMap(),
+      'userCode': userCode,
+    });
 
-    batch.set(
-      firestore.collection('patients').doc(user.uid),
-      patientModel.toMap(),
-    );
+    batch.set(firestore.collection('patients').doc(user.uid), {
+      ...patientModel.toMap(),
+      'patientCode': patientCode,
+    });
 
     await batch.commit();
 
@@ -118,6 +118,36 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
 
     if (!doc.exists) {
       throw Exception('Không tìm thấy hồ sơ người dùng.');
+    }
+
+    final userData = doc.data() ?? <String, dynamic>{};
+    if ((userData['userCode'] ?? '').toString().trim().isEmpty) {
+      final userCode = IdFormatter.format(
+        prefix: 'USR',
+        rawId: currentUser.uid,
+      );
+      await firestore.collection('users').doc(currentUser.uid).update({
+        'userCode': userCode,
+        'updatedAt': Timestamp.now(),
+      });
+    }
+
+    final patientDoc = await firestore
+        .collection('patients')
+        .doc(currentUser.uid)
+        .get();
+    if (patientDoc.exists) {
+      final patientData = patientDoc.data() ?? <String, dynamic>{};
+      if ((patientData['patientCode'] ?? '').toString().trim().isEmpty) {
+        final patientCode = IdFormatter.format(
+          prefix: 'PT',
+          rawId: currentUser.uid,
+        );
+        await firestore.collection('patients').doc(currentUser.uid).update({
+          'patientCode': patientCode,
+          'updatedAt': Timestamp.now(),
+        });
+      }
     }
 
     return UserModel.fromDocument(doc);

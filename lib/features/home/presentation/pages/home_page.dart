@@ -416,7 +416,8 @@ class _HomePageState extends State<HomePage> {
     bool isNewUser = false;
     if (authUser != null) {
       final cTime = authUser.metadata.creationTime?.millisecondsSinceEpoch ?? 0;
-      final lTime = authUser.metadata.lastSignInTime?.millisecondsSinceEpoch ?? 0;
+      final lTime =
+          authUser.metadata.lastSignInTime?.millisecondsSinceEpoch ?? 0;
       if ((lTime - cTime).abs() < 60000) {
         isNewUser = true;
       }
@@ -424,8 +425,11 @@ class _HomePageState extends State<HomePage> {
     final welcomeStr = isNewUser ? 'CHÀO MỪNG,' : 'CHÀO MỪNG TRỞ LẠI,';
 
     return StreamBuilder<DocumentSnapshot>(
-      stream: authUser != null 
-          ? FirebaseFirestore.instance.collection('users').doc(authUser.uid).snapshots()
+      stream: authUser != null
+          ? FirebaseFirestore.instance
+                .collection('users')
+                .doc(authUser.uid)
+                .snapshots()
           : const Stream.empty(),
       builder: (context, snapshot) {
         String userName = 'Người dùng';
@@ -443,8 +447,9 @@ class _HomePageState extends State<HomePage> {
             }
             avatarUrl = data['avatarUrl'] as String?;
           }
-        } else if (authUser?.displayName != null && authUser!.displayName!.trim().isNotEmpty) {
-           userName = authUser.displayName!;
+        } else if (authUser?.displayName != null &&
+            authUser!.displayName!.trim().isNotEmpty) {
+          userName = authUser.displayName!;
         }
 
         return Row(
@@ -456,7 +461,12 @@ class _HomePageState extends State<HomePage> {
                 backgroundColor: const Color(0xFF0E8B8E),
                 child: ClipOval(
                   child: avatarUrl != null && avatarUrl.isNotEmpty
-                      ? Image.network(avatarUrl, fit: BoxFit.cover, width: 44, height: 44)
+                      ? Image.network(
+                          avatarUrl,
+                          fit: BoxFit.cover,
+                          width: 44,
+                          height: 44,
+                        )
                       : Container(
                           width: 44,
                           height: 44,
@@ -464,7 +474,11 @@ class _HomePageState extends State<HomePage> {
                             color: Color(0xFFBEE6EA),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.person, color: Color(0xFF1E3148), size: 24),
+                          child: const Icon(
+                            Icons.person,
+                            color: Color(0xFF1E3148),
+                            size: 24,
+                          ),
                         ),
                 ),
               ),
@@ -508,7 +522,10 @@ class _HomePageState extends State<HomePage> {
               style: TextButton.styleFrom(
                 foregroundColor: const Color(0xFFC62828),
                 backgroundColor: const Color(0xFFFFEBEE),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
                 ),
@@ -522,7 +539,10 @@ class _HomePageState extends State<HomePage> {
                   : const Icon(Icons.logout_rounded, size: 18),
               label: Text(
                 _isLoggingOut ? '...' : 'Dang xuat',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
@@ -613,8 +633,6 @@ class _HomePageState extends State<HomePage> {
                         'patientId',
                         isEqualTo: FirebaseAuth.instance.currentUser!.uid,
                       )
-                      .orderBy('appointmentDate', descending: true)
-                      .limit(1)
                       .snapshots(),
             builder: (context, snapshot) {
               if (FirebaseAuth.instance.currentUser?.uid == null) {
@@ -639,7 +657,42 @@ class _HomePageState extends State<HomePage> {
                 return _buildEmptyUpcomingCard();
               }
 
-              final data = docs.first.data();
+              final now = DateTime.now();
+              QueryDocumentSnapshot<Map<String, dynamic>>? nearestDoc;
+
+              for (final doc in docs) {
+                final data = doc.data();
+                final status = (data['status'] ?? '').toString().toLowerCase();
+                if (status == 'cancelled' || status == 'completed') {
+                  continue;
+                }
+
+                final ts = data['appointmentDate'];
+                if (ts is! Timestamp) continue;
+
+                final date = ts.toDate();
+                if (date.isBefore(now)) continue;
+
+                if (nearestDoc == null) {
+                  nearestDoc = doc;
+                  continue;
+                }
+
+                final nearestDate =
+                    (nearestDoc.data()['appointmentDate'] as Timestamp)
+                        .toDate();
+                if (date.isBefore(nearestDate)) {
+                  nearestDoc = doc;
+                }
+              }
+
+              if (nearestDoc == null) {
+                return _buildEmptyUpcomingCard(
+                  message: 'Bạn chưa có lịch hẹn sắp tới.',
+                );
+              }
+
+              final data = nearestDoc.data();
               final doctorName = (data['doctorName'] ?? 'Bác sĩ') as String;
               final departmentName =
                   (data['departmentName'] ?? 'Chuyên khoa') as String;
@@ -1157,29 +1210,31 @@ class _HomePageState extends State<HomePage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                    Icon(
-                      icons[index],
-                      size: 24,
-                      color: selected ? Colors.white : const Color(0xFF7B7F8D),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      labels[index],
-                      style: TextStyle(
+                      Icon(
+                        icons[index],
+                        size: 24,
                         color: selected
                             ? Colors.white
-                            : const Color(0xFF6E7381),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.3,
+                            : const Color(0xFF7B7F8D),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 6),
+                      Text(
+                        labels[index],
+                        style: TextStyle(
+                          color: selected
+                              ? Colors.white
+                              : const Color(0xFF6E7381),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
         ),
       ),
     );

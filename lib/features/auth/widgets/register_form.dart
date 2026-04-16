@@ -96,15 +96,11 @@ class _RegisterFormState extends State<RegisterForm> {
 
       if (!mounted) return;
 
-      _showMessage(
-        'Đăng ký thành công. Vui lòng kiểm tra email để xác thực.',
-        isError: false,
+      Navigator.pushReplacementNamed(
+        context,
+        AppRoutes.registerSuccess,
+        arguments: _emailController.text.trim(),
       );
-
-      await Future.delayed(const Duration(milliseconds: 800));
-
-      if (!mounted) return;
-      Navigator.pushReplacementNamed(context, AppRoutes.login);
     } on FirebaseAuthException catch (e) {
       _showMessage(_mapAuthError(e));
     } catch (_) {
@@ -233,9 +229,7 @@ class _RegisterFormState extends State<RegisterForm> {
               },
               suffixIcon: IconButton(
                 icon: Icon(
-                  _obscurePassword
-                      ? Icons.visibility_off
-                      : Icons.visibility,
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
                 ),
                 onPressed: () {
                   setState(() => _obscurePassword = !_obscurePassword);
@@ -275,10 +269,10 @@ class _RegisterFormState extends State<RegisterForm> {
               onChanged: _isLoading
                   ? null
                   : (value) {
-                setState(() {
-                  _acceptedTerms = value ?? false;
-                });
-              },
+                      setState(() {
+                        _acceptedTerms = value ?? false;
+                      });
+                    },
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
               title: const Text(
@@ -299,8 +293,8 @@ class _RegisterFormState extends State<RegisterForm> {
               onTap: _isLoading
                   ? () {}
                   : () {
-                Navigator.pushReplacementNamed(context, AppRoutes.login);
-              },
+                      Navigator.pushReplacementNamed(context, AppRoutes.login);
+                    },
             ),
           ],
         ),
