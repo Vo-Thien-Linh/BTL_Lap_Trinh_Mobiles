@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:baitaplon/features/appointment/presentation/bloc/booking_bloc.dart';
 import 'package:baitaplon/features/appointment/domain/entities/appointment_entities.dart';
 import 'package:baitaplon/app/theme/app_colors.dart';
+import 'package:baitaplon/shared/utils/id_formatter.dart';
 import 'package:baitaplon/shared/widgets/custom_button.dart';
 
 class BookingTicketStep extends StatelessWidget {
@@ -21,7 +22,11 @@ class BookingTicketStep extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: 20),
-              Icon(Icons.check_circle_rounded, color: AppColors.success, size: 48),
+              Icon(
+                Icons.check_circle_rounded,
+                color: AppColors.success,
+                size: 48,
+              ),
               const SizedBox(height: 12),
               const Text(
                 'ĐẶT LỊCH THÀNH CÔNG!',
@@ -50,8 +55,16 @@ class BookingTicketStep extends StatelessWidget {
   }
 
   Widget _buildTicket(BuildContext context, HospitalAppointment appointment) {
-    final formattedFee = NumberFormat.decimalPattern().format(appointment.consultationFee);
-    final dateStr = DateFormat('dd/MM/yyyy').format(appointment.appointmentDate);
+    final formattedFee = NumberFormat.decimalPattern().format(
+      appointment.consultationFee,
+    );
+    final dateStr = DateFormat(
+      'dd/MM/yyyy',
+    ).format(appointment.appointmentDate);
+    final patientCode = IdFormatter.format(
+      prefix: 'PT',
+      rawId: appointment.patientId,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -108,7 +121,7 @@ class BookingTicketStep extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Department & Room
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
@@ -125,7 +138,10 @@ class BookingTicketStep extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.success.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -145,28 +161,40 @@ class BookingTicketStep extends StatelessWidget {
 
           // STT
           _buildSTTCircle(appointment.queueNumber),
-          
+
           const SizedBox(height: 20),
-          
+
           // Details
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               children: [
-                _buildTicketRow('Họ tên:', appointment.patientName.toUpperCase()),
-                _buildTicketRow('Mã BN:', 'BN-${appointment.patientId.substring(0, 6)}'),
+                _buildTicketRow(
+                  'Họ tên:',
+                  appointment.patientName.toUpperCase(),
+                ),
+                _buildTicketRow('Mã BN:', patientCode),
                 _buildTicketRow('Ngày khám:', dateStr),
-                _buildTicketRow('Đối tượng:', appointment.insuranceNumber != null ? 'BHYT (${appointment.insuranceNumber})' : 'Không BHYT'),
-                _buildTicketRow('Tiền khám:', '$formattedFee đ', valColor: AppColors.success),
+                _buildTicketRow(
+                  'Đối tượng:',
+                  appointment.insuranceNumber != null
+                      ? 'BHYT (${appointment.insuranceNumber})'
+                      : 'Không BHYT',
+                ),
+                _buildTicketRow(
+                  'Tiền khám:',
+                  '$formattedFee đ',
+                  valColor: AppColors.success,
+                ),
               ],
             ),
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Footer / Cut effect
           _buildTicketFooter(appointment),
-          
+
           const SizedBox(height: 40),
         ],
       ),
@@ -178,7 +206,11 @@ class BookingTicketStep extends StatelessWidget {
       children: [
         const Text(
           'SỐ THỨ TỰ',
-          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.hint),
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: AppColors.hint,
+          ),
         ),
         const SizedBox(height: 8),
         Container(
@@ -238,22 +270,26 @@ class BookingTicketStep extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.info_outline_rounded, size: 14, color: AppColors.hint),
+              const Icon(
+                Icons.info_outline_rounded,
+                size: 14,
+                color: AppColors.hint,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Lưu ý quan trọng',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.hint),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.hint,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 10),
           Text(
             'Vui lòng có mặt tại phòng khám 15 phút trước giờ hẹn. Phiếu khám chỉ có giá trị trong ngày và không có giá trị thay thế đơn thuốc.',
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColors.text,
-              height: 1.5,
-            ),
+            style: TextStyle(fontSize: 12, color: AppColors.text, height: 1.5),
           ),
         ],
       ),

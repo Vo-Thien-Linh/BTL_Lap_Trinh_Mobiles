@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../app/routes/app_routes.dart';
 import '../../../../config/service_locator.dart';
+import '../../../../shared/utils/id_formatter.dart';
 import '../../../auth/domain/usecases/logout_usecase.dart';
 import 'doctor_appointment_detail_page.dart';
 
@@ -76,6 +77,7 @@ class _DoctorHomePageState extends State<DoctorHomePage>
     if (doctorSnapshot.docs.isEmpty) {
       return _DoctorContext(
         doctorId: '',
+        doctorCode: '',
         doctorName: doctorName,
         specialization: 'Đa khoa',
       );
@@ -83,9 +85,13 @@ class _DoctorHomePageState extends State<DoctorHomePage>
 
     final doctorDoc = doctorSnapshot.docs.first;
     final data = doctorDoc.data();
+    final doctorCode = (data['doctorCode'] ?? '').toString().trim();
 
     return _DoctorContext(
       doctorId: doctorDoc.id,
+      doctorCode: doctorCode.isEmpty
+          ? IdFormatter.format(prefix: 'DOC', rawId: doctorDoc.id)
+          : doctorCode,
       doctorName: (data['name'] ?? doctorName) as String,
       specialization: (data['specialization'] ?? 'Đa khoa') as String,
     );
@@ -465,7 +471,10 @@ class _DoctorHomePageState extends State<DoctorHomePage>
                                   ),
                                 );
                               },
-                              icon: const Icon(Icons.visibility_outlined, size: 16),
+                              icon: const Icon(
+                                Icons.visibility_outlined,
+                                size: 16,
+                              ),
                               label: const Text('Xem hồ sơ'),
                             ),
                           ),
@@ -561,7 +570,7 @@ class _DoctorHomePageState extends State<DoctorHomePage>
               _profileRow('Chuyên khoa', doctor.specialization),
               _profileRow(
                 'Mã bác sĩ',
-                doctor.doctorId.isEmpty ? 'Chưa cập nhật' : doctor.doctorId,
+                doctor.doctorId.isEmpty ? 'Chưa cập nhật' : doctor.doctorCode,
               ),
             ],
           ),
@@ -771,11 +780,13 @@ class _DoctorHomePageState extends State<DoctorHomePage>
 class _DoctorContext {
   const _DoctorContext({
     required this.doctorId,
+    required this.doctorCode,
     required this.doctorName,
     required this.specialization,
   });
 
   final String doctorId;
+  final String doctorCode;
   final String doctorName;
   final String specialization;
 }

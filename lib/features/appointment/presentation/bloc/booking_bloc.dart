@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/appointment_entities.dart';
 import '../../domain/usecases/appointment_usecases.dart';
+import '../../../../shared/utils/id_formatter.dart';
 
 part 'booking_event.dart';
 part 'booking_state.dart';
@@ -54,8 +55,20 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
       // For demo, if shifts collection is empty, we use default ones
       final shifts = [
-        const ShiftEntity(id: 'morning', name: 'Sáng', startTime: '07:30', endTime: '11:30', maxSlots: 20),
-        const ShiftEntity(id: 'afternoon', name: 'Chiều', startTime: '13:30', endTime: '17:00', maxSlots: 20),
+        const ShiftEntity(
+          id: 'morning',
+          name: 'Sáng',
+          startTime: '07:30',
+          endTime: '11:30',
+          maxSlots: 20,
+        ),
+        const ShiftEntity(
+          id: 'afternoon',
+          name: 'Chiều',
+          startTime: '13:30',
+          endTime: '17:00',
+          maxSlots: 20,
+        ),
       ];
       // Fetch patient's active appointments if patientId is provided
       List<HospitalAppointment> activeAppointments = [];
@@ -64,14 +77,21 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         activeAppointments = await getPatientActiveAppointments(user.uid);
       }
 
-      emit(state.copyWith(
-        status: BookingStatus.initial,
-        departments: departments,
-        shifts: shifts,
-        patientAppointments: activeAppointments,
-      ));
+      emit(
+        state.copyWith(
+          status: BookingStatus.initial,
+          departments: departments,
+          shifts: shifts,
+          patientAppointments: activeAppointments,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(status: BookingStatus.failure, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: BookingStatus.failure,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -81,39 +101,124 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
     // 1. Departments (Added more)
     final depts = [
-      {'id': 'tim_mach', 'name': 'Tim mạch', 'desc': 'Khoa chuyên tim mạch', 'loc': 'Tầng 2'},
-      {'id': 'nhi_khoa', 'name': 'Nhi khoa', 'desc': 'Chăm sóc trẻ em', 'loc': 'Tầng 1'},
-      {'id': 'noi_tiet', 'name': 'Nội tiết', 'desc': 'Điều trị nội tiết', 'loc': 'Tầng 3'},
-      {'id': 'da_lieu', 'name': 'Da liễu', 'desc': 'Chăm sóc da', 'loc': 'Tầng 4'},
-      {'id': 'rang_ham_mat', 'name': 'Răng Hàm Mặt', 'desc': 'Nha khoa chuyên sâu', 'loc': 'Tầng 1'},
-      {'id': 'tai_mui_hong', 'name': 'Tai Mũi Họng', 'desc': 'Khám tai mũi họng', 'loc': 'Tầng 2'},
+      {
+        'id': 'tim_mach',
+        'name': 'Tim mạch',
+        'desc': 'Khoa chuyên tim mạch',
+        'loc': 'Tầng 2',
+      },
+      {
+        'id': 'nhi_khoa',
+        'name': 'Nhi khoa',
+        'desc': 'Chăm sóc trẻ em',
+        'loc': 'Tầng 1',
+      },
+      {
+        'id': 'noi_tiet',
+        'name': 'Nội tiết',
+        'desc': 'Điều trị nội tiết',
+        'loc': 'Tầng 3',
+      },
+      {
+        'id': 'da_lieu',
+        'name': 'Da liễu',
+        'desc': 'Chăm sóc da',
+        'loc': 'Tầng 4',
+      },
+      {
+        'id': 'rang_ham_mat',
+        'name': 'Răng Hàm Mặt',
+        'desc': 'Nha khoa chuyên sâu',
+        'loc': 'Tầng 1',
+      },
+      {
+        'id': 'tai_mui_hong',
+        'name': 'Tai Mũi Họng',
+        'desc': 'Khám tai mũi họng',
+        'loc': 'Tầng 2',
+      },
       {'id': 'mat', 'name': 'Mắt', 'desc': 'Khoa mắt', 'loc': 'Tầng 5'},
     ];
 
     for (var dept in depts) {
-      batch.set(db.collection('Departments').doc(dept['id'] as String), {
-        'name': dept['name'],
-        'description': dept['desc'],
-        'location': dept['loc'],
-        'phone': '0123456789',
-      }, SetOptions(merge: true));
+      batch.set(
+        db.collection('Departments').doc(dept['id'] as String),
+        {
+          'name': dept['name'],
+          'description': dept['desc'],
+          'location': dept['loc'],
+          'phone': '0123456789',
+        },
+        SetOptions(merge: true),
+      );
     }
 
     // 2. Doctors (Comprehensive list)
     final doctors = [
-      {'id': 'dr_tim_1', 'name': 'BS Nguyễn Văn A', 'dept': 'tim_mach', 'fee': 500000.0},
-      {'id': 'dr_tim_2', 'name': 'BS Phạm Minh B', 'dept': 'tim_mach', 'fee': 450000.0},
-      {'id': 'dr_nhi_1', 'name': 'BS Trần Thị C', 'dept': 'nhi_khoa', 'fee': 350000.0},
-      {'id': 'dr_nhi_2', 'name': 'BS Lê Hoàng D', 'dept': 'nhi_khoa', 'fee': 300000.0},
-      {'id': 'dr_da_1', 'name': 'BS Hoàng Gia E', 'dept': 'da_lieu', 'fee': 600000.0},
-      {'id': 'dr_da_2', 'name': 'BS Vũ Đức F', 'dept': 'da_lieu', 'fee': 550000.0},
-      {'id': 'dr_mat_1', 'name': 'BS Đặng Minh G', 'dept': 'mat', 'fee': 400000.0},
-      {'id': 'dr_rhm_1', 'name': 'BS Phan Thanh H', 'dept': 'rang_ham_mat', 'fee': 400000.0},
-      {'id': 'dr_tmh_1', 'name': 'BS Ngô Bảo K', 'dept': 'tai_mui_hong', 'fee': 380000.0},
-      {'id': 'dr_nt_1', 'name': 'BS Lý Tiểu L', 'dept': 'noi_tiet', 'fee': 420000.0},
+      {
+        'id': 'dr_tim_1',
+        'name': 'BS Nguyễn Văn A',
+        'dept': 'tim_mach',
+        'fee': 500000.0,
+      },
+      {
+        'id': 'dr_tim_2',
+        'name': 'BS Phạm Minh B',
+        'dept': 'tim_mach',
+        'fee': 450000.0,
+      },
+      {
+        'id': 'dr_nhi_1',
+        'name': 'BS Trần Thị C',
+        'dept': 'nhi_khoa',
+        'fee': 350000.0,
+      },
+      {
+        'id': 'dr_nhi_2',
+        'name': 'BS Lê Hoàng D',
+        'dept': 'nhi_khoa',
+        'fee': 300000.0,
+      },
+      {
+        'id': 'dr_da_1',
+        'name': 'BS Hoàng Gia E',
+        'dept': 'da_lieu',
+        'fee': 600000.0,
+      },
+      {
+        'id': 'dr_da_2',
+        'name': 'BS Vũ Đức F',
+        'dept': 'da_lieu',
+        'fee': 550000.0,
+      },
+      {
+        'id': 'dr_mat_1',
+        'name': 'BS Đặng Minh G',
+        'dept': 'mat',
+        'fee': 400000.0,
+      },
+      {
+        'id': 'dr_rhm_1',
+        'name': 'BS Phan Thanh H',
+        'dept': 'rang_ham_mat',
+        'fee': 400000.0,
+      },
+      {
+        'id': 'dr_tmh_1',
+        'name': 'BS Ngô Bảo K',
+        'dept': 'tai_mui_hong',
+        'fee': 380000.0,
+      },
+      {
+        'id': 'dr_nt_1',
+        'name': 'BS Lý Tiểu L',
+        'dept': 'noi_tiet',
+        'fee': 420000.0,
+      },
     ];
 
     for (var dr in doctors) {
+      final doctorId = dr['id'] as String;
       batch.set(db.collection('Doctors').doc(dr['id'] as String), {
         'name': dr['name'],
         'specialization': dr['dept'],
@@ -122,40 +227,71 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         'consultationFee': dr['fee'],
         'isActive': true,
         'licenseNumber': 'BS${(dr['id'] as String).toUpperCase()}',
+        'doctorCode': IdFormatter.format(prefix: 'DOC', rawId: doctorId),
       }, SetOptions(merge: true));
 
       // 3. Create Schedules for each doctor (Next 7 days)
       for (int i = 0; i < 7; i++) {
         final date = DateTime.now().add(Duration(days: i));
         final dateStr = '${date.year}-${date.month}-${date.day}';
-        
+
         // Morning shift
-        batch.set(db.collection('DoctorSchedules').doc('${dr['id']}_$dateStr\_morning'), {
-          'doctorId': dr['id'],
-          'scheduleDate': Timestamp.fromDate(DateTime(date.year, date.month, date.day)), // FIXED: Use scheduleDate
-          'shiftId': 'morning',
-          'isAvailable': true,
-          'maxSlots': 20,
-        }, SetOptions(merge: true));
+        batch.set(
+          db.collection('DoctorSchedules').doc('${dr['id']}_$dateStr\_morning'),
+          {
+            'doctorId': dr['id'],
+            'scheduleDate': Timestamp.fromDate(
+              DateTime(date.year, date.month, date.day),
+            ), // FIXED: Use scheduleDate
+            'shiftId': 'morning',
+            'isAvailable': true,
+            'maxSlots': 20,
+          },
+          SetOptions(merge: true),
+        );
 
         // Afternoon shift
-        batch.set(db.collection('DoctorSchedules').doc('${dr['id']}_$dateStr\_afternoon'), {
-          'doctorId': dr['id'],
-          'scheduleDate': Timestamp.fromDate(DateTime(date.year, date.month, date.day)), // FIXED: Use scheduleDate
-          'shiftId': 'afternoon',
-          'isAvailable': true,
-          'maxSlots': 20,
-        }, SetOptions(merge: true));
+        batch.set(
+          db
+              .collection('DoctorSchedules')
+              .doc('${dr['id']}_$dateStr\_afternoon'),
+          {
+            'doctorId': dr['id'],
+            'scheduleDate': Timestamp.fromDate(
+              DateTime(date.year, date.month, date.day),
+            ), // FIXED: Use scheduleDate
+            'shiftId': 'afternoon',
+            'isAvailable': true,
+            'maxSlots': 20,
+          },
+          SetOptions(merge: true),
+        );
       }
     }
 
     // 3. Shifts
     final shiftList = [
-      {'id': 'morning', 'name': 'Sáng', 'start': '07:30', 'end': '11:30', 'max': 20},
-      {'id': 'afternoon', 'name': 'Chiều', 'start': '13:30', 'end': '17:00', 'max': 20},
+      {
+        'id': 'morning',
+        'name': 'Sáng',
+        'start': '07:30',
+        'end': '11:30',
+        'max': 20,
+      },
+      {
+        'id': 'afternoon',
+        'name': 'Chiều',
+        'start': '13:30',
+        'end': '17:00',
+        'max': 20,
+      },
     ];
     for (var s in shiftList) {
-      batch.set(db.collection('Shifts').doc(s['id'] as String), s, SetOptions(merge: true));
+      batch.set(
+        db.collection('Shifts').doc(s['id'] as String),
+        s,
+        SetOptions(merge: true),
+      );
     }
 
     await batch.commit();
@@ -168,14 +304,21 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     emit(state.copyWith(status: BookingStatus.loading));
     try {
       final doctors = await getDoctorsByDept(event.department.id);
-      emit(state.copyWith(
-        status: BookingStatus.initial,
-        selectedDepartment: event.department,
-        doctors: doctors,
-        currentStep: 1,
-      ));
+      emit(
+        state.copyWith(
+          status: BookingStatus.initial,
+          selectedDepartment: event.department,
+          doctors: doctors,
+          currentStep: 1,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(status: BookingStatus.failure, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: BookingStatus.failure,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -191,26 +334,35 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       );
 
       if (hasDuplicateDoctor) {
-        emit(state.copyWith(
-          status: BookingStatus.failure,
-          errorMessage: 'Bạn đang có lịch hẹn chưa hoàn thành với bác sĩ ${event.doctor.name}. Vui lòng hoàn thành trước khi đặt thêm.',
-        ));
+        emit(
+          state.copyWith(
+            status: BookingStatus.failure,
+            errorMessage:
+                'Bạn đang có lịch hẹn chưa hoàn thành với bác sĩ ${event.doctor.name}. Vui lòng hoàn thành trước khi đặt thêm.',
+          ),
+        );
         return;
       }
 
-      final schedules = await getDoctorSchedules(
-        event.doctor.id,
-        event.date,
+      final schedules = await getDoctorSchedules(event.doctor.id, event.date);
+      emit(
+        state.copyWith(
+          status: BookingStatus.initial,
+          selectedDoctor: event.doctor,
+          selectedDate: event.date,
+          schedules: List<ScheduleEntity>.from(
+            schedules,
+          ), // Explicit cast to Entity
+          currentStep: 2,
+        ),
       );
-      emit(state.copyWith(
-        status: BookingStatus.initial,
-        selectedDoctor: event.doctor,
-        selectedDate: event.date,
-        schedules: List<ScheduleEntity>.from(schedules), // Explicit cast to Entity
-        currentStep: 2,
-      ));
     } catch (e) {
-      emit(state.copyWith(status: BookingStatus.failure, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: BookingStatus.failure,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -218,11 +370,14 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     SelectShift event,
     Emitter<BookingState> emit,
   ) async {
-    emit(state.copyWith(status: BookingStatus.loading, selectedShift: event.shift));
+    emit(
+      state.copyWith(status: BookingStatus.loading, selectedShift: event.shift),
+    );
     try {
       // Logic 2: Check for time slot conflict (Same DATE + Same SHIFT)
       final conflict = state.patientAppointments.where((app) {
-        final isSameDate = app.appointmentDate.year == state.selectedDate!.year &&
+        final isSameDate =
+            app.appointmentDate.year == state.selectedDate!.year &&
             app.appointmentDate.month == state.selectedDate!.month &&
             app.appointmentDate.day == state.selectedDate!.day;
         return isSameDate && app.shiftId == event.shift.id;
@@ -230,10 +385,13 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
       if (conflict.isNotEmpty) {
         final conflictingDept = conflict.first.departmentName;
-        emit(state.copyWith(
-          status: BookingStatus.failure,
-          errorMessage: 'Bạn đã có lịch khám tại khoa $conflictingDept vào thời gian này. Vui lóng chọn ca khác.',
-        ));
+        emit(
+          state.copyWith(
+            status: BookingStatus.failure,
+            errorMessage:
+                'Bạn đã có lịch khám tại khoa $conflictingDept vào thời gian này. Vui lóng chọn ca khác.',
+          ),
+        );
         return;
       }
 
@@ -242,15 +400,22 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         state.selectedDate!,
         event.shift.id,
       );
-      emit(state.copyWith(
-        status: BookingStatus.initial,
-        selectedShift: event.shift,
-        takenQueueNumbers: taken,
-        selectedQueueNumber: null, // Reset when shift changes
-        currentStep: 2, // Stay on Step 2 to select STT
-      ));
+      emit(
+        state.copyWith(
+          status: BookingStatus.initial,
+          selectedShift: event.shift,
+          takenQueueNumbers: taken,
+          selectedQueueNumber: null, // Reset when shift changes
+          currentStep: 2, // Stay on Step 2 to select STT
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(status: BookingStatus.failure, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: BookingStatus.failure,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -258,10 +423,12 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     SelectQueueNumber event,
     Emitter<BookingState> emit,
   ) {
-    emit(state.copyWith(
-      selectedQueueNumber: event.queueNumber,
-      currentStep: 3, // Auto-advance to Booking Summary
-    ));
+    emit(
+      state.copyWith(
+        selectedQueueNumber: event.queueNumber,
+        currentStep: 3, // Auto-advance to Booking Summary
+      ),
+    );
   }
 
   void _onSelectPaymentMethod(
@@ -271,10 +438,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     emit(state.copyWith(selectedPaymentMethod: event.method));
   }
 
-  void _onUpdateSymptoms(
-    UpdateSymptoms event,
-    Emitter<BookingState> emit,
-  ) {
+  void _onUpdateSymptoms(UpdateSymptoms event, Emitter<BookingState> emit) {
     emit(state.copyWith(symptoms: event.symptoms));
   }
 
@@ -282,7 +446,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     ConfirmBooking event,
     Emitter<BookingState> emit,
   ) async {
-    if (state.selectedDoctor == null || state.selectedDate == null || state.selectedShift == null) {
+    if (state.selectedDoctor == null ||
+        state.selectedDate == null ||
+        state.selectedShift == null) {
       return;
     }
 
@@ -322,29 +488,30 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       );
 
       final created = await createAppointment(appointment);
-      emit(state.copyWith(
-        status: BookingStatus.success,
-        createdAppointment: created,
-        currentStep: 4,
-      ));
+      emit(
+        state.copyWith(
+          status: BookingStatus.success,
+          createdAppointment: created,
+          currentStep: 4,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(status: BookingStatus.failure, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: BookingStatus.failure,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
-  void _onStepBack(
-    StepBack event,
-    Emitter<BookingState> emit,
-  ) {
+  void _onStepBack(StepBack event, Emitter<BookingState> emit) {
     if (state.currentStep > 0) {
       emit(state.copyWith(currentStep: state.currentStep - 1));
     }
   }
 
-  void _onResetBooking(
-    ResetBooking event,
-    Emitter<BookingState> emit,
-  ) {
+  void _onResetBooking(ResetBooking event, Emitter<BookingState> emit) {
     emit(const BookingState());
     add(LoadInitialData());
   }

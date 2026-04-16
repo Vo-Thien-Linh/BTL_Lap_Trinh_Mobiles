@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
+import '../../features/auth/presentation/pages/register_success_page.dart';
 import '../../features/auth/presentation/pages/verify_email_page.dart';
 import '../../features/doctor/presentation/pages/doctor_home_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
@@ -15,6 +16,7 @@ class AppRoutes {
   static const String onboarding = '/onboarding';
   static const String login = '/login';
   static const String register = '/register';
+  static const String registerSuccess = '/register-success';
   static const String forgotPassword = '/forgot-password';
   static const String verifyEmail = '/verify-email';
   static const String home = '/home';
@@ -31,6 +33,9 @@ class AppRoutes {
         return _buildRoute(const LoginPage());
       case register:
         return _buildRoute(const RegisterPage());
+      case registerSuccess:
+        final email = settings.arguments as String?;
+        return _buildRoute(RegisterSuccessPage(email: email));
       case forgotPassword:
         return _buildRoute(const ForgotPasswordPage());
       case verifyEmail:
