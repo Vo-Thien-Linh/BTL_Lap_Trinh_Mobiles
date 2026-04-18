@@ -5,6 +5,7 @@ import '../../../../app/routes/app_routes.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../config/service_locator.dart';
 import '../../../../shared/utils/validators.dart';
+import '../../../../shared/utils/firebase_data_seeder.dart';
 import '../../../../shared/widgets/app_logo_header.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
@@ -56,8 +57,8 @@ class _LoginFormState extends State<LoginForm> {
         password: _passwordController.text,
       );
 
-      // reload để lấy trạng thái verify mới nhất
-      await FirebaseAuth.instance.currentUser?.reload();
+      // Đã tối ưu: Bỏ qua reload dư thừa để vào app ngay lập tức
+      // await FirebaseAuth.instance.currentUser?.reload();
 
       final user = FirebaseAuth.instance.currentUser;
 
@@ -81,9 +82,53 @@ class _LoginFormState extends State<LoginForm> {
     } on FirebaseAuthException catch (error) {
       if (!mounted) return;
       _showMessage(_mapAuthError(error));
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
-      _showMessage('Đăng nhập thất bại. Vui lòng thử lại.');
+      _showMessage(e.toString().replaceAll('Exception: ', ''));
+    } finally {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleDemoLogin() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    try {
+      const email = 'demo@medical.com';
+      const password = 'Password123!';
+
+      UserCredential userCredential;
+      try {
+        userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
+          // Tạo tài khoản demo nều chưa có
+          userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+            email: email,
+            password: password,
+          );
+        } else {
+          rethrow;
+        }
+      }
+
+      final uid = userCredential.user!.uid;
+      
+      // Seed dữ liệu
+      await FirebaseDataSeeder.seedAll(uid);
+
+      if (!mounted) return;
+      _showMessage('Chào mừng bạn đến với bản thử nghiệm!', isError: false);
+      
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
+    } catch (e) {
+      if (!mounted) return;
+      _showMessage('Lỗi khởi tạo Demo: ${e.toString()}');
     } finally {
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -211,6 +256,27 @@ class _LoginFormState extends State<LoginForm> {
               text: 'Đăng nhập',
               isLoading: _isLoading,
               onPressed: _handleLogin,
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton(
+              onPressed: _isLoading ? null : _handleDemoLogin,
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 54),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                side: const BorderSide(color: AppColors.primary, width: 1),
+                foregroundColor: AppColors.primary,
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.auto_awesome_rounded, size: 20),
+                  SizedBox(width: 10),
+                  Text(
+                    'TRẢI NGHIỆM DEMO (1-CHẠM)',
+                    style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 18),
             FormSwitchText(

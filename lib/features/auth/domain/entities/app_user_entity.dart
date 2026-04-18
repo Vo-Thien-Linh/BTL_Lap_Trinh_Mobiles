@@ -13,6 +13,8 @@ class AppUserEntity {
   final String? dateOfBirth;
   final String? gender;
   final String? healthInsuranceNumber;
+  final String? bloodType;
+  final String? address;
   final String? avatarUrl;
 
   const AppUserEntity({
@@ -30,6 +32,8 @@ class AppUserEntity {
     this.dateOfBirth,
     this.gender,
     this.healthInsuranceNumber,
+    this.bloodType,
+    this.address,
     this.avatarUrl,
   });
 }

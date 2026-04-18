@@ -85,72 +85,77 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
     required String email,
     required String password,
   }) async {
-    final credential = await firebaseAuth.signInWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
+    final stopwatch = Stopwatch()..start();
+    print('--- [PERF] 1. Bat dau dang nhap Firebase...');
 
-    final user = credential.user;
-    if (user == null) {
-      throw Exception('Không tìm thấy người dùng.');
-    }
-
-    await user.reload();
-    final currentUser = firebaseAuth.currentUser;
-
-    if (currentUser == null) {
-      throw Exception('Không thể tải thông tin người dùng.');
-    }
-
-    if (!currentUser.emailVerified) {
-      throw FirebaseAuthException(
-        code: 'email-not-verified',
-        message: 'Email chưa được xác thực.',
-      );
-    }
-
-    await firestore.collection('users').doc(currentUser.uid).update({
-      'emailVerified': true,
-      'updatedAt': Timestamp.now(),
-    });
-
-    final doc = await firestore.collection('users').doc(currentUser.uid).get();
-
-    if (!doc.exists) {
-      throw Exception('Không tìm thấy hồ sơ người dùng.');
-    }
-
-    final userData = doc.data() ?? <String, dynamic>{};
-    if ((userData['userCode'] ?? '').toString().trim().isEmpty) {
-      final userCode = IdFormatter.format(
-        prefix: 'USR',
-        rawId: currentUser.uid,
-      );
-      await firestore.collection('users').doc(currentUser.uid).update({
-        'userCode': userCode,
-        'updatedAt': Timestamp.now(),
+    try {
+      // Thêm timeout 15 giây để tránh bị treo vô hạn do App Check/Emulator lag
+      final credential = await firebaseAuth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      ).timeout(const Duration(seconds: 15), onTimeout: () {
+        print('--- [PERF] ERROR: Firebase Auth bi timeout sau 15s!');
+        throw Exception('Kết nối tới Firebase quá chậm. Vui lòng kiểm tra mạng hoặc khởi động lại máy ảo.');
       });
-    }
+      print('--- [PERF] 2. Firebase Auth xong trong: ${stopwatch.elapsedMilliseconds}ms');
 
-    final patientDoc = await firestore
-        .collection('patients')
-        .doc(currentUser.uid)
-        .get();
-    if (patientDoc.exists) {
-      final patientData = patientDoc.data() ?? <String, dynamic>{};
-      if ((patientData['patientCode'] ?? '').toString().trim().isEmpty) {
-        final patientCode = IdFormatter.format(
-          prefix: 'PT',
-          rawId: currentUser.uid,
-        );
-        await firestore.collection('patients').doc(currentUser.uid).update({
-          'patientCode': patientCode,
-          'updatedAt': Timestamp.now(),
-        });
+      final user = credential.user;
+      if (user == null) throw Exception('Không tìm thấy người dùng.');
+
+      final currentUser = firebaseAuth.currentUser;
+      if (currentUser == null) throw Exception('Không thể tải thông tin người dùng.');
+
+      final userRef = firestore.collection('users').doc(currentUser.uid);
+      
+      print('--- [PERF] 3. Bat dau lay Firestore...');
+      final startTimeFirestore = stopwatch.elapsedMilliseconds;
+      final doc = await userRef.get();
+      print('--- [PERF] 4. Lay Firestore xong trong: ${stopwatch.elapsedMilliseconds - startTimeFirestore}ms');
+
+      if (!doc.exists) {
+        throw Exception('Không tìm thấy hồ sơ người dùng.');
       }
-    }
 
-    return UserModel.fromDocument(doc);
+      final userData = doc.data() ?? <String, dynamic>{};
+      
+      // Chạy các cập nhật ngầm, không dùng await để không làm chậm login
+      _runBackgroundUpdates(userRef, currentUser, userData);
+
+      print('--- [PERF] TOTAL LOGIN TIME: ${stopwatch.elapsedMilliseconds}ms');
+      return UserModel.fromDocument(doc);
+    } finally {
+      stopwatch.stop();
+    }
+  }
+
+  void _runBackgroundUpdates(DocumentReference userRef, User currentUser, Map<String, dynamic> userData) {
+    try {
+      final Map<String, dynamic> updates = {};
+      if (userData['emailVerified'] != true) updates['emailVerified'] = true;
+      if ((userData['userCode'] ?? '').toString().trim().isEmpty) {
+        updates['userCode'] = IdFormatter.format(prefix: 'USR', rawId: currentUser.uid);
+      }
+      
+      if (updates.isNotEmpty) {
+        updates['updatedAt'] = FieldValue.serverTimestamp();
+        userRef.update(updates).catchError((e) => print('--- [BG] User update fail: $e'));
+      }
+
+      // Sync patient code if exists
+      firestore.collection('patients').doc(currentUser.uid).get().then((pDoc) {
+        if (pDoc.exists) {
+          final pData = pDoc.data() ?? {};
+          if ((pData['patientCode'] ?? '').toString().trim().isEmpty) {
+            pDoc.reference.update({
+              'patientCode': IdFormatter.format(prefix: 'PT', rawId: currentUser.uid),
+              'updatedAt': FieldValue.serverTimestamp(),
+            }).catchError((e) => print('--- [BG] Patient update fail: $e'));
+          }
+        }
+      });
+    } catch (e) {
+      print('--- [BG] Error: $e');
+    }
   }
 
   @override

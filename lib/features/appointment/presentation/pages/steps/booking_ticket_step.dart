@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:baitaplon/features/appointment/presentation/bloc/booking_bloc.dart';
-import 'package:baitaplon/features/appointment/domain/entities/appointment_entities.dart';
-import 'package:baitaplon/app/theme/app_colors.dart';
-import 'package:baitaplon/shared/utils/id_formatter.dart';
-import 'package:baitaplon/shared/widgets/custom_button.dart';
+import '../../../../../app/routes/app_routes.dart';
+import '../../bloc/booking_bloc.dart';
+import '../../../domain/entities/appointment_entities.dart';
 
 class BookingTicketStep extends StatelessWidget {
   const BookingTicketStep({super.key});
@@ -17,282 +15,292 @@ class BookingTicketStep extends StatelessWidget {
         final appointment = state.createdAppointment;
         if (appointment == null) return const SizedBox.shrink();
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              Icon(
-                Icons.check_circle_rounded,
-                color: AppColors.success,
-                size: 48,
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'ĐẶT LỊCH THÀNH CÔNG!',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.success,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 24),
-              _buildTicket(context, appointment),
-              const SizedBox(height: 32),
-              CustomButton(
-                text: 'XÁC NHẬN & VỀ TRANG CHỦ',
-                onPressed: () {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-              ),
-              const SizedBox(height: 48), // Bottom safe space
-            ],
+        final isConfirmed = appointment.status == 'confirmed';
+
+        return Theme(
+          data: Theme.of(context).copyWith(
+            dividerTheme: const DividerThemeData(thickness: 1, color: Color(0xFFE2E8F0)),
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            child: Column(
+              children: [
+                if (!isConfirmed) ...[
+                  const Icon(Icons.info_outline_rounded, color: Color(0xFF3B82F6), size: 48),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'XÁC NHẬN PHIẾU KHÁM',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF1E40AF), letterSpacing: 1.2),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Vui lòng kiểm tra lại thông tin trước khi thanh toán',
+                    style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                  ),
+                ] else ...[
+                  const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 48),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'THANH TOÁN THÀNH CÔNG!',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF065F46), letterSpacing: 1.2),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Cảm ơn bạn đã tin tưởng dịch vụ của MedCare',
+                    style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                  ),
+                ],
+                const SizedBox(height: 32),
+                _buildExaminationSlip(context, appointment),
+                const SizedBox(height: 24),
+                
+                if (!isConfirmed) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        context.read<BookingBloc>().add(FinalizePaymentAndConfirm(
+                          appointmentId: appointment.id,
+                          patientId: appointment.patientId,
+                          amount: appointment.consultationFee,
+                        ));
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1E40AF),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        elevation: 0,
+                      ),
+                      child: state.status == BookingStatus.loading 
+                        ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                        : const Text('XÁC NHẬN THANH TOÁN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () => Navigator.pushNamed(context, AppRoutes.profile),
+                    child: const Text(
+                      'Thay đổi thông tin cá nhân',
+                      style: TextStyle(color: Color(0xFF3B82F6), fontWeight: FontWeight.w700, decoration: TextDecoration.underline),
+                    ),
+                  ),
+                ] else ...[
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF10B981),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      child: const Text('XONG & VỀ TRANG CHỦ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
         );
       },
     );
   }
 
-  Widget _buildTicket(BuildContext context, HospitalAppointment appointment) {
-    final formattedFee = NumberFormat.decimalPattern().format(
-      appointment.consultationFee,
-    );
-    final dateStr = DateFormat(
-      'dd/MM/yyyy',
-    ).format(appointment.appointmentDate);
-    final patientCode = IdFormatter.format(
-      prefix: 'PT',
-      rawId: appointment.patientId,
-    );
-
+  Widget _buildExaminationSlip(BuildContext context, HospitalAppointment appointment) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 30, offset: const Offset(0, 10)),
         ],
       ),
       child: Column(
         children: [
           // Header
           Container(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('HỆ THỐNG Y TẾ MEDCARE', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF1E3A8A))),
+                          Text('CƠ SỞ: 123 Bế Văn Đàn, TP. HCM', style: TextStyle(fontSize: 10, color: Color(0xFF64748B), fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(color: const Color(0xFF1E3A8A), borderRadius: BorderRadius.circular(8)),
+                      child: const Text('MEDCARE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 10)),
+                    )
+                  ],
+                ),
+                const SizedBox(height: 20),
+                const Text('PHIẾU KHÁM BỆNH', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: 1.5)),
+                Text(
+                  'Mã phiếu: ${appointment.id.toUpperCase().substring(0, 8)}',
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                ),
+              ],
+            ),
+          ),
+
+          // Main Info
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Patient Info Section
+                _buildSectionTitle('THÔNG TIN BỆNH NHÂN'),
+                const SizedBox(height: 12),
+                _buildInfoRow('Họ và tên:', appointment.patientName.toUpperCase(), isBold: true),
+                _buildInfoRow('Mã bệnh nhân:', appointment.patientId.substring(0, 10).toUpperCase()),
+                _buildInfoRow('Ngày sinh:', appointment.patientDOB ?? 'Chưa cập nhật'),
+                _buildInfoRow('Giới tính:', appointment.patientGender ?? 'Chưa cập nhật'),
+                
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: DottedLine(),
+                ),
+
+                // Appointment Section
+                _buildSectionTitle('CHI TIẾT LỊCH HẸN'),
+                const SizedBox(height: 12),
+                _buildInfoRow('Chuyên khoa:', appointment.departmentName),
+                _buildInfoRow('Vị trí:', appointment.roomNumber, valColor: const Color(0xFF2563EB)),
+                _buildInfoRow('Ngày khám:', DateFormat('dd/MM/yyyy').format(appointment.appointmentDate)),
+                _buildInfoRow('Giờ dự kiến:', appointment.timeSlot, isBold: true),
+                
+                const SizedBox(height: 20),
+                Center(
+                  child: Column(
+                    children: [
+                      const Text('SỐ THỨ TỰ KHÁM', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF64748B), letterSpacing: 0.5)),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: 90, height: 90,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE0E7FF),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFF312E81), width: 3),
+                        ),
+                        child: Text(
+                          appointment.queueNumber.toString(),
+                          style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Color(0xFF312E81)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: DottedLine(),
+                ),
+
+                // Payment Section
+                _buildSectionTitle('THANH TOÁN'),
+                const SizedBox(height: 12),
+                _buildInfoRow(
+                  'Đối tượng:', 
+                  appointment.insuranceNumber != null ? 'BẢO HIỂM Y TẾ' : 'KHÁM DỊCH VỤ',
+                  valColor: appointment.insuranceNumber != null ? const Color(0xFF059669) : const Color(0xFFD97706),
+                ),
+                if (appointment.insuranceNumber != null)
+                  _buildInfoRow('Mã thẻ BHYT:', appointment.insuranceNumber!),
+                _buildInfoRow(
+                  'Chi phí khám:', 
+                  NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(appointment.consultationFee),
+                  valSize: 18, isBold: true, valColor: const Color(0xFFB91C1C),
+                ),
+              ],
+            ),
+          ),
+
+          // Footer
+          Container(
             padding: const EdgeInsets.all(20),
             decoration: const BoxDecoration(
-              color: AppColors.secondary,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              color: Color(0xFFFFF7ED),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
             ),
-            child: Column(
+            child: const Row(
               children: [
-                const Text(
-                  'Bệnh viện Đa khoa MedCare',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryDark,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '123 Đường Số 1, Phường Bến Nghé, Quận 1, TP. HCM',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 11, color: AppColors.hint),
-                ),
-                const Divider(height: 30, color: AppColors.border),
-                const Text(
-                  'PHIẾU KHÁM BỆNH',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.text,
-                    letterSpacing: 2,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Mã phiếu: APP${DateFormat('yyyyMMdd').format(appointment.createdAt)}${appointment.queueNumber.toString().padLeft(3, '0')}',
-                  style: TextStyle(fontSize: 11, color: AppColors.hint),
-                ),
-              ],
-            ),
-          ),
-
-          // Department & Room
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-            child: Column(
-              children: [
-                Text(
-                  appointment.departmentName.toUpperCase(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.text,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.success.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+                Icon(Icons.access_time_filled_rounded, color: Color(0xFFC2410C), size: 20),
+                SizedBox(width: 12),
+                Expanded(
                   child: Text(
-                    appointment.roomNumber,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.success,
-                    ),
+                    'Vui lòng có mặt tại quầy tiếp đón 15 phút trước giờ hẹn để chuẩn bị thủ tục.',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF9A3412), fontWeight: FontWeight.w600, height: 1.4),
                   ),
                 ),
               ],
             ),
           ),
-
-          // STT
-          _buildSTTCircle(appointment.queueNumber),
-
-          const SizedBox(height: 20),
-
-          // Details
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                _buildTicketRow(
-                  'Họ tên:',
-                  appointment.patientName.toUpperCase(),
-                ),
-                _buildTicketRow('Mã BN:', patientCode),
-                _buildTicketRow('Ngày khám:', dateStr),
-                _buildTicketRow(
-                  'Đối tượng:',
-                  appointment.insuranceNumber != null
-                      ? 'BHYT (${appointment.insuranceNumber})'
-                      : 'Không BHYT',
-                ),
-                _buildTicketRow(
-                  'Tiền khám:',
-                  '$formattedFee đ',
-                  valColor: AppColors.success,
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Footer / Cut effect
-          _buildTicketFooter(appointment),
-
-          const SizedBox(height: 40),
         ],
       ),
     );
   }
 
-  Widget _buildSTTCircle(int number) {
-    return Column(
-      children: [
-        const Text(
-          'SỐ THỨ TỰ',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: AppColors.hint,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          width: 80,
-          height: 80,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: AppColors.success, width: 3),
-          ),
-          child: Text(
-            number.toString(),
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w900,
-              color: AppColors.success,
-            ),
-          ),
-        ),
-      ],
-    );
+  Widget _buildSectionTitle(String title) {
+    return Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF334155), letterSpacing: 1));
   }
 
-  Widget _buildTicketRow(String label, String value, {Color? valColor}) {
+  Widget _buildInfoRow(String label, String value, {bool isBold = false, Color? valColor, double valSize = 14}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 13, color: AppColors.hint)),
+          Text(label, style: const TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
           Text(
             value,
             style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: valColor ?? AppColors.text,
+              fontSize: valSize,
+              fontWeight: isBold ? FontWeight.w900 : FontWeight.w700,
+              color: valColor ?? const Color(0xFF0F172A),
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildTicketFooter(HospitalAppointment appointment) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 18),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border.withOpacity(0.5)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.info_outline_rounded,
-                size: 14,
-                color: AppColors.hint,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Lưu ý quan trọng',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.hint,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Vui lòng có mặt tại phòng khám 15 phút trước giờ hẹn. Phiếu khám chỉ có giá trị trong ngày và không có giá trị thay thế đơn thuốc.',
-            style: TextStyle(fontSize: 12, color: AppColors.text, height: 1.5),
-          ),
-        ],
-      ),
+class DottedLine extends StatelessWidget {
+  const DottedLine({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final boxWidth = constraints.constrainWidth();
+        const dashWidth = 5.0;
+        const dashSpace = 4.0;
+        final dashCount = (boxWidth / (dashWidth + dashSpace)).floor();
+        return Flex(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          direction: Axis.horizontal,
+          children: List.generate(dashCount, (_) {
+            return const SizedBox(width: dashWidth, height: 1, child: DecoratedBox(decoration: BoxDecoration(color: Color(0xFFCBD5E1))));
+          }),
+        );
+      },
     );
   }
 }

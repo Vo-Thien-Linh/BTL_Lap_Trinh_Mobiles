@@ -35,6 +35,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     on<SelectPaymentMethod>(_onSelectPaymentMethod);
     on<UpdateSymptoms>(_onUpdateSymptoms);
     on<ConfirmBooking>(_onConfirmBooking);
+    on<FinalizePaymentAndConfirm>(_onFinalizePaymentAndConfirm);
     on<StepBack>(_onStepBack);
     on<ResetBooking>(_onResetBooking);
   }
@@ -49,7 +50,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
       // AUTO-SEED: If Firestore is empty, we seed it automatically for the user
       if (departments.isEmpty) {
-        await _autoSeedFirestore();
+        await seedInitialData();
         departments = await getDepartments();
       }
 
@@ -95,7 +96,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     }
   }
 
-  Future<void> _autoSeedFirestore() async {
+  Future<void> seedInitialData() async {
     final db = FirebaseFirestore.instance;
     final batch = db.batch();
 
@@ -159,60 +160,70 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         'id': 'dr_tim_1',
         'name': 'BS Nguyễn Văn A',
         'dept': 'tim_mach',
+        'deptName': 'Tim mạch',
         'fee': 500000.0,
       },
       {
         'id': 'dr_tim_2',
         'name': 'BS Phạm Minh B',
         'dept': 'tim_mach',
+        'deptName': 'Tim mạch',
         'fee': 450000.0,
       },
       {
         'id': 'dr_nhi_1',
         'name': 'BS Trần Thị C',
         'dept': 'nhi_khoa',
+        'deptName': 'Nhi khoa',
         'fee': 350000.0,
       },
       {
         'id': 'dr_nhi_2',
         'name': 'BS Lê Hoàng D',
         'dept': 'nhi_khoa',
+        'deptName': 'Nhi khoa',
         'fee': 300000.0,
       },
       {
         'id': 'dr_da_1',
         'name': 'BS Hoàng Gia E',
         'dept': 'da_lieu',
+        'deptName': 'Da liễu',
         'fee': 600000.0,
       },
       {
         'id': 'dr_da_2',
         'name': 'BS Vũ Đức F',
         'dept': 'da_lieu',
+        'deptName': 'Da liễu',
         'fee': 550000.0,
       },
       {
         'id': 'dr_mat_1',
         'name': 'BS Đặng Minh G',
         'dept': 'mat',
+        'deptName': 'Mắt',
         'fee': 400000.0,
       },
       {
         'id': 'dr_rhm_1',
         'name': 'BS Phan Thanh H',
         'dept': 'rang_ham_mat',
+        'deptName': 'Răng Hàm Mặt',
         'fee': 400000.0,
       },
       {
         'id': 'dr_tmh_1',
         'name': 'BS Ngô Bảo K',
         'dept': 'tai_mui_hong',
+        'deptName': 'Tai Mũi Họng',
         'fee': 380000.0,
       },
       {
         'id': 'dr_nt_1',
         'name': 'BS Lý Tiểu L',
         'dept': 'noi_tiet',
+        'deptName': 'Nội tiết',
         'fee': 420000.0,
       },
     ];
@@ -223,12 +234,13 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         'name': dr['name'],
         'specialization': dr['dept'],
         'departmentId': dr['dept'],
+        'departmentName': dr['deptName'],
         'yearsOfExperience': 10 + (doctors.indexOf(dr) % 5),
         'consultationFee': dr['fee'],
         'isActive': true,
         'licenseNumber': 'BS${(dr['id'] as String).toUpperCase()}',
         'doctorCode': IdFormatter.format(prefix: 'DOC', rawId: doctorId),
-      }, SetOptions(merge: true));
+      }, SetOptions(merge: false)); // FORCE OVERWRITE: Ensure empty fields are replaced
 
       // 3. Create Schedules for each doctor (Next 7 days)
       for (int i = 0; i < 7; i++) {
@@ -246,6 +258,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
             'shiftId': 'morning',
             'isAvailable': true,
             'maxSlots': 20,
+            'availableSlots': 20,
           },
           SetOptions(merge: true),
         );
@@ -263,6 +276,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
             'shiftId': 'afternoon',
             'isAvailable': true,
             'maxSlots': 20,
+            'availableSlots': 20,
           },
           SetOptions(merge: true),
         );
@@ -454,6 +468,21 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
     emit(state.copyWith(status: BookingStatus.loading));
     try {
+      // FETCH Patient info (DOB, Gender) for the clinical ticket
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(event.patientId)
+          .get();
+      
+      String? dob;
+      String? gender;
+      
+      if (userDoc.exists) {
+        final data = userDoc.data()!;
+        dob = data['dateOfBirth'] as String?;
+        gender = data['gender'] as String?;
+      }
+
       // Use selectedQueueNumber if user picked one, otherwise fetch next
       int queueNumber;
       if (state.selectedQueueNumber != null) {
@@ -469,6 +498,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       final appointment = HospitalAppointment(
         id: '', // Will be set by Firestore
         patientId: event.patientId,
+        patientDOB: dob,
+        patientGender: gender,
         patientName: event.patientName,
         doctorId: state.selectedDoctor!.id,
         doctorName: state.selectedDoctor!.name,
@@ -502,6 +533,81 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           errorMessage: e.toString(),
         ),
       );
+    }
+  }
+
+  Future<void> _onFinalizePaymentAndConfirm(
+    FinalizePaymentAndConfirm event,
+    Emitter<BookingState> emit,
+  ) async {
+    emit(state.copyWith(status: BookingStatus.loading));
+    try {
+      final db = FirebaseFirestore.instance;
+      final batch = db.batch();
+
+      final paymentId = 'PAY_${DateTime.now().millisecondsSinceEpoch}';
+      final invoiceId = 'INV_${DateTime.now().millisecondsSinceEpoch}';
+
+      // 1. Create Payment Record (Pending as requested)
+      final paymentRef = db.collection('Payments').doc(paymentId);
+      batch.set(paymentRef, {
+        'appointmentId': event.appointmentId,
+        'patientId': event.patientId,
+        'amount': event.amount,
+        'status': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+        'method': state.selectedPaymentMethod,
+      });
+
+      // 2. Create Invoice Record
+      final invoiceRef = db.collection('Invoices').doc(invoiceId);
+      batch.set(invoiceRef, {
+        'id': invoiceId,
+        'appointmentId': event.appointmentId,
+        'subtotal': event.amount,
+        'discount': 0.0,
+        'tax': 0.0,
+        'total': event.amount,
+        'status': 'paid', // User said "Sau khi thanh toán hoàn tất..."
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      // 3. Update Appointment Status to Confirmed
+      final appointmentRef = db.collection('Appointments').doc(event.appointmentId);
+      batch.update(appointmentRef, {'status': 'confirmed'});
+
+      await batch.commit();
+
+      // Refresh appointment in state (for Ticket UI updates if any)
+      if (state.createdAppointment != null) {
+        final updated = HospitalAppointment(
+          id: state.createdAppointment!.id,
+          patientId: state.createdAppointment!.patientId,
+          patientDOB: state.createdAppointment!.patientDOB,
+          patientGender: state.createdAppointment!.patientGender,
+          patientName: state.createdAppointment!.patientName,
+          doctorId: state.createdAppointment!.doctorId,
+          doctorName: state.createdAppointment!.doctorName,
+          departmentId: state.createdAppointment!.departmentId,
+          departmentName: state.createdAppointment!.departmentName,
+          appointmentDate: state.createdAppointment!.appointmentDate,
+          shiftId: state.createdAppointment!.shiftId,
+          timeSlot: state.createdAppointment!.timeSlot,
+          queueNumber: state.createdAppointment!.queueNumber,
+          roomNumber: state.createdAppointment!.roomNumber,
+          consultationFee: state.createdAppointment!.consultationFee,
+          insuranceNumber: state.createdAppointment!.insuranceNumber,
+          symptoms: state.createdAppointment!.symptoms,
+          status: 'confirmed',
+          paymentMethod: state.createdAppointment!.paymentMethod,
+          createdAt: state.createdAppointment!.createdAt,
+        );
+        emit(state.copyWith(status: BookingStatus.success, createdAppointment: updated));
+      } else {
+        emit(state.copyWith(status: BookingStatus.success));
+      }
+    } catch (e) {
+      emit(state.copyWith(status: BookingStatus.failure, errorMessage: e.toString()));
     }
   }
 

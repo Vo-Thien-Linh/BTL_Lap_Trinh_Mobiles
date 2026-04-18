@@ -12,7 +12,8 @@ extension AppRoleX on AppRole {
   };
 
   static AppRole fromString(String value) {
-    switch (value) {
+    final cleanValue = value.trim().toLowerCase();
+    switch (cleanValue) {
       case 'doctor':
         return AppRole.doctor;
       case 'admin':
