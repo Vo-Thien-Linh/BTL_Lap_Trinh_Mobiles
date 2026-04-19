@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'config/service_locator.dart' as sl;
 import 'app/app.dart';
 import 'app/routes/app_routes.dart';
+import 'app/settings/app_settings_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,9 +12,23 @@ Future<void> main() async {
   await Firebase.initializeApp();
 
   await sl.setupServiceLocator();
-  
+
   // CHIẾN LƯỢC: ĐƯA NGƯỜI DÙNG VÀO TRANG CHỦ BÁC SĨ ĐỂ KIỂM THỬ CHỨC NĂNG
   const initialRoute = AppRoutes.doctorHome;
 
-  runApp(HospitalBookingApp(initialRoute: initialRoute));
+  final settingsController = AppSettingsController(
+    sharedPreferences: sl.getIt(),
+  );
+  await settingsController.load();
+
+  if (!sl.getIt.isRegistered<AppSettingsController>()) {
+    sl.getIt.registerSingleton<AppSettingsController>(settingsController);
+  }
+
+  runApp(
+    HospitalBookingApp(
+      initialRoute: initialRoute,
+      settingsController: settingsController,
+    ),
+  );
 }

@@ -6,6 +6,7 @@ import '../../../../app/routes/app_routes.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../shared/utils/firebase_data_seeder.dart';
+import '../../../../shared/utils/app_i18n.dart';
 import '../../../home/presentation/pages/examination_history_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -16,7 +17,8 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStateMixin {
+class _ProfilePageState extends State<ProfilePage>
+    with SingleTickerProviderStateMixin {
   bool _isLoading = true;
   UserModel? _userModel;
   List<Map<String, dynamic>> _familyMembers = [];
@@ -25,7 +27,11 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this, initialIndex: widget.initialTab);
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: widget.initialTab,
+    );
     _loadUserProfile();
   }
 
@@ -40,7 +46,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         // Load User Profile
-        final doc = await FirebaseFirestore.instance.collection('Users').doc(user.uid).get();
+        final doc = await FirebaseFirestore.instance
+            .collection('Users')
+            .doc(user.uid)
+            .get();
         if (doc.exists) {
           _userModel = UserModel.fromDocument(doc);
         }
@@ -51,9 +60,9 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
             .doc(user.uid)
             .collection('FamilyMembers')
             .get();
-        
+
         _familyMembers = familySnapshot.docs.map((d) => d.data()).toList();
-        
+
         setState(() {});
       }
     } catch (e) {
@@ -70,7 +79,9 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     if (_isLoading) {
       return const Scaffold(
         backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
       );
     }
 
@@ -102,7 +113,11 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                     indicatorColor: AppColors.primary,
                     indicatorWeight: 4,
                     indicatorSize: TabBarIndicatorSize.label,
-                    labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
+                    labelStyle: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 13,
+                      letterSpacing: 0.5,
+                    ),
                     dividerColor: Colors.transparent,
                     tabs: const [
                       Tab(text: 'THÔNG TIN'),
@@ -137,10 +152,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
       title: Text(
         'HỒ SƠ CÁ NHÂN',
         style: TextStyle(
-          fontSize: 14, 
-          fontWeight: FontWeight.w900, 
-          color: Colors.white, 
-          letterSpacing: 2.0
+          fontSize: 14,
+          fontWeight: FontWeight.w900,
+          color: Colors.white,
+          letterSpacing: 2.0,
         ),
       ),
     );
@@ -164,10 +179,12 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
               color: Colors.black.withOpacity(0.3),
               blurRadius: 20,
               offset: const Offset(0, 10),
-            )
+            ),
           ],
           image: DecorationImage(
-            image: const NetworkImage('https://www.transparenttextures.com/patterns/cubes.png'),
+            image: const NetworkImage(
+              'https://www.transparenttextures.com/patterns/cubes.png',
+            ),
             opacity: 0.05,
             repeat: ImageRepeat.repeat,
           ),
@@ -204,7 +221,11 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                           letterSpacing: 1.5,
                         ),
                       ),
-                      Icon(Icons.contactless_outlined, color: Colors.white.withOpacity(0.5), size: 20),
+                      Icon(
+                        Icons.contactless_outlined,
+                        color: Colors.white.withOpacity(0.5),
+                        size: 20,
+                      ),
                     ],
                   ),
                   const Spacer(),
@@ -213,16 +234,21 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                       Container(
                         padding: const EdgeInsets.all(3),
                         decoration: BoxDecoration(
-                          border: Border.all(color: AppColors.primaryLight, width: 2),
+                          border: Border.all(
+                            color: AppColors.primaryLight,
+                            width: 2,
+                          ),
                           shape: BoxShape.circle,
                         ),
                         child: CircleAvatar(
                           radius: 32,
-                          backgroundImage: user.avatarUrl != null 
-                              ? NetworkImage(user.avatarUrl!) 
+                          backgroundImage: user.avatarUrl != null
+                              ? NetworkImage(user.avatarUrl!)
                               : null,
                           backgroundColor: AppColors.primaryLight,
-                          child: user.avatarUrl == null ? Text(user.fullName[0]) : null,
+                          child: user.avatarUrl == null
+                              ? Text(user.fullName[0])
+                              : null,
                         ),
                       ),
                       const SizedBox(width: 20),
@@ -266,7 +292,11 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Icons.qr_code_rounded, color: Colors.black, size: 24),
+                          child: const Icon(
+                            Icons.qr_code_rounded,
+                            color: Colors.black,
+                            size: 24,
+                          ),
                         ),
                       ),
                     ],
@@ -284,14 +314,31 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 8, fontWeight: FontWeight.w800)),
-        Text(value, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1)),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.5),
+            fontSize: 8,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1,
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildHealthVitalsGrid(UserModel user) {
-    double bmi = (user.weight ?? 0) / (((user.height ?? 1) / 100) * ((user.height ?? 1) / 100));
+    double bmi =
+        (user.weight ?? 0) /
+        (((user.height ?? 1) / 100) * ((user.height ?? 1) / 100));
     String bmiStatus = _getBMIStatus(bmi);
     Color bmiColor = _getBMIColor(bmi);
 
@@ -302,28 +349,33 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
         children: [
           const Text(
             'CHỈ SỐ SINH TỒN',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textHint, letterSpacing: 1.2),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textHint,
+              letterSpacing: 1.2,
+            ),
           ),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: _buildInteractiveVitalCard(
-                  'BMI', 
-                  bmi.toStringAsFixed(1), 
-                  bmiStatus, 
-                  Icons.analytics_rounded, 
-                  bmiColor
+                  'BMI',
+                  bmi.toStringAsFixed(1),
+                  bmiStatus,
+                  Icons.analytics_rounded,
+                  bmiColor,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _buildInteractiveVitalCard(
-                  'NHÓM MÁU', 
-                  user.bloodType ?? 'O+', 
-                  'Tương thích cao', 
-                  Icons.water_drop_rounded, 
-                  const Color(0xFFEF4444)
+                  'NHÓM MÁU',
+                  user.bloodType ?? 'O+',
+                  'Tương thích cao',
+                  Icons.water_drop_rounded,
+                  const Color(0xFFEF4444),
                 ),
               ),
             ],
@@ -333,21 +385,21 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
             children: [
               Expanded(
                 child: _buildInteractiveVitalCard(
-                  'CHIỀU CAO', 
-                  '${user.height ?? "--"} cm', 
-                  'Tăng 1.2% year', 
-                  Icons.straighten_rounded, 
-                  const Color(0xFF3B82F6)
+                  'CHIỀU CAO',
+                  '${user.height ?? "--"} cm',
+                  'Tăng 1.2% year',
+                  Icons.straighten_rounded,
+                  const Color(0xFF3B82F6),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _buildInteractiveVitalCard(
-                  'CÂN NẶNG', 
-                  '${user.weight ?? "--"} kg', 
-                  'Ổn định', 
-                  Icons.monitor_weight_rounded, 
-                  const Color(0xFF10B981)
+                  'CÂN NẶNG',
+                  '${user.weight ?? "--"} kg',
+                  'Ổn định',
+                  Icons.monitor_weight_rounded,
+                  const Color(0xFF10B981),
                 ),
               ),
             ],
@@ -357,7 +409,13 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildInteractiveVitalCard(String label, String value, String status, IconData icon, Color color) {
+  Widget _buildInteractiveVitalCard(
+    String label,
+    String value,
+    String status,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -373,18 +431,39 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: Icon(icon, color: color, size: 18),
               ),
               Text(
                 status,
-                style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: color),
+                style: TextStyle(
+                  fontSize: 8,
+                  fontWeight: FontWeight.w900,
+                  color: color,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.textHint)),
-          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textBody)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textHint,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textBody,
+            ),
+          ),
         ],
       ),
     );
@@ -398,7 +477,12 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
           padding: EdgeInsets.symmetric(horizontal: 20),
           child: Text(
             'GIA ĐÌNH CỦA BẠN',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textHint, letterSpacing: 1.2),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textHint,
+              letterSpacing: 1.2,
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -419,16 +503,22 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                   children: [
                     CircleAvatar(
                       radius: 28,
-                      backgroundImage: member['avatarUrl'] != null 
-                          ? NetworkImage(member['avatarUrl']) 
+                      backgroundImage: member['avatarUrl'] != null
+                          ? NetworkImage(member['avatarUrl'])
                           : null,
                       backgroundColor: AppColors.primaryLight,
-                      child: member['avatarUrl'] == null ? const Icon(Icons.person) : null,
+                      child: member['avatarUrl'] == null
+                          ? const Icon(Icons.person)
+                          : null,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       member['relationship'] ?? 'Người thân',
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.textBody),
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textBody,
+                      ),
                     ),
                   ],
                 ),
@@ -448,14 +538,24 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.primary.withOpacity(0.2), style: BorderStyle.none),
+            border: Border.all(
+              color: AppColors.primary.withOpacity(0.2),
+              style: BorderStyle.none,
+            ),
             color: AppColors.primary.withOpacity(0.05),
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.add_rounded, color: AppColors.primary),
         ),
         const SizedBox(height: 8),
-        const Text('Thêm mới', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.textHint)),
+        const Text(
+          'Thêm mới',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textHint,
+          ),
+        ),
       ],
     );
   }
@@ -468,21 +568,48 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
           _buildMenuSection(
             title: 'THÔNG TIN LIÊN HỆ',
             items: [
-              _buildMenuItem(Icons.phone_iphone_rounded, 'Số điện thoại', user.phone, AppColors.primary),
-              _buildMenuItem(Icons.email_rounded, 'Email liên hệ', user.email, AppColors.primary),
-              _buildMenuItem(Icons.location_on_rounded, 'Địa chỉ thường trú', user.address ?? 'Chưa cập nhật', AppColors.primary),
+              _buildMenuItem(
+                Icons.phone_iphone_rounded,
+                'Số điện thoại',
+                user.phone,
+                AppColors.primary,
+              ),
+              _buildMenuItem(
+                Icons.email_rounded,
+                'Email liên hệ',
+                user.email,
+                AppColors.primary,
+              ),
+              _buildMenuItem(
+                Icons.location_on_rounded,
+                'Địa chỉ thường trú',
+                user.address ?? 'Chưa cập nhật',
+                AppColors.primary,
+              ),
             ],
           ),
           const SizedBox(height: 20),
           _buildMenuSection(
             title: 'HỒ SƠ BẢO HIỂM & KHẨN CẤP',
             items: [
-              _buildMenuItem(Icons.badge_rounded, 'Số thẻ BHYT', user.healthInsuranceNumber ?? 'Chưa cập nhật', AppColors.success),
-              _buildMenuItem(Icons.contact_emergency_rounded, 'Người liên hệ khẩn cấp', user.emergencyPhone ?? 'Chưa thiết lập', AppColors.error),
+              _buildMenuItem(
+                Icons.badge_rounded,
+                'Số thẻ BHYT',
+                user.healthInsuranceNumber ?? 'Chưa cập nhật',
+                AppColors.success,
+              ),
+              _buildMenuItem(
+                Icons.contact_emergency_rounded,
+                'Người liên hệ khẩn cấp',
+                user.emergencyPhone ?? 'Chưa thiết lập',
+                AppColors.error,
+              ),
             ],
           ),
           const SizedBox(height: 30),
           _buildUpdateProfileButton(user),
+          const SizedBox(height: 12),
+          _buildSettingsButton(),
           const SizedBox(height: 12),
           _buildSyncDataButton(user),
           const SizedBox(height: 12),
@@ -493,20 +620,37 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildMenuSection({required String title, required List<Widget> items}) {
+  Widget _buildMenuSection({
+    required String title,
+    required List<Widget> items,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 8, bottom: 12),
-          child: Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textHint, letterSpacing: 1.2)),
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textHint,
+              letterSpacing: 1.2,
+            ),
+          ),
         ),
         Container(
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(28),
             border: Border.all(color: AppColors.border.withOpacity(0.5)),
-            boxShadow: [BoxShadow(color: AppColors.textBody.withOpacity(0.02), blurRadius: 15, offset: const Offset(0, 5))],
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.textBody.withOpacity(0.02),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
           child: Column(children: items),
         ),
@@ -514,7 +658,12 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildMenuItem(IconData icon, String title, String value, Color iconColor) {
+  Widget _buildMenuItem(
+    IconData icon,
+    String title,
+    String value,
+    Color iconColor,
+  ) {
     return InkWell(
       onTap: () {},
       child: Padding(
@@ -523,7 +672,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
           children: [
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: iconColor.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(14),
+              ),
               child: Icon(icon, color: iconColor, size: 20),
             ),
             const SizedBox(width: 16),
@@ -531,13 +683,31 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textHint)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textHint,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.textBody)),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.textBody,
+                    ),
+                  ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: AppColors.border, size: 20),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.border,
+              size: 20,
+            ),
           ],
         ),
       ),
@@ -553,12 +723,16 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
             color: AppColors.primary.withOpacity(0.2),
             blurRadius: 15,
             offset: const Offset(0, 8),
-          )
+          ),
         ],
       ),
       child: ElevatedButton(
         onPressed: () async {
-          final result = await Navigator.pushNamed(context, AppRoutes.editProfile, arguments: user);
+          final result = await Navigator.pushNamed(
+            context,
+            AppRoutes.editProfile,
+            arguments: user,
+          );
           if (result == true) {
             setState(() => _isLoading = true);
             _loadUserProfile();
@@ -568,10 +742,15 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 60),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           elevation: 0,
         ),
-        child: const Text('CẬP NHẬT HỒ SƠ', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+        child: const Text(
+          'CẬP NHẬT HỒ SƠ',
+          style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5),
+        ),
       ),
     );
   }
@@ -585,7 +764,9 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Đã đồng bộ 14 bác sĩ Tim mạch và dữ liệu mẫu thành công!'),
+                content: Text(
+                  'Đã đồng bộ 14 bác sĩ Tim mạch và dữ liệu mẫu thành công!',
+                ),
                 backgroundColor: AppColors.success,
                 behavior: SnackBarBehavior.floating,
               ),
@@ -595,7 +776,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
         } catch (e) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Lỗi đồng bộ: $e'), backgroundColor: AppColors.error),
+              SnackBar(
+                content: Text('Lỗi đồng bộ: $e'),
+                backgroundColor: AppColors.error,
+              ),
             );
           }
         } finally {
@@ -609,7 +793,35 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
       ),
       child: const Text(
         'ĐỒNG BỘ DỮ LIỆU MẪU (DEV)',
-        style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 1.0),
+        style: TextStyle(
+          color: AppColors.primary,
+          fontWeight: FontWeight.w900,
+          fontSize: 13,
+          letterSpacing: 1.0,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsButton() {
+    return OutlinedButton.icon(
+      onPressed: () {
+        Navigator.pushNamed(context, AppRoutes.settings);
+      },
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 54),
+        side: const BorderSide(color: AppColors.primary),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      icon: const Icon(Icons.settings_outlined, color: AppColors.primary),
+      label: Text(
+        context.tr('profile.settings'),
+        style: const TextStyle(
+          color: AppColors.primary,
+          fontWeight: FontWeight.w900,
+          fontSize: 13,
+          letterSpacing: 1.0,
+        ),
       ),
     );
   }
@@ -620,7 +832,15 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
         await FirebaseAuth.instance.signOut();
         if (mounted) Navigator.pushReplacementNamed(context, AppRoutes.login);
       },
-      child: const Text('ĐĂNG XUẤT HỎI HỆ THỐNG', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 1.5)),
+      child: const Text(
+        'ĐĂNG XUẤT HỎI HỆ THỐNG',
+        style: TextStyle(
+          color: AppColors.error,
+          fontWeight: FontWeight.w900,
+          fontSize: 13,
+          letterSpacing: 1.5,
+        ),
+      ),
     );
   }
 
@@ -650,7 +870,11 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
             children: [
               const Text(
                 'MÃ BỆNH NHÂN',
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 2),
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                  letterSpacing: 2,
+                ),
               ),
               const SizedBox(height: 24),
               Container(
@@ -660,17 +884,28 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: AppColors.border),
                 ),
-                child: const Icon(Icons.qr_code_2_rounded, size: 200, color: AppColors.textBody),
+                child: const Icon(
+                  Icons.qr_code_2_rounded,
+                  size: 200,
+                  color: AppColors.textBody,
+                ),
               ),
               const SizedBox(height: 24),
               Text(
                 user.fullName.toUpperCase(),
-                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                ),
               ),
               Text(
                 'ID: ${user.uid.toUpperCase()}',
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 10, color: AppColors.textHint, fontFamily: 'monospace'),
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: AppColors.textHint,
+                  fontFamily: 'monospace',
+                ),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -678,9 +913,17 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
-                child: const Text('ĐÓNG', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
+                child: const Text(
+                  'ĐÓNG',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ],
           ),
@@ -701,7 +944,11 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => 48;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return _child;
   }
 
