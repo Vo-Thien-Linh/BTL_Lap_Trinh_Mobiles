@@ -6,7 +6,8 @@ import 'package:baitaplon/features/appointment/domain/entities/appointment_entit
 import 'package:baitaplon/app/theme/app_colors.dart';
 
 class SelectDoctorDateStep extends StatefulWidget {
-  const SelectDoctorDateStep({super.key});
+  final DoctorEntity? initialDoctor;
+  const SelectDoctorDateStep({super.key, this.initialDoctor});
 
   @override
   State<SelectDoctorDateStep> createState() => _SelectDoctorDateStepState();
@@ -15,6 +16,20 @@ class SelectDoctorDateStep extends StatefulWidget {
 class _SelectDoctorDateStepState extends State<SelectDoctorDateStep> {
   DateTime _selectedDate = DateTime.now();
   DoctorEntity? _selectedDoctor;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialDoctor != null) {
+      _selectedDoctor = widget.initialDoctor;
+      // Auto-notify Bloc to select this doctor and load their schedules
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<BookingBloc>().add(
+          SelectDoctorAndDate(_selectedDoctor!, _selectedDate),
+        );
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -179,7 +179,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       };
 
       await FirebaseFirestore.instance
-          .collection('users')
+          .collection('Users')
           .doc(widget.user.uid)
           .update(updatedData);
 

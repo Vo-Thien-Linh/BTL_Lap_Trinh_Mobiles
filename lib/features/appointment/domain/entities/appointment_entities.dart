@@ -6,6 +6,8 @@ class DepartmentEntity extends Equatable {
   final String description;
   final String location;
   final String phone;
+  final int doctorCount;
+  final bool isActive;
 
   const DepartmentEntity({
     required this.id,
@@ -13,10 +15,12 @@ class DepartmentEntity extends Equatable {
     required this.description,
     required this.location,
     required this.phone,
+    this.doctorCount = 0,
+    this.isActive = true,
   });
 
   @override
-  List<Object?> get props => [id, name, description, location, phone];
+  List<Object?> get props => [id, name, description, location, phone, doctorCount, isActive];
 }
 
 class DoctorEntity extends Equatable {
@@ -95,6 +99,8 @@ class ScheduleEntity extends Equatable {
 class HospitalAppointment extends Equatable {
   final String id;
   final String patientId;
+  final String? patientDOB;
+  final String? patientGender;
   final String patientName;
   final String doctorId;
   final String doctorName;
@@ -108,6 +114,13 @@ class HospitalAppointment extends Equatable {
   final double consultationFee;
   final String? insuranceNumber;
   final String symptoms;
+  final String? diagnosis;
+  final String? physicalExam;
+  final String? treatment;
+  final String? notes;
+  final List<Map<String, dynamic>>? prescription;
+  final List<Map<String, dynamic>>? labResults;
+  final Map<String, dynamic>? vitals;
   final String status;
   final String paymentMethod;
   final DateTime createdAt;
@@ -115,6 +128,8 @@ class HospitalAppointment extends Equatable {
   const HospitalAppointment({
     required this.id,
     required this.patientId,
+    this.patientDOB,
+    this.patientGender,
     required this.patientName,
     required this.doctorId,
     required this.doctorName,
@@ -128,6 +143,13 @@ class HospitalAppointment extends Equatable {
     required this.consultationFee,
     this.insuranceNumber,
     required this.symptoms,
+    this.diagnosis,
+    this.physicalExam,
+    this.treatment,
+    this.notes,
+    this.prescription,
+    this.labResults,
+    this.vitals,
     required this.status,
     required this.paymentMethod,
     required this.createdAt,

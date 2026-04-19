@@ -74,4 +74,19 @@ class ConfirmBooking extends BookingEvent {
 
 class StepBack extends BookingEvent {}
 
+class FinalizePaymentAndConfirm extends BookingEvent {
+  final String appointmentId;
+  final String patientId;
+  final double amount;
+  
+  const FinalizePaymentAndConfirm({
+    required this.appointmentId, 
+    required this.patientId, 
+    required this.amount,
+  });
+
+  @override
+  List<Object?> get props => [appointmentId, patientId, amount];
+}
+
 class ResetBooking extends BookingEvent {}

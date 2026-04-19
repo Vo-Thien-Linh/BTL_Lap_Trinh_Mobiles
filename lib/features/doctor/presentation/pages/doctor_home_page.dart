@@ -1,12 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../../../app/routes/app_routes.dart';
 import '../../../../config/service_locator.dart';
-import '../../../../shared/utils/id_formatter.dart';
 import '../../../auth/domain/usecases/logout_usecase.dart';
-import 'doctor_appointment_detail_page.dart';
+import 'doctor_queue_page.dart';
+import 'doctor_service_queue_page.dart';
+import 'doctor_schedule_page.dart';
+import 'doctor_patient_records_page.dart';
+import 'doctor_prescription_builder_page.dart';
+import 'doctor_examination_list_page.dart';
 
 class DoctorHomePage extends StatefulWidget {
   const DoctorHomePage({super.key});
@@ -15,844 +20,420 @@ class DoctorHomePage extends StatefulWidget {
   State<DoctorHomePage> createState() => _DoctorHomePageState();
 }
 
-class _DoctorHomePageState extends State<DoctorHomePage>
-    with SingleTickerProviderStateMixin {
-  final LogoutUsecase _logoutUsecase = getIt<LogoutUsecase>();
-
-  late final TabController _tabController;
+class _DoctorHomePageState extends State<DoctorHomePage> {
   bool _isLoggingOut = false;
+  bool _isOnline = true; // Trạng thái hoạt động thực tế
+
+  Future<void> _handleLogout() async {
+    setState(() => _isLoggingOut = true);
+    try {
+      await getIt<LogoutUsecase>()();
+    } catch (_) {}
+    if (!mounted) return;
+    Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+  }
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _handleLogout() async {
-    setState(() => _isLoggingOut = true);
-
-    try {
-      await _logoutUsecase();
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _isLoggingOut = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Không thể đăng xuất. Vui lòng thử lại.')),
-      );
-      return;
-    }
-
-    if (!mounted) return;
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      AppRoutes.login,
-      (route) => false,
-    );
-  }
-
-  Future<_DoctorContext?> _loadDoctorContext() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return null;
-
-    final userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
-    final userData = userDoc.data() ?? {};
-    final doctorName =
-        (userData['fullName'] ?? userData['username'] ?? 'Bác sĩ') as String;
-
-    final doctorSnapshot = await FirebaseFirestore.instance
-        .collection('Doctors')
-        .where('userId', isEqualTo: uid)
-        .limit(1)
-        .get();
-
-    if (doctorSnapshot.docs.isEmpty) {
-      return _DoctorContext(
-        doctorId: '',
-        doctorCode: '',
-        doctorName: doctorName,
-        specialization: 'Đa khoa',
-      );
-    }
-
-    final doctorDoc = doctorSnapshot.docs.first;
-    final data = doctorDoc.data();
-    final doctorCode = (data['doctorCode'] ?? '').toString().trim();
-
-    return _DoctorContext(
-      doctorId: doctorDoc.id,
-      doctorCode: doctorCode.isEmpty
-          ? IdFormatter.format(prefix: 'DOC', rawId: doctorDoc.id)
-          : doctorCode,
-      doctorName: (data['name'] ?? doctorName) as String,
-      specialization: (data['specialization'] ?? 'Đa khoa') as String,
-    );
-  }
-
-  Stream<QuerySnapshot<Map<String, dynamic>>> _doctorAppointmentsStream(
-    String doctorId,
-  ) {
-    if (doctorId.isEmpty) {
-      return const Stream.empty();
-    }
-
-    return FirebaseFirestore.instance
-        .collection('Appointments')
-        .where('doctorId', isEqualTo: doctorId)
-        .snapshots();
-  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF3F6FC),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        toolbarHeight: 74,
-        title: const Text(
-          'Cổng Bác sĩ',
-          style: TextStyle(
-            color: Color(0xFF13223E),
-            fontWeight: FontWeight.w800,
-            fontSize: 24,
-          ),
-        ),
-        actions: [
-          IconButton(
-            onPressed: _isLoggingOut ? null : _handleLogout,
-            icon: _isLoggingOut
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.logout_rounded, color: Color(0xFFC62828)),
-          ),
-          const SizedBox(width: 10),
-        ],
-      ),
-      body: FutureBuilder<_DoctorContext?>(
-        future: _loadDoctorContext(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    final authUser = FirebaseAuth.instance.currentUser;
 
-          final doctor = snapshot.data;
-          if (doctor == null) {
-            return const Center(
-              child: Text('Không tìm thấy thông tin bác sĩ.'),
-            );
-          }
+    return StreamBuilder<DocumentSnapshot>(
+      stream: authUser != null
+          ? FirebaseFirestore.instance.collection('users').doc(authUser.uid).snapshots()
+          : const Stream.empty(),
+      builder: (context, snapshot) {
+        String name = 'Bác sĩ';
+        if (snapshot.hasData && snapshot.data!.exists) {
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          name = data['fullName'] ?? data['username'] ?? 'Bác sĩ';
+        }
 
-          return Column(
+        return Scaffold(
+          backgroundColor: const Color(0xFFF8FAFC),
+          body: Stack(
             children: [
-              _buildDoctorHeader(doctor),
-              const SizedBox(height: 12),
-              _buildTabBar(),
-              const SizedBox(height: 8),
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildOverviewTab(doctor),
-                    _buildScheduleTab(doctor),
-                    _buildPatientsTab(doctor),
-                    _buildProfileTab(doctor),
-                  ],
+              // Vibrant Blue Premium Background
+              Container(
+                height: 380,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF1A56CE), Color(0xFF3B82F6), Color(0xFF60A5FA)],
+                  ),
                 ),
               ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildDoctorHeader(_DoctorContext doctor) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 18),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0E47B5), Color(0xFF2267D1)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0E47B5).withOpacity(0.28),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          const CircleAvatar(
-            radius: 28,
-            backgroundColor: Color(0xFFD9E7FF),
-            child: Icon(
-              Icons.medical_services_rounded,
-              color: Color(0xFF0E47B5),
-              size: 30,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  doctor.doctorName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Chuyên ngành: ${doctor.specialization}',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.88),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabBar() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 18),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE8EDF7),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        indicator: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        labelColor: const Color(0xFF0E47B5),
-        unselectedLabelColor: const Color(0xFF5B6780),
-        labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-        tabs: const [
-          Tab(text: 'Tổng quan'),
-          Tab(text: 'Lịch khám'),
-          Tab(text: 'Bệnh nhân'),
-          Tab(text: 'Hồ sơ'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOverviewTab(_DoctorContext doctor) {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: _doctorAppointmentsStream(doctor.doctorId),
-      builder: (context, snapshot) {
-        final docs = snapshot.data?.docs ?? [];
-        final now = DateTime.now();
-        final todayStart = DateTime(now.year, now.month, now.day);
-        final todayEnd = todayStart.add(const Duration(days: 1));
-
-        final todayAppointments = docs.where((doc) {
-          final ts = doc.data()['appointmentDate'];
-          if (ts is! Timestamp) return false;
-          final date = ts.toDate();
-          return !date.isBefore(todayStart) && date.isBefore(todayEnd);
-        }).toList();
-
-        final waitingPatients = todayAppointments.where((doc) {
-          final status = (doc.data()['status'] ?? '').toString().toLowerCase();
-          return status == 'pending' || status == 'confirmed';
-        }).length;
-
-        final upcoming = docs.where((doc) {
-          final ts = doc.data()['appointmentDate'];
-          if (ts is! Timestamp) return false;
-          return ts.toDate().isAfter(now);
-        }).toList();
-
-        return ListView(
-          padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: _metricCard(
-                    title: 'Lịch hôm nay',
-                    value: '${todayAppointments.length}',
-                    color: const Color(0xFF1457CC),
-                    icon: Icons.calendar_today_rounded,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _metricCard(
-                    title: 'Đang chờ',
-                    value: '$waitingPatients',
-                    color: const Color(0xFF0E9F6E),
-                    icon: Icons.groups_rounded,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            _sectionCard(
-              title: 'Lịch sắp tới',
-              child: upcoming.isEmpty
-                  ? const Text('Chưa có lịch sắp tới.')
-                  : Column(
-                      children: upcoming.take(4).map((doc) {
-                        final data = doc.data();
-                        final patientName =
-                            (data['patientName'] ?? 'Bệnh nhân') as String;
-                        final date = (data['appointmentDate'] as Timestamp?)
-                            ?.toDate();
-                        final dateText = date == null
-                            ? 'Chưa có ngày'
-                            : '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-                        return _listTileInfo(
-                          icon: Icons.event_available_rounded,
-                          title: patientName,
-                          subtitle: dateText,
-                        );
-                      }).toList(),
+              CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  _buildCommandHeader(name),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        children: [
+                          _buildNextPatientSpotlight(),
+                          const SizedBox(height: 24),
+                          _buildSmartMetricsRow(),
+                          const SizedBox(height: 32),
+                          _buildSectionHeader('CÔNG CỤ ĐIỀU HÀNH'),
+                          const SizedBox(height: 16),
+                          _buildModernGrid(),
+                          const SizedBox(height: 32),
+                          _buildSectionHeader('LỊCH TRÌNH KHÁM'),
+                          const SizedBox(height: 8),
+                          _buildMiniTimeline(),
+                          const SizedBox(height: 32),
+                          _buildSectionHeader('HIỆU SUẤT TRỰC'),
+                          const SizedBox(height: 16),
+                          _buildPerformanceSnapshot(),
+                          const SizedBox(height: 40),
+                        ],
+                      ),
                     ),
-            ),
-            const SizedBox(height: 14),
-            _sectionCard(
-              title: 'Tác vụ nhanh',
-              child: Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: const [
-                  _QuickActionChip(
-                    label: 'Nhập kết quả',
-                    icon: Icons.edit_note_rounded,
-                  ),
-                  _QuickActionChip(
-                    label: 'Kê đơn thuốc',
-                    icon: Icons.medication_rounded,
-                  ),
-                  _QuickActionChip(
-                    label: 'Lịch làm việc',
-                    icon: Icons.schedule_rounded,
-                  ),
-                  _QuickActionChip(
-                    label: 'Danh sách bệnh nhân',
-                    icon: Icons.badge_rounded,
                   ),
                 ],
               ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildScheduleTab(_DoctorContext doctor) {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: _doctorAppointmentsStream(doctor.doctorId),
-      builder: (context, snapshot) {
-        final docs = snapshot.data?.docs ?? [];
-        final sorted = [...docs]
-          ..sort((a, b) {
-            final da =
-                (a.data()['appointmentDate'] as Timestamp?)?.toDate() ??
-                DateTime(1900);
-            final db =
-                (b.data()['appointmentDate'] as Timestamp?)?.toDate() ??
-                DateTime(1900);
-            return da.compareTo(db);
-          });
-
-        return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
-          itemCount: sorted.length,
-          itemBuilder: (context, index) {
-            final data = sorted[index].data();
-            final patientName = (data['patientName'] ?? 'Bệnh nhân') as String;
-            final status = (data['status'] ?? 'pending').toString();
-            final date = (data['appointmentDate'] as Timestamp?)?.toDate();
-            final timeText = date == null
-                ? 'Chưa có thời gian'
-                : '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} - ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE7ECF6)),
-              ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => DoctorAppointmentDetailPage(
-                        appointmentId: sorted[index].id,
-                        initialData: data,
-                      ),
-                    ),
-                  );
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          const CircleAvatar(
-                            backgroundColor: Color(0xFFDCE8FF),
-                            child: Icon(
-                              Icons.person_outline_rounded,
-                              color: Color(0xFF1654C0),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  patientName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF15233D),
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  timeText,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF5A6680),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          _statusBadge(status),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) => DoctorAppointmentDetailPage(
-                                      appointmentId: sorted[index].id,
-                                      initialData: data,
-                                    ),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(
-                                Icons.visibility_outlined,
-                                size: 16,
-                              ),
-                              label: const Text('Xem hồ sơ'),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) => DoctorAppointmentDetailPage(
-                                      appointmentId: sorted[index].id,
-                                      initialData: data,
-                                    ),
-                                  ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF1457CC),
-                                foregroundColor: Colors.white,
-                              ),
-                              icon: const Icon(
-                                Icons.medical_services_outlined,
-                                size: 16,
-                              ),
-                              label: const Text('Bắt đầu khám'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildPatientsTab(_DoctorContext doctor) {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: _doctorAppointmentsStream(doctor.doctorId),
-      builder: (context, snapshot) {
-        final docs = snapshot.data?.docs ?? [];
-        final uniquePatients = <String, Map<String, dynamic>>{};
-
-        for (final doc in docs) {
-          final data = doc.data();
-          final patientId = (data['patientId'] ?? '').toString();
-          if (patientId.isEmpty) continue;
-          uniquePatients[patientId] = data;
-        }
-
-        final items = uniquePatients.values.toList();
-        return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            final data = items[index];
-            final name = (data['patientName'] ?? 'Bệnh nhân') as String;
-            final symptoms = (data['symptoms'] ?? 'Chưa có mô tả triệu chứng')
-                .toString();
-            return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE7ECF6)),
-              ),
-              child: _listTileInfo(
-                icon: Icons.badge_rounded,
-                title: name,
-                subtitle: symptoms,
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildProfileTab(_DoctorContext doctor) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
-      children: [
-        _sectionCard(
-          title: 'Hồ sơ bác sĩ',
-          child: Column(
-            children: [
-              _profileRow('Họ tên', doctor.doctorName),
-              _profileRow('Chuyên khoa', doctor.specialization),
-              _profileRow(
-                'Mã bác sĩ',
-                doctor.doctorId.isEmpty ? 'Chưa cập nhật' : doctor.doctorCode,
-              ),
             ],
           ),
-        ),
-        const SizedBox(height: 14),
-        _sectionCard(
-          title: 'Chức năng',
-          child: Column(
-            children: const [
-              _ActionLine(
-                icon: Icons.edit_note_rounded,
-                label: 'Nhập kết quả khám',
-              ),
-              _ActionLine(
-                icon: Icons.medication_outlined,
-                label: 'Kê đơn thuốc',
-              ),
-              _ActionLine(
-                icon: Icons.schedule_outlined,
-                label: 'Quản lý lịch làm việc',
-              ),
-              _ActionLine(
-                icon: Icons.lock_outline_rounded,
-                label: 'Đổi mật khẩu',
-              ),
-            ],
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 
-  Widget _metricCard({
-    required String title,
-    required String value,
-    required Color color,
-    required IconData icon,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE7ECF6)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Color(0xFF122241),
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            title,
-            style: const TextStyle(color: Color(0xFF5A6680), fontSize: 12.5),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _sectionCard({required String title, required Widget child}) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE7ECF6)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Color(0xFF13223E),
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 10),
-          child,
-        ],
-      ),
-    );
-  }
-
-  Widget _listTileInfo({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: const Color(0xFFE8F0FF),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, size: 19, color: const Color(0xFF1A56C1)),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
+  Widget _buildCommandHeader(String name) {
+    return SliverAppBar(
+      expandedHeight: 240,
+      pinned: true,
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      stretch: true,
+      title: const Text('CLINICAL COMMAND CENTER', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 2.5, color: Colors.white70)),
+      centerTitle: true,
+      flexibleSpace: FlexibleSpaceBar(
+        background: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 110, 24, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Color(0xFF162641),
-                  fontWeight: FontWeight.w700,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _isOnline ? 'SẴN SÀNG KHÁM BỆNH,' : 'ĐANG NGOẠI TUYẾN,', 
+                          style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.0)
+                        ),
+                        const SizedBox(height: 4),
+                        Text(name, style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+                      ],
+                    ),
+                  ),
+                  _buildStatusToggle(),
+                ],
               ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  color: Color(0xFF5A6680),
-                  fontSize: 12.5,
-                ),
-              ),
+              const SizedBox(height: 28),
+              _buildSmartSearchTrigger(),
             ],
           ),
         ),
+      ),
+      actions: [
+        _buildHeaderIcon(
+          icon: Icons.notifications_none_rounded,
+          onTap: () => Navigator.pushNamed(context, AppRoutes.doctorNotifications),
+          badge: true,
+        ),
+        _buildHeaderIcon(
+          icon: Icons.refresh_rounded,
+          onTap: () => _handleRefresh(context),
+        ),
+        _buildHeaderIcon(
+          icon: Icons.power_settings_new_rounded,
+          onTap: _isLoggingOut ? null : _handleLogout,
+          color: const Color(0xFFFFE4E4),
+        ),
+        const SizedBox(width: 12),
       ],
     );
   }
 
-  Widget _statusBadge(String status) {
-    final value = status.toLowerCase();
-    late final Color color;
-    late final String label;
-
-    if (value == 'completed') {
-      color = const Color(0xFF0E9F6E);
-      label = 'Đã khám';
-    } else if (value == 'cancelled') {
-      color = const Color(0xFFDE3A3A);
-      label = 'Đã huỷ';
-    } else if (value == 'confirmed') {
-      color = const Color(0xFF1565C0);
-      label = 'Đã xác nhận';
-    } else {
-      color = const Color(0xFFB26A00);
-      label = 'Chờ khám';
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontSize: 11.5,
-          fontWeight: FontWeight.w700,
+  Widget _buildStatusToggle() {
+    return GestureDetector(
+      onTap: () => setState(() => _isOnline = !_isOnline),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 400),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: _isOnline ? Colors.white.withOpacity(0.2) : Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
+          boxShadow: [
+            if (_isOnline) BoxShadow(color: Colors.white.withOpacity(0.1), blurRadius: 10, spreadRadius: 1)
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8, height: 8,
+              decoration: BoxDecoration(
+                color: _isOnline ? const Color(0xFF4ADE80) : Colors.white54,
+                shape: BoxShape.circle,
+                boxShadow: [_isOnline ? const BoxShadow(color: Color(0xFF4ADE80), blurRadius: 6, spreadRadius: 2) : const BoxShadow()]
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              _isOnline ? 'ONLINE' : 'OFFLINE', 
+              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _profileRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: Color(0xFF5A6680),
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
+  Widget _buildHeaderIcon({required IconData icon, VoidCallback? onTap, bool badge = false, Color color = Colors.white}) {
+    return Container(
+      margin: const EdgeInsets.only(left: 8),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+      child: IconButton(
+        onPressed: onTap,
+        icon: badge ? Badge(backgroundColor: const Color(0xFFEF4444), smallSize: 8, child: Icon(icon, color: color, size: 20)) : Icon(icon, color: color, size: 20),
+      ),
+    );
+  }
+
+  void _handleRefresh(BuildContext context) async {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đang cập nhật dữ liệu...'), duration: Duration(seconds: 1)));
+    if (mounted) setState(() {});
+  }
+
+  Widget _buildSmartSearchTrigger() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => Navigator.pushNamed(context, AppRoutes.doctorSearch),
+        borderRadius: BorderRadius.circular(18),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.25), 
+                borderRadius: BorderRadius.circular(18), 
+                border: Border.all(color: Colors.white.withOpacity(0.35))
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.search_rounded, color: Colors.white, size: 20),
+                  const SizedBox(width: 14),
+                  Text('Tìm kiếm nhanh bệnh án...', style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14, fontWeight: FontWeight.w500)),
+                ],
               ),
             ),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                color: Color(0xFF13223E),
-                fontSize: 13.5,
-                fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNextPatientSpotlight() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [BoxShadow(color: const Color(0xFF0E47B5).withOpacity(0.08), blurRadius: 40, offset: const Offset(0, 16))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.play_circle_filled_rounded, color: Color(0xFF0E47B5), size: 18),
+              SizedBox(width: 8),
+              Text('BỆNH NHÂN TIẾP THEO', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: Color(0xFF0E47B5), letterSpacing: 1.5)),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: const Color(0xFFF0F5FF),
+                child: const Icon(Icons.person_rounded, color: Color(0xFF0E47B5)),
               ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Trần Thị Bình', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF15233D))),
+                    Text('29 tuổi • Nữ • Khám tức ngực', style: TextStyle(fontSize: 12, color: Color(0xFF5A6680))),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: const Color(0xFFEF4444).withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+                child: const Icon(Icons.flash_on_rounded, color: Color(0xFFEF4444), size: 20),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _spotlightVital('Huyết áp', '160/100', Colors.red),
+              _spotlightVital('Nhịp tim', '112 bpm', Colors.orange),
+              _spotlightVital('SpO2', '92%', Colors.red),
+            ],
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DoctorQueuePage())),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0E47B5),
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 56),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              elevation: 0,
             ),
+            child: const Text('MỜI VÀO PHÒNG KHÁM', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
           ),
         ],
       ),
     );
   }
-}
 
-class _DoctorContext {
-  const _DoctorContext({
-    required this.doctorId,
-    required this.doctorCode,
-    required this.doctorName,
-    required this.specialization,
-  });
+  Widget _spotlightVital(String label, String val, Color color) {
+    return Column(
+      children: [
+        Text(val, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: color)),
+        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF8A95AC))),
+      ],
+    );
+  }
 
-  final String doctorId;
-  final String doctorCode;
-  final String doctorName;
-  final String specialization;
-}
+  Widget _buildSmartMetricsRow() {
+    return Row(
+      children: [
+        _metricCard('CHỜ KHÁM', '12', const Color(0xFF0E47B5), Icons.hourglass_empty_rounded),
+        const SizedBox(width: 14),
+        _metricCard('KHẨN CẤP', '02', const Color(0xFFEF4444), Icons.notification_important_rounded, hasPulse: true),
+        const SizedBox(width: 14),
+        _metricCard('ĐÃ KHÁM', '24', const Color(0xFF10B981), Icons.task_alt_rounded),
+      ],
+    );
+  }
 
-class _QuickActionChip extends StatelessWidget {
-  const _QuickActionChip({required this.label, required this.icon});
-
-  final String label;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEAF1FF),
-        borderRadius: BorderRadius.circular(12),
+  Widget _metricCard(String label, String val, Color color, IconData icon, {bool hasPulse = false}) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: color.withOpacity(0.08))),
+        child: Column(
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(height: 12),
+            Text(val, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: color)),
+            Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Color(0xFF8A95AC))),
+          ],
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: const Color(0xFF0E47B5)),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFF0E47B5),
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Text(title, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF8A95AC), letterSpacing: 1.5));
+  }
+
+  Widget _buildModernGrid() {
+    final tools = [
+      {'icon': Icons.groups_rounded, 'label': 'Hàng đợi', 'color': const Color(0xFF0E47B5), 'target': const DoctorQueuePage()},
+      {'icon': Icons.medical_services_rounded, 'label': 'Khám bệnh', 'color': const Color(0xFF1A56CE), 'target': const DoctorExaminationListPage()},
+      {'icon': Icons.biotech_rounded, 'label': 'Xét nghiệm', 'color': const Color(0xFF10B981), 'target': const DoctorServiceQueuePage()},
+      {'icon': Icons.event_note_rounded, 'label': 'Lịch làm', 'color': const Color(0xFFD97706), 'target': const DoctorSchedulePage()},
+      {'icon': Icons.folder_shared_rounded, 'label': 'Hồ sơ BN', 'color': const Color(0xFF0EA5E9), 'target': const DoctorPatientRecordsPage()},
+      {'icon': Icons.medication_rounded, 'label': 'Kê đơn', 'color': const Color(0xFF8B5CF6), 'target': const DoctorPrescriptionBuilderPage()},
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1),
+      itemCount: tools.length,
+      itemBuilder: (context, i) {
+        final t = tools[i];
+        return InkWell(
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => t['target'] as Widget)),
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: (t['color'] as Color).withOpacity(0.12), shape: BoxShape.circle), child: Icon(t['icon'] as IconData, color: t['color'] as Color, size: 20)),
+                const SizedBox(height: 8),
+                Text(t['label'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF15233D))),
+              ],
             ),
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMiniTimeline() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.calendar_today_rounded, size: 16, color: Color(0xFF8A95AC)),
+          SizedBox(width: 12),
+          Text('Hiện chưa có lịch khám bổ sung trong ngày', style: TextStyle(color: Color(0xFF8A95AC), fontSize: 12)),
         ],
       ),
     );
   }
-}
 
-class _ActionLine extends StatelessWidget {
-  const _ActionLine({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildPerformanceSnapshot() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF4F7FD),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(28)),
+      child: Column(
         children: [
-          Icon(icon, size: 18, color: const Color(0xFF2459BF)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: Color(0xFF193257),
-                fontWeight: FontWeight.w600,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('ĐÁNH GIÁ CHUNG', style: TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.w900)),
+                  Text('9.8/10 Hài lòng', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)),
+                ],
               ),
-            ),
+              Icon(Icons.auto_awesome_rounded, color: Colors.yellow[700]),
+            ],
           ),
-          const Icon(Icons.chevron_right_rounded, color: Color(0xFF8A95AC)),
+          const SizedBox(height: 20),
+          LinearProgressIndicator(value: 0.98, backgroundColor: Colors.white12, valueColor: AlwaysStoppedAnimation<Color>(Colors.green[400]!), minHeight: 4),
         ],
       ),
     );

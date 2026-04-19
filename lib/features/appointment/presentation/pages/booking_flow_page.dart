@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../domain/entities/appointment_entities.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:baitaplon/app/theme/app_colors.dart';
 import 'package:baitaplon/config/service_locator.dart';
@@ -10,19 +11,42 @@ import 'package:baitaplon/features/appointment/presentation/pages/steps/booking_
 import 'package:baitaplon/features/appointment/presentation/pages/steps/booking_ticket_step.dart';
 
 class BookingFlowPage extends StatelessWidget {
-  const BookingFlowPage({super.key});
+  final DepartmentEntity? initialDepartment;
+  final DoctorEntity? initialDoctor;
+
+  const BookingFlowPage({
+    super.key,
+    this.initialDepartment,
+    this.initialDoctor,
+  });
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => getIt<BookingBloc>()..add(LoadInitialData()),
-      child: const BookingFlowView(),
+      create: (context) {
+        final bloc = getIt<BookingBloc>()..add(LoadInitialData());
+        
+        // If we have a department, select it to skip step 0
+        if (initialDepartment != null) {
+          bloc.add(SelectDepartment(initialDepartment!));
+          
+          // Note: If we have a doctor too, we'll need to ensure the Bloc 
+          // knows about it. Currently, SelectDepartment only takes a dept.
+          // We'll handle this by letting the Bloc stay at Step 1 with doctor pre-filled
+          // OR we could add a specialized initiation event if needed.
+          // For now, this logic will land us on Step 1.
+        }
+        
+        return bloc;
+      },
+      child: BookingFlowView(initialDoctor: initialDoctor),
     );
   }
 }
 
 class BookingFlowView extends StatefulWidget {
-  const BookingFlowView({super.key});
+  final DoctorEntity? initialDoctor;
+  const BookingFlowView({super.key, this.initialDoctor});
 
   @override
   State<BookingFlowView> createState() => _BookingFlowViewState();
@@ -65,14 +89,7 @@ class _BookingFlowViewState extends State<BookingFlowView> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            onPressed: () {
-              final step = context.read<BookingBloc>().state.currentStep;
-              if (step == 0 || step == 4) {
-                Navigator.pop(context);
-              } else {
-                context.read<BookingBloc>().add(StepBack());
-              }
-            },
+            onPressed: () => Navigator.pop(context),
             icon: const Icon(Icons.close_rounded, color: AppColors.text),
           ),
           centerTitle: true,
@@ -95,10 +112,10 @@ class _BookingFlowViewState extends State<BookingFlowView> {
                 child: PageView(
                   controller: _pageController,
                   physics: const NeverScrollableScrollPhysics(),
-                  children: const [
-                    SelectDepartmentStep(),
-                    SelectDoctorDateStep(),
-                    SelectTimeSlotStep(),
+                  children: [
+                    const SelectDepartmentStep(),
+                    SelectDoctorDateStep(initialDoctor: widget.initialDoctor),
+                    const SelectTimeSlotStep(),
                     BookingSummaryStep(),
                     BookingTicketStep(),
                   ],
