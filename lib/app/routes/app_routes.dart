@@ -38,6 +38,7 @@ import '../../features/home/presentation/pages/payment_success_page.dart';
 import '../../features/home/presentation/pages/medical_record_dashboard_page.dart';
 import '../../features/home/presentation/pages/medical_emergency_id_page.dart';
 import '../../features/home/presentation/pages/digital_receipt_page.dart';
+import '../../features/settings/presentation/pages/settings_page.dart';
 
 class AppRoutes {
   static const String onboarding = '/onboarding';
@@ -71,9 +72,10 @@ class AppRoutes {
   static const String doctorExaminationList = '/doctor-examination-list';
   static const String doctorSchedule = '/doctor-schedule';
   static const String doctorPatientRecords = '/doctor-patient-records';
+  static const String settings = '/settings';
 
-  static Route<dynamic> generateRoute(RouteSettings settings) {
-    switch (settings.name) {
+  static Route<dynamic> generateRoute(RouteSettings routeSettings) {
+    switch (routeSettings.name) {
       case onboarding:
         return _buildRoute(const OnboardingScreen());
       case login:
@@ -81,7 +83,7 @@ class AppRoutes {
       case register:
         return _buildRoute(const RegisterPage());
       case registerSuccess:
-        final email = settings.arguments as String?;
+        final email = routeSettings.arguments as String?;
         return _buildRoute(RegisterSuccessPage(email: email));
       case forgotPassword:
         return _buildRoute(const ForgotPasswordPage());
@@ -95,42 +97,46 @@ class AppRoutes {
         DepartmentEntity? initialDepartment;
         DoctorEntity? initialDoctor;
 
-        if (settings.arguments is DepartmentEntity) {
-          initialDepartment = settings.arguments as DepartmentEntity;
-        } else if (settings.arguments is Map<String, dynamic>) {
-          final args = settings.arguments as Map<String, dynamic>;
+        if (routeSettings.arguments is DepartmentEntity) {
+          initialDepartment = routeSettings.arguments as DepartmentEntity;
+        } else if (routeSettings.arguments is Map<String, dynamic>) {
+          final args = routeSettings.arguments as Map<String, dynamic>;
           initialDepartment = args['department'] as DepartmentEntity?;
           initialDoctor = args['doctor'] as DoctorEntity?;
         }
 
-        return _buildRoute(BookingFlowPage(
-          initialDepartment: initialDepartment,
-          initialDoctor: initialDoctor,
-        ));
+        return _buildRoute(
+          BookingFlowPage(
+            initialDepartment: initialDepartment,
+            initialDoctor: initialDoctor,
+          ),
+        );
       case profile:
-        final tab = settings.arguments as int? ?? 0;
+        final tab = routeSettings.arguments as int? ?? 0;
         return _buildRoute(ProfilePage(initialTab: tab));
       case editProfile:
-        final user = settings.arguments as UserModel;
+        final user = routeSettings.arguments as UserModel;
         return _buildRoute(EditProfilePage(user: user));
       case examinationDetail:
-        final appointment = settings.arguments as HospitalAppointment;
-        return _buildRoute(ExaminationResultDetailPage(appointment: appointment));
+        final appointment = routeSettings.arguments as HospitalAppointment;
+        return _buildRoute(
+          ExaminationResultDetailPage(appointment: appointment),
+        );
       case examinationHistory:
-        final filter = settings.arguments as String?;
+        final filter = routeSettings.arguments as String?;
         return _buildRoute(ExaminationHistoryPage(defaultFilter: filter));
       case resultsDashboard:
         return _buildRoute(const ExaminationResultsDashboardPage());
       case medicalVaultCategory:
-        final category = settings.arguments as String;
+        final category = routeSettings.arguments as String;
         return _buildRoute(MedicalVaultCategoryPage(category: category));
       case prescriptionDetail:
-        final appointment = settings.arguments as HospitalAppointment;
+        final appointment = routeSettings.arguments as HospitalAppointment;
         return _buildRoute(PrescriptionDetailPage(appointment: appointment));
       case paymentManagement:
         return _buildRoute(const PaymentManagementPage());
       case invoiceDetail:
-        final invoice = settings.arguments as InvoiceModel;
+        final invoice = routeSettings.arguments as InvoiceModel;
         return _buildRoute(
           BlocProvider(
             create: (context) => PaymentBloc(),
@@ -138,14 +144,14 @@ class AppRoutes {
           ),
         );
       case paymentSuccess:
-        final invoice = settings.arguments as InvoiceModel;
+        final invoice = routeSettings.arguments as InvoiceModel;
         return _buildRoute(PaymentSuccessPage(invoice: invoice));
       case medicalRecordDashboard:
         return _buildRoute(const MedicalRecordDashboardPage());
       case medicalEmergencyId:
         return _buildRoute(const MedicalEmergencyIdPage());
       case digitalReceipt:
-        final invoice = settings.arguments as InvoiceModel;
+        final invoice = routeSettings.arguments as InvoiceModel;
         return _buildRoute(DigitalReceiptPage(invoice: invoice));
       case appointmentManagement:
         return _buildRoute(const AppointmentManagementPage());
@@ -165,6 +171,8 @@ class AppRoutes {
         return _buildRoute(const DoctorSchedulePage());
       case doctorPatientRecords:
         return _buildRoute(const DoctorPatientRecordsPage());
+      case settings:
+        return _buildRoute(const SettingsPage());
       default:
         return _buildRoute(const LoginPage());
     }
