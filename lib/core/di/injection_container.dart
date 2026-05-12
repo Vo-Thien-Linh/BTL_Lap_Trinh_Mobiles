@@ -1,0 +1,1 @@
+export '../../config/service_locator.dart';
