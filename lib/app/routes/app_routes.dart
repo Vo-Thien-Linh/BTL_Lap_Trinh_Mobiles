@@ -40,6 +40,7 @@ import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/profile/presentation/pages/edit_profile_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
+import '../../features/health_insurance/presentation/pages/health_insurance_page.dart';
 
 class AppRoutes {
   static const String onboarding = '/onboarding';
@@ -71,6 +72,7 @@ class AppRoutes {
   static const String doctorAppointmentDetail = '/doctor-appointment-detail';
 
   static const String patientSearch = '/patient-search';
+  static const String healthInsurance = '/health-insurance';
 
   static const String examinationDetail = '/examination-detail';
   static const String examinationHistory = '/examination-history';
@@ -269,6 +271,9 @@ class AppRoutes {
           return _buildRoute(DigitalReceiptPage(invoice: args));
         }
         return _buildErrorRoute('Thiếu thông tin biên lai.');
+
+      case healthInsurance:
+        return _buildRoute(const HealthInsurancePage());
 
       default:
         return _buildRoute(const LoginPage());

@@ -11,6 +11,7 @@ import '../../../appointment/domain/usecases/appointment_usecases.dart';
 import '../../../auth/domain/usecases/logout_usecase.dart';
 import 'department_detail_page.dart';
 import '../widgets/doctor_profile_sheet.dart';
+import '../../../health_insurance/presentation/utils/health_insurance_reminder.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -32,6 +33,9 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _departmentsFuture = _loadDepartments();
     _featuredDoctorsFuture = _loadFeaturedDoctors();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      HealthInsuranceReminder.showIfNeeded(context);
+    });
   }
 
   Future<List<DepartmentEntity>> _loadDepartments() async {
@@ -298,9 +302,9 @@ class _HomePageState extends State<HomePage> {
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final doctor = doctors[index];
-                    final displayName = doctor.name.isNotEmpty 
-                      ? doctor.name 
-                      : (index == 0 ? 'BS. Nguyễn Minh Đức' : (index == 1 ? 'BS. Trần Thu Hà' : (index == 2 ? 'BS. Lê Quang Vinh' : 'BS. Phạm Hoàng Anh')));
+                    final displayName = doctor.name.isNotEmpty
+                        ? doctor.name
+                        : (index == 0 ? 'BS. Nguyễn Minh Đức' : (index == 1 ? 'BS. Trần Thu Hà' : (index == 2 ? 'BS. Lê Quang Vinh' : 'BS. Phạm Hoàng Anh')));
 
                     return InkWell(
                       onTap: () {
@@ -325,9 +329,9 @@ class _HomePageState extends State<HomePage> {
                               backgroundColor: const Color(0xFFE4ECFF),
                               child: doctor.imageUrl == null
                                   ? const Icon(
-                                      Icons.person_rounded,
-                                      color: Color(0xFF0A3DA8),
-                                    )
+                                Icons.person_rounded,
+                                color: Color(0xFF0A3DA8),
+                              )
                                   : null,
                             ),
                             const SizedBox(width: 14),
@@ -414,7 +418,7 @@ class _HomePageState extends State<HomePage> {
     Navigator.pushNamedAndRemoveUntil(
       context,
       AppRoutes.login,
-      (route) => false,
+          (route) => false,
     );
   }
 
@@ -463,9 +467,9 @@ class _HomePageState extends State<HomePage> {
     return StreamBuilder<DocumentSnapshot>(
       stream: authUser != null
           ? FirebaseFirestore.instance
-                .collection('users')
-                .doc(authUser.uid)
-                .snapshots()
+          .collection('users')
+          .doc(authUser.uid)
+          .snapshots()
           : const Stream.empty(),
       builder: (context, snapshot) {
         String userName = 'Người dùng';
@@ -498,24 +502,24 @@ class _HomePageState extends State<HomePage> {
                 child: ClipOval(
                   child: avatarUrl != null && avatarUrl.isNotEmpty
                       ? Image.network(
-                          avatarUrl,
-                          fit: BoxFit.cover,
-                          width: 44,
-                          height: 44,
-                        )
+                    avatarUrl,
+                    fit: BoxFit.cover,
+                    width: 44,
+                    height: 44,
+                  )
                       : Container(
-                          width: 44,
-                          height: 44,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFBEE6EA),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.person,
-                            color: Color(0xFF1E3148),
-                            size: 24,
-                          ),
-                        ),
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFBEE6EA),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.person,
+                      color: Color(0xFF1E3148),
+                      size: 24,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -550,10 +554,10 @@ class _HomePageState extends State<HomePage> {
             StreamBuilder<QuerySnapshot>(
               stream: authUser != null
                   ? FirebaseFirestore.instance
-                        .collection('Notifications')
-                        .where('patientId', isEqualTo: authUser.uid)
-                        .where('isRead', isEqualTo: false)
-                        .snapshots()
+                  .collection('Notifications')
+                  .where('patientId', isEqualTo: authUser.uid)
+                  .where('isRead', isEqualTo: false)
+                  .snapshots()
                   : const Stream.empty(),
               builder: (context, snapshot) {
                 final unreadCount = snapshot.hasData ? snapshot.data!.docs.length : 0;
@@ -581,7 +585,7 @@ class _HomePageState extends State<HomePage> {
                   _departmentsFuture = _loadDepartments();
                   _featuredDoctorsFuture = _loadFeaturedDoctors();
                 });
-                
+
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Row(
@@ -615,10 +619,10 @@ class _HomePageState extends State<HomePage> {
               ),
               icon: _isLoggingOut
                   ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
                   : const Icon(Icons.logout_rounded, size: 18),
               label: Text(
                 _isLoggingOut ? '...' : 'Dang xuat',
@@ -715,12 +719,12 @@ class _HomePageState extends State<HomePage> {
             stream: FirebaseAuth.instance.currentUser?.uid == null
                 ? null
                 : FirebaseFirestore.instance
-                      .collection('Appointments')
-                      .where(
-                        'patientId',
-                        isEqualTo: FirebaseAuth.instance.currentUser!.uid,
-                      )
-                      .snapshots(),
+                .collection('Appointments')
+                .where(
+              'patientId',
+              isEqualTo: FirebaseAuth.instance.currentUser!.uid,
+            )
+                .snapshots(),
             builder: (context, snapshot) {
               if (FirebaseAuth.instance.currentUser?.uid == null) {
                 return _buildEmptyUpcomingCard();
@@ -766,8 +770,8 @@ class _HomePageState extends State<HomePage> {
                 }
 
                 final nearestDate =
-                    (nearestDoc.data()['appointmentDate'] as Timestamp)
-                        .toDate();
+                (nearestDoc.data()['appointmentDate'] as Timestamp)
+                    .toDate();
                 if (date.isBefore(nearestDate)) {
                   nearestDoc = doc;
                 }
@@ -782,15 +786,15 @@ class _HomePageState extends State<HomePage> {
               final data = nearestDoc.data();
               final doctorName = (data['doctorName'] ?? 'Bác sĩ') as String;
               final departmentName =
-                  (data['departmentName'] ?? 'Chuyên khoa') as String;
+              (data['departmentName'] ?? 'Chuyên khoa') as String;
               final appointmentDate = (data['appointmentDate'] as Timestamp?)
                   ?.toDate();
               final dateText = appointmentDate == null
                   ? 'Chưa có ngày'
                   : '${appointmentDate.day.toString().padLeft(2, '0')}/${appointmentDate.month.toString().padLeft(2, '0')}/${appointmentDate.year}';
               final timeSlot =
-                  (data['timeSlot'] ?? data['shift'] ?? 'Đang cập nhật')
-                      as String;
+              (data['timeSlot'] ?? data['shift'] ?? 'Đang cập nhật')
+              as String;
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -880,7 +884,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildEmptyUpcomingCard({
     String message =
-        'Hãy đặt lịch để hệ thống hiển thị lịch hẹn mới nhất của bạn.',
+    'Hãy đặt lịch để hệ thống hiển thị lịch hẹn mới nhất của bạn.',
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -956,6 +960,12 @@ class _HomePageState extends State<HomePage> {
         Color(0xFFDB6B00),
       ),
       _ActionItem(
+        'BHYT',
+        Icons.health_and_safety_outlined,
+        Color(0xFFD1FAE5),
+        Color(0xFF047857),
+      ),
+      _ActionItem(
         'Hồ sơ bệnh án',
         Icons.folder_shared_outlined,
         Color(0xFFCBE0FF),
@@ -999,6 +1009,8 @@ class _HomePageState extends State<HomePage> {
               Navigator.pushNamed(context, AppRoutes.examinationHistory);
             } else if (item.label == 'Thanh toán') {
               Navigator.pushNamed(context, AppRoutes.paymentManagement);
+            } else if (item.label == 'BHYT') {
+              Navigator.pushNamed(context, AppRoutes.healthInsurance);
             }
           },
           borderRadius: BorderRadius.circular(20),
@@ -1109,95 +1121,95 @@ class _HomePageState extends State<HomePage> {
                 scrollDirection: Axis.horizontal,
                 itemCount: departments.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 12),
-                  itemBuilder: (context, index) {
-                    final department = departments[index];
-                    final visual = _departmentVisual(index);
+                itemBuilder: (context, index) {
+                  final department = departments[index];
+                  final visual = _departmentVisual(index);
 
-                    // Intelligent Label Fallback logic
-                    String title = department.name.replaceAll('Khoa ', '');
-                    String subtitle = department.location;
+                  // Intelligent Label Fallback logic
+                  String title = department.name.replaceAll('Khoa ', '');
+                  String subtitle = department.location;
 
-                    if (title.isEmpty || title.contains('Tầng') || title.contains('Khu') || title.length < 2) {
-                      title = visual.label;
-                      subtitle = department.location.isNotEmpty ? department.location : department.name;
-                    }
+                  if (title.isEmpty || title.contains('Tầng') || title.contains('Khu') || title.length < 2) {
+                    title = visual.label;
+                    subtitle = department.location.isNotEmpty ? department.location : department.name;
+                  }
 
-                    return GestureDetector(
-                      onTap: () {
-                        _navigateToDetail(department, index);
-                      },
-                      child: Container(
-                        width: 148,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: const Color(0xFFE8EBF4)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
-                              blurRadius: 16,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            Container(
-                              width: 76,
-                              height: 76,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: visual.colors,
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: visual.colors.first.withOpacity(0.22),
-                                    blurRadius: 14,
-                                    offset: const Offset(0, 6),
-                                  ),
-                                ],
-                              ),
-                              child: Center(
-                                child: Icon(
-                                  visual.icon,
-                                  color: Colors.white,
-                                  size: 30,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              title,
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Color(0xFF222739),
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              subtitle,
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Color(0xFF5C6477),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
+                  return GestureDetector(
+                    onTap: () {
+                      _navigateToDetail(department, index);
+                    },
+                    child: Container(
+                      width: 148,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: const Color(0xFFE8EBF4)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 16,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
                       ),
-                    );
-                  },
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 76,
+                            height: 76,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: visual.colors,
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: visual.colors.first.withOpacity(0.22),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Icon(
+                                visual.icon,
+                                color: Colors.white,
+                                size: 30,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            title,
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Color(0xFF222739),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            subtitle,
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Color(0xFF5C6477),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               );
             },
           ),
@@ -1337,10 +1349,10 @@ class _HomePageState extends State<HomePage> {
                         StreamBuilder<QuerySnapshot>(
                           stream: FirebaseAuth.instance.currentUser != null
                               ? FirebaseFirestore.instance
-                                  .collection('Notifications')
-                                  .where('patientId', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
-                                  .where('isRead', isEqualTo: false)
-                                  .snapshots()
+                              .collection('Notifications')
+                              .where('patientId', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+                              .where('isRead', isEqualTo: false)
+                              .snapshots()
                               : const Stream.empty(),
                           builder: (context, snapshot) {
                             final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
@@ -1559,28 +1571,28 @@ class _DoctorCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      doctor.name.isNotEmpty 
-                        ? doctor.name 
-                        : (index == 0 ? 'BS. Nguyễn Minh Đức' : (index == 1 ? 'BS. Trần Thu Hà' : (index == 2 ? 'BS. Lê Quang Vinh' : 'BS. Phạm Hoàng Anh'))),
+                      doctor.name.isNotEmpty
+                          ? doctor.name
+                          : (index == 0 ? 'BS. Nguyễn Minh Đức' : (index == 1 ? 'BS. Trần Thu Hà' : (index == 2 ? 'BS. Lê Quang Vinh' : 'BS. Phạm Hoàng Anh'))),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: Color(0xFF0F172A), 
-                        fontWeight: FontWeight.w900, 
-                        fontSize: 18, 
-                        letterSpacing: -0.5
+                          color: Color(0xFF0F172A),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                          letterSpacing: -0.5
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      doctor.departmentName.isNotEmpty 
-                        ? doctor.departmentName 
-                        : (doctor.specialization.isNotEmpty ? doctor.specialization.toUpperCase() : 'NỘI TỔNG QUÁT'),
+                      doctor.departmentName.isNotEmpty
+                          ? doctor.departmentName
+                          : (doctor.specialization.isNotEmpty ? doctor.specialization.toUpperCase() : 'NỘI TỔNG QUÁT'),
                       style: const TextStyle(
-                        color: Color(0xFF6366F1), 
-                        fontWeight: FontWeight.w800, 
-                        fontSize: 13,
-                        letterSpacing: 0.5
+                          color: Color(0xFF6366F1),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          letterSpacing: 0.5
                       ),
                     ),
                     const SizedBox(height: 12),

@@ -73,6 +73,15 @@ class _ProfilePageState extends State<ProfilePage>
       });
     }
   }
+  String _formatHealthInsuranceText(String? healthInsuranceNumber) {
+    final value = healthInsuranceNumber?.trim();
+
+    if (value == null || value.isEmpty) {
+      return 'Chưa cập nhật - bấm để thêm ngay';
+    }
+
+    return value;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -338,7 +347,7 @@ class _ProfilePageState extends State<ProfilePage>
   Widget _buildHealthVitalsGrid(UserModel user) {
     double bmi =
         (user.weight ?? 0) /
-        (((user.height ?? 1) / 100) * ((user.height ?? 1) / 100));
+            (((user.height ?? 1) / 100) * ((user.height ?? 1) / 100));
     String bmiStatus = _getBMIStatus(bmi);
     Color bmiColor = _getBMIColor(bmi);
 
@@ -410,12 +419,12 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildInteractiveVitalCard(
-    String label,
-    String value,
-    String status,
-    IconData icon,
-    Color color,
-  ) {
+      String label,
+      String value,
+      String status,
+      IconData icon,
+      Color color,
+      ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -593,10 +602,21 @@ class _ProfilePageState extends State<ProfilePage>
             title: 'HỒ SƠ BẢO HIỂM & KHẨN CẤP',
             items: [
               _buildMenuItem(
-                Icons.badge_rounded,
-                'Số thẻ BHYT',
-                user.healthInsuranceNumber ?? 'Chưa cập nhật',
+                Icons.health_and_safety_rounded,
+                'BHYT',
+                _formatHealthInsuranceText(user.healthInsuranceNumber),
                 AppColors.success,
+                onTap: () async {
+                  final result = await Navigator.pushNamed(
+                    context,
+                    AppRoutes.healthInsurance,
+                  );
+
+                  if (mounted && result == true) {
+                    setState(() => _isLoading = true);
+                    await _loadUserProfile();
+                  }
+                },
               ),
               _buildMenuItem(
                 Icons.contact_emergency_rounded,
@@ -659,13 +679,14 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildMenuItem(
-    IconData icon,
-    String title,
-    String value,
-    Color iconColor,
-  ) {
+      IconData icon,
+      String title,
+      String value,
+      Color iconColor, {
+        VoidCallback? onTap,
+      }) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -945,10 +966,10 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
+      BuildContext context,
+      double shrinkOffset,
+      bool overlapsContent,
+      ) {
     return _child;
   }
 
