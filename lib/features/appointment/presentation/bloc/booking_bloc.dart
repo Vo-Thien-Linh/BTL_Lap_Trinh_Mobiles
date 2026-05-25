@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/appointment_entities.dart';
 import '../../domain/usecases/appointment_usecases.dart';
 import '../../../../shared/utils/id_formatter.dart';
+import '../../../notification/presentation/utils/notification_facade.dart';
 
 part 'booking_event.dart';
 part 'booking_state.dart';
@@ -41,9 +42,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   Future<void> _onLoadInitialData(
-    LoadInitialData event,
-    Emitter<BookingState> emit,
-  ) async {
+      LoadInitialData event,
+      Emitter<BookingState> emit,
+      ) async {
     emit(state.copyWith(status: BookingStatus.loading));
     try {
       var departments = await getDepartments();
@@ -312,9 +313,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   Future<void> _onSelectDepartment(
-    SelectDepartment event,
-    Emitter<BookingState> emit,
-  ) async {
+      SelectDepartment event,
+      Emitter<BookingState> emit,
+      ) async {
     emit(state.copyWith(status: BookingStatus.loading));
     try {
       final doctors = await getDoctorsByDept(event.department.id);
@@ -337,14 +338,14 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   Future<void> _onSelectDoctorAndDate(
-    SelectDoctorAndDate event,
-    Emitter<BookingState> emit,
-  ) async {
+      SelectDoctorAndDate event,
+      Emitter<BookingState> emit,
+      ) async {
     emit(state.copyWith(status: BookingStatus.loading));
     try {
       // Logic 1: Check if patient already has active appointment with THIS doctor
       final hasDuplicateDoctor = state.patientAppointments.any(
-        (app) => app.doctorId == event.doctor.id,
+            (app) => app.doctorId == event.doctor.id,
       );
 
       if (hasDuplicateDoctor) {
@@ -352,7 +353,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           state.copyWith(
             status: BookingStatus.failure,
             errorMessage:
-                'Bạn đang có lịch hẹn chưa hoàn thành với bác sĩ ${event.doctor.name}. Vui lòng hoàn thành trước khi đặt thêm.',
+            'Bạn đang có lịch hẹn chưa hoàn thành với bác sĩ ${event.doctor.name}. Vui lòng hoàn thành trước khi đặt thêm.',
           ),
         );
         return;
@@ -381,9 +382,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   Future<void> _onSelectShift(
-    SelectShift event,
-    Emitter<BookingState> emit,
-  ) async {
+      SelectShift event,
+      Emitter<BookingState> emit,
+      ) async {
     emit(
       state.copyWith(status: BookingStatus.loading, selectedShift: event.shift),
     );
@@ -392,8 +393,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       final conflict = state.patientAppointments.where((app) {
         final isSameDate =
             app.appointmentDate.year == state.selectedDate!.year &&
-            app.appointmentDate.month == state.selectedDate!.month &&
-            app.appointmentDate.day == state.selectedDate!.day;
+                app.appointmentDate.month == state.selectedDate!.month &&
+                app.appointmentDate.day == state.selectedDate!.day;
         return isSameDate && app.shiftId == event.shift.id;
       }).toList();
 
@@ -403,7 +404,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           state.copyWith(
             status: BookingStatus.failure,
             errorMessage:
-                'Bạn đã có lịch khám tại khoa $conflictingDept vào thời gian này. Vui lóng chọn ca khác.',
+            'Bạn đã có lịch khám tại khoa $conflictingDept vào thời gian này. Vui lóng chọn ca khác.',
           ),
         );
         return;
@@ -434,9 +435,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   void _onSelectQueueNumber(
-    SelectQueueNumber event,
-    Emitter<BookingState> emit,
-  ) {
+      SelectQueueNumber event,
+      Emitter<BookingState> emit,
+      ) {
     emit(
       state.copyWith(
         selectedQueueNumber: event.queueNumber,
@@ -446,9 +447,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   void _onSelectPaymentMethod(
-    SelectPaymentMethod event,
-    Emitter<BookingState> emit,
-  ) {
+      SelectPaymentMethod event,
+      Emitter<BookingState> emit,
+      ) {
     emit(state.copyWith(selectedPaymentMethod: event.method));
   }
 
@@ -457,9 +458,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   Future<void> _onConfirmBooking(
-    ConfirmBooking event,
-    Emitter<BookingState> emit,
-  ) async {
+      ConfirmBooking event,
+      Emitter<BookingState> emit,
+      ) async {
     if (state.selectedDoctor == null ||
         state.selectedDate == null ||
         state.selectedShift == null) {
@@ -473,10 +474,10 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           .collection('users')
           .doc(event.patientId)
           .get();
-      
+
       String? dob;
       String? gender;
-      
+
       if (userDoc.exists) {
         final data = userDoc.data()!;
         dob = data['dateOfBirth'] as String?;
@@ -537,9 +538,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   Future<void> _onFinalizePaymentAndConfirm(
-    FinalizePaymentAndConfirm event,
-    Emitter<BookingState> emit,
-  ) async {
+      FinalizePaymentAndConfirm event,
+      Emitter<BookingState> emit,
+      ) async {
     emit(state.copyWith(status: BookingStatus.loading));
     try {
       final db = FirebaseFirestore.instance;
@@ -577,6 +578,34 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       batch.update(appointmentRef, {'status': 'confirmed'});
 
       await batch.commit();
+
+      // Gửi thông báo sau khi đặt lịch/thanh toán thành công.
+      // Lỗi thông báo không được làm hỏng flow đặt lịch.
+      try {
+        final appointment = state.createdAppointment;
+        if (appointment != null) {
+          final appointmentTime = NotificationFacade.combineDateAndTimeSlot(
+            appointment.appointmentDate,
+            appointment.timeSlot,
+          );
+
+          await NotificationFacade.onAppointmentCreated(
+            appointmentId: event.appointmentId,
+            patientId: event.patientId,
+            patientName: appointment.patientName,
+            doctorId: appointment.doctorId,
+            doctorName: appointment.doctorName,
+            departmentId: appointment.departmentId,
+            departmentName: appointment.departmentName,
+            appointmentTime: appointmentTime,
+            patientEmail: FirebaseAuth.instance.currentUser?.email,
+          );
+        }
+      } catch (e) {
+        // Không throw lại để tránh người dùng bị báo lỗi thanh toán/đặt lịch
+        // chỉ vì phần gửi thông báo gặp sự cố.
+        print('Notification error after booking confirmation: $e');
+      }
 
       // Refresh appointment in state (for Ticket UI updates if any)
       if (state.createdAppointment != null) {

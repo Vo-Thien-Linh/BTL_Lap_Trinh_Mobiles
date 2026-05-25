@@ -27,6 +27,13 @@ import '../features/appointment/domain/repositories/appointment_repository.dart'
 import '../features/appointment/domain/usecases/appointment_usecases.dart';
 import '../features/appointment/presentation/bloc/booking_bloc.dart';
 
+import '../features/notification/data/datasources/notification_remote_data_source.dart';
+import '../features/notification/data/datasources/notification_service.dart';
+import '../features/notification/data/repositories/notification_repository_impl.dart';
+import '../features/notification/domain/repositories/notification_repository.dart';
+import '../features/notification/domain/usecases/notification_usecases.dart';
+import '../features/notification/presentation/bloc/notification_bloc.dart';
+
 final getIt = GetIt.instance;
 
 Future<void> setupServiceLocator() async {
@@ -37,7 +44,7 @@ Future<void> setupServiceLocator() async {
 
   if (!getIt.isRegistered<FirebaseFirestore>()) {
     getIt.registerLazySingleton<FirebaseFirestore>(
-      () => FirebaseFirestore.instance,
+          () => FirebaseFirestore.instance,
     );
   }
 
@@ -49,7 +56,7 @@ Future<void> setupServiceLocator() async {
   // --- Auth Feature ---
   if (!getIt.isRegistered<AuthRemoteDatasource>()) {
     getIt.registerLazySingleton<AuthRemoteDatasource>(
-      () => AuthRemoteDatasourceImpl(
+          () => AuthRemoteDatasourceImpl(
         firebaseAuth: getIt<FirebaseAuth>(),
         firestore: getIt<FirebaseFirestore>(),
       ),
@@ -58,38 +65,38 @@ Future<void> setupServiceLocator() async {
 
   if (!getIt.isRegistered<AuthRepository>()) {
     getIt.registerLazySingleton<AuthRepository>(
-      () => AuthRepositoryImpl(remoteDatasource: getIt<AuthRemoteDatasource>()),
+          () => AuthRepositoryImpl(remoteDatasource: getIt<AuthRemoteDatasource>()),
     );
   }
 
   if (!getIt.isRegistered<LoginUsecase>()) {
     getIt.registerLazySingleton<LoginUsecase>(
-      () => LoginUsecase(repository: getIt<AuthRepository>()),
+          () => LoginUsecase(repository: getIt<AuthRepository>()),
     );
   }
 
   if (!getIt.isRegistered<RegisterUsecase>()) {
     getIt.registerLazySingleton<RegisterUsecase>(
-      () => RegisterUsecase(repository: getIt<AuthRepository>()),
+          () => RegisterUsecase(repository: getIt<AuthRepository>()),
     );
   }
 
   if (!getIt.isRegistered<ForgotPasswordUsecase>()) {
     getIt.registerLazySingleton<ForgotPasswordUsecase>(
-      () => ForgotPasswordUsecase(repository: getIt<AuthRepository>()),
+          () => ForgotPasswordUsecase(repository: getIt<AuthRepository>()),
     );
   }
 
   if (!getIt.isRegistered<LogoutUsecase>()) {
     getIt.registerLazySingleton<LogoutUsecase>(
-      () => LogoutUsecase(repository: getIt<AuthRepository>()),
+          () => LogoutUsecase(repository: getIt<AuthRepository>()),
     );
   }
 
   // --- Onboarding Feature ---
   if (!getIt.isRegistered<OnboardingLocalDatasource>()) {
     getIt.registerLazySingleton<OnboardingLocalDatasource>(
-      () => OnboardingLocalDatasourceImpl(
+          () => OnboardingLocalDatasourceImpl(
         sharedPreferences: getIt<SharedPreferences>(),
       ),
     );
@@ -97,7 +104,7 @@ Future<void> setupServiceLocator() async {
 
   if (!getIt.isRegistered<OnboardingRepository>()) {
     getIt.registerLazySingleton<OnboardingRepository>(
-      () => OnboardingRepositoryImpl(
+          () => OnboardingRepositoryImpl(
         localDatasource: getIt<OnboardingLocalDatasource>(),
       ),
     );
@@ -105,13 +112,13 @@ Future<void> setupServiceLocator() async {
 
   if (!getIt.isRegistered<HasSeenOnboardingUsecase>()) {
     getIt.registerLazySingleton<HasSeenOnboardingUsecase>(
-      () => HasSeenOnboardingUsecase(repository: getIt<OnboardingRepository>()),
+          () => HasSeenOnboardingUsecase(repository: getIt<OnboardingRepository>()),
     );
   }
 
   if (!getIt.isRegistered<CompleteOnboardingUsecase>()) {
     getIt.registerLazySingleton<CompleteOnboardingUsecase>(
-      () =>
+          () =>
           CompleteOnboardingUsecase(repository: getIt<OnboardingRepository>()),
     );
   }
@@ -119,32 +126,32 @@ Future<void> setupServiceLocator() async {
   // --- Home Feature ---
   if (!getIt.isRegistered<HomeLocalDatasource>()) {
     getIt.registerLazySingleton<HomeLocalDatasource>(
-      () => HomeLocalDatasourceImpl(),
+          () => HomeLocalDatasourceImpl(),
     );
   }
 
   if (!getIt.isRegistered<HomeRepository>()) {
     getIt.registerLazySingleton<HomeRepository>(
-      () => HomeRepositoryImpl(localDatasource: getIt<HomeLocalDatasource>()),
+          () => HomeRepositoryImpl(localDatasource: getIt<HomeLocalDatasource>()),
     );
   }
 
   if (!getIt.isRegistered<GetAppointmentsUsecase>()) {
     getIt.registerLazySingleton<GetAppointmentsUsecase>(
-      () => GetAppointmentsUsecase(repository: getIt<HomeRepository>()),
+          () => GetAppointmentsUsecase(repository: getIt<HomeRepository>()),
     );
   }
 
   if (!getIt.isRegistered<HomeBloc>()) {
     getIt.registerFactory<HomeBloc>(
-      () => HomeBloc(getAppointmentsUsecase: getIt<GetAppointmentsUsecase>()),
+          () => HomeBloc(getAppointmentsUsecase: getIt<GetAppointmentsUsecase>()),
     );
   }
 
   // --- Appointment Feature ---
   if (!getIt.isRegistered<AppointmentRemoteDatasource>()) {
     getIt.registerLazySingleton<AppointmentRemoteDatasource>(
-      () => AppointmentRemoteDatasourceImpl(
+          () => AppointmentRemoteDatasourceImpl(
         firestore: getIt<FirebaseFirestore>(),
       ),
     );
@@ -152,7 +159,7 @@ Future<void> setupServiceLocator() async {
 
   if (!getIt.isRegistered<AppointmentRepository>()) {
     getIt.registerLazySingleton<AppointmentRepository>(
-      () => AppointmentRepositoryImpl(
+          () => AppointmentRepositoryImpl(
         remoteDatasource: getIt<AppointmentRemoteDatasource>(),
       ),
     );
@@ -160,49 +167,49 @@ Future<void> setupServiceLocator() async {
 
   if (!getIt.isRegistered<GetDepartmentsUsecase>()) {
     getIt.registerLazySingleton<GetDepartmentsUsecase>(
-      () => GetDepartmentsUsecase(getIt<AppointmentRepository>()),
+          () => GetDepartmentsUsecase(getIt<AppointmentRepository>()),
     );
   }
 
   if (!getIt.isRegistered<GetDoctorsByDeptUsecase>()) {
     getIt.registerLazySingleton<GetDoctorsByDeptUsecase>(
-      () => GetDoctorsByDeptUsecase(getIt<AppointmentRepository>()),
+          () => GetDoctorsByDeptUsecase(getIt<AppointmentRepository>()),
     );
   }
 
   if (!getIt.isRegistered<GetDoctorSchedulesUsecase>()) {
     getIt.registerLazySingleton<GetDoctorSchedulesUsecase>(
-      () => GetDoctorSchedulesUsecase(getIt<AppointmentRepository>()),
+          () => GetDoctorSchedulesUsecase(getIt<AppointmentRepository>()),
     );
   }
 
   if (!getIt.isRegistered<CreateAppointmentUsecase>()) {
     getIt.registerLazySingleton<CreateAppointmentUsecase>(
-      () => CreateAppointmentUsecase(getIt<AppointmentRepository>()),
+          () => CreateAppointmentUsecase(getIt<AppointmentRepository>()),
     );
   }
 
   if (!getIt.isRegistered<GetNextQueueNumberUsecase>()) {
     getIt.registerLazySingleton<GetNextQueueNumberUsecase>(
-      () => GetNextQueueNumberUsecase(getIt<AppointmentRepository>()),
+          () => GetNextQueueNumberUsecase(getIt<AppointmentRepository>()),
     );
   }
 
   if (!getIt.isRegistered<GetTakenQueueNumbersUsecase>()) {
     getIt.registerLazySingleton<GetTakenQueueNumbersUsecase>(
-      () => GetTakenQueueNumbersUsecase(getIt<AppointmentRepository>()),
+          () => GetTakenQueueNumbersUsecase(getIt<AppointmentRepository>()),
     );
   }
 
   if (!getIt.isRegistered<GetPatientActiveAppointmentsUsecase>()) {
     getIt.registerLazySingleton<GetPatientActiveAppointmentsUsecase>(
-      () => GetPatientActiveAppointmentsUsecase(getIt<AppointmentRepository>()),
+          () => GetPatientActiveAppointmentsUsecase(getIt<AppointmentRepository>()),
     );
   }
 
   if (!getIt.isRegistered<BookingBloc>()) {
     getIt.registerFactory<BookingBloc>(
-      () => BookingBloc(
+          () => BookingBloc(
         getDepartments: getIt<GetDepartmentsUsecase>(),
         getDoctorsByDept: getIt<GetDoctorsByDeptUsecase>(),
         getDoctorSchedules: getIt<GetDoctorSchedulesUsecase>(),
@@ -213,4 +220,110 @@ Future<void> setupServiceLocator() async {
       ),
     );
   }
+
+  // --- Notification Feature ---
+  if (!getIt.isRegistered<NotificationService>()) {
+    getIt.registerLazySingleton<NotificationService>(() => NotificationService());
+  }
+
+  if (!getIt.isRegistered<NotificationRemoteDataSource>()) {
+    getIt.registerLazySingleton<NotificationRemoteDataSource>(
+          () => NotificationRemoteDataSource(getIt<FirebaseFirestore>()),
+    );
+  }
+
+  if (!getIt.isRegistered<NotificationRepository>()) {
+    getIt.registerLazySingleton<NotificationRepository>(
+          () => NotificationRepositoryImpl(
+        remoteDataSource: getIt<NotificationRemoteDataSource>(),
+        notificationService: getIt<NotificationService>(),
+      ),
+    );
+  }
+
+  if (!getIt.isRegistered<RegisterNotificationDeviceUseCase>()) {
+    getIt.registerLazySingleton<RegisterNotificationDeviceUseCase>(
+          () => RegisterNotificationDeviceUseCase(getIt<NotificationRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<SendAppointmentConfirmationUseCase>()) {
+    getIt.registerLazySingleton<SendAppointmentConfirmationUseCase>(
+          () => SendAppointmentConfirmationUseCase(getIt<NotificationRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<SendAppointmentCancelledUseCase>()) {
+    getIt.registerLazySingleton<SendAppointmentCancelledUseCase>(
+          () => SendAppointmentCancelledUseCase(getIt<NotificationRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<ScheduleAppointmentRemindersUseCase>()) {
+    getIt.registerLazySingleton<ScheduleAppointmentRemindersUseCase>(
+          () => ScheduleAppointmentRemindersUseCase(getIt<NotificationRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<SendPreparationInstructionsUseCase>()) {
+    getIt.registerLazySingleton<SendPreparationInstructionsUseCase>(
+          () => SendPreparationInstructionsUseCase(getIt<NotificationRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<SendExaminationCompleteUseCase>()) {
+    getIt.registerLazySingleton<SendExaminationCompleteUseCase>(
+          () => SendExaminationCompleteUseCase(getIt<NotificationRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<SendResultAvailableUseCase>()) {
+    getIt.registerLazySingleton<SendResultAvailableUseCase>(
+          () => SendResultAvailableUseCase(getIt<NotificationRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<SendDoctorNotificationUseCase>()) {
+    getIt.registerLazySingleton<SendDoctorNotificationUseCase>(
+          () => SendDoctorNotificationUseCase(getIt<NotificationRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<ScheduleMedicationRemindersUseCase>()) {
+    getIt.registerLazySingleton<ScheduleMedicationRemindersUseCase>(
+          () => ScheduleMedicationRemindersUseCase(getIt<NotificationRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<GetNotificationsUseCase>()) {
+    getIt.registerLazySingleton<GetNotificationsUseCase>(
+          () => GetNotificationsUseCase(getIt<NotificationRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<GetNotificationTemplatesByDepartmentUseCase>()) {
+    getIt.registerLazySingleton<GetNotificationTemplatesByDepartmentUseCase>(
+          () => GetNotificationTemplatesByDepartmentUseCase(getIt<NotificationRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<NotificationBloc>()) {
+    getIt.registerFactory<NotificationBloc>(
+          () => NotificationBloc(
+        repository: getIt<NotificationRepository>(),
+        registerDevice: getIt<RegisterNotificationDeviceUseCase>(),
+        sendAppointmentConfirmation: getIt<SendAppointmentConfirmationUseCase>(),
+        sendAppointmentCancelled: getIt<SendAppointmentCancelledUseCase>(),
+        scheduleAppointmentReminders: getIt<ScheduleAppointmentRemindersUseCase>(),
+        sendPreparationInstructions: getIt<SendPreparationInstructionsUseCase>(),
+        sendExaminationComplete: getIt<SendExaminationCompleteUseCase>(),
+        sendResultAvailable: getIt<SendResultAvailableUseCase>(),
+        sendDoctorNotification: getIt<SendDoctorNotificationUseCase>(),
+        scheduleMedicationReminders: getIt<ScheduleMedicationRemindersUseCase>(),
+        getNotifications: getIt<GetNotificationsUseCase>(),
+        getTemplates: getIt<GetNotificationTemplatesByDepartmentUseCase>(),
+      ),
+    );
+  }
+
 }

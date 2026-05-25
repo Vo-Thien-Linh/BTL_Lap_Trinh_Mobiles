@@ -1,4 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
+import '../../../notification/presentation/utils/notification_facade.dart';
 
 class DoctorServiceQueuePage extends StatefulWidget {
   const DoctorServiceQueuePage({super.key});
@@ -9,10 +12,17 @@ class DoctorServiceQueuePage extends StatefulWidget {
 
 class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
   String _activeFilter = 'Tất cả';
+  final Set<String> _processingItems = <String>{};
   final List<String> _filters = ['Tất cả', 'Xét nghiệm', 'Siêu âm', 'X-Quang', 'CT Scan'];
 
+  /// Đây vẫn là dữ liệu demo giống file cũ.
+  /// Khi nối dữ liệu thật từ Firestore, mỗi phiếu dịch vụ cần có đủ:
+  /// appointmentId, patientId, doctorId, patientName, service, type, status.
   final List<Map<String, dynamic>> _serviceQueue = [
     {
+      'appointmentId': 'demo_appointment_001',
+      'patientId': 'demo_patient_001',
+      'doctorId': '',
       'patientName': 'Phạm Hải Đăng',
       'service': 'Xét nghiệm máu',
       'type': 'Xét nghiệm',
@@ -20,9 +30,12 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
       'time': '10:30',
       'status': 'Chờ thực hiện',
       'priority': 0,
-      'notes': 'Kiểm tra đường huyết và mỡ máu.'
+      'notes': 'Kiểm tra đường huyết và mỡ máu.',
     },
     {
+      'appointmentId': 'demo_appointment_002',
+      'patientId': 'demo_patient_002',
+      'doctorId': '',
       'patientName': 'Nguyễn Thị Hoa',
       'service': 'Siêu âm tim',
       'type': 'Siêu âm',
@@ -30,9 +43,12 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
       'time': '11:15',
       'status': 'Đang thực hiện',
       'priority': 1,
-      'notes': 'Nghi ngờ hở van 2 lá.'
+      'notes': 'Nghi ngờ hở van 2 lá.',
     },
     {
+      'appointmentId': 'demo_appointment_003',
+      'patientId': 'demo_patient_003',
+      'doctorId': '',
       'patientName': 'Trần Văn Mạnh',
       'service': 'Chụp X-Quang phổi',
       'type': 'X-Quang',
@@ -40,9 +56,12 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
       'time': '14:00',
       'status': 'Chờ thực hiện',
       'priority': 0,
-      'notes': 'Theo dõi viêm phổi thùy.'
+      'notes': 'Theo dõi viêm phổi thùy.',
     },
     {
+      'appointmentId': 'demo_appointment_004',
+      'patientId': 'demo_patient_004',
+      'doctorId': '',
       'patientName': 'Lê Hoàng Nam',
       'service': 'Chụp CT Sọ não',
       'type': 'CT Scan',
@@ -50,7 +69,7 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
       'time': '14:30',
       'status': 'Hoàn tất',
       'priority': 1,
-      'notes': 'Khẩn cấp - Chấn thương sọ não.'
+      'notes': 'Khẩn cấp - Chấn thương sọ não.',
     },
   ];
 
@@ -76,10 +95,16 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
       pinned: true,
       expandedHeight: 120,
       backgroundColor: const Color(0xFF0D9488),
-      title: const Text('Hàng đợi dịch vụ', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
+      title: const Text(
+        'Hàng đợi dịch vụ',
+        style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
+      ),
       centerTitle: true,
       actions: [
-        IconButton(onPressed: () {}, icon: const Icon(Icons.refresh_rounded, color: Colors.white)),
+        IconButton(
+          onPressed: () => setState(() {}),
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+        ),
         const SizedBox(width: 8),
       ],
       flexibleSpace: FlexibleSpaceBar(
@@ -97,6 +122,10 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
   }
 
   Widget _buildSummaryStats() {
+    final total = _serviceQueue.length;
+    final waiting = _serviceQueue.where((q) => q['status'] == 'Chờ thực hiện').length;
+    final done = _serviceQueue.where((q) => q['status'] == 'Hoàn tất').length;
+
     return SliverToBoxAdapter(
       child: Container(
         margin: const EdgeInsets.all(20),
@@ -104,16 +133,22 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _statItem('4', 'Tổng số', const Color(0xFF15233D)),
+            _statItem('$total', 'Tổng số', const Color(0xFF15233D)),
             const VerticalDivider(),
-            _statItem('2', 'Đang chờ', const Color(0xFFD97706)),
+            _statItem('$waiting', 'Đang chờ', const Color(0xFFD97706)),
             const VerticalDivider(),
-            _statItem('1', 'Đã xong', const Color(0xFF0E9F6E)),
+            _statItem('$done', 'Đã xong', const Color(0xFF0E9F6E)),
           ],
         ),
       ),
@@ -123,8 +158,18 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
   Widget _statItem(String val, String label, Color color) {
     return Column(
       children: [
-        Text(val, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: color)),
-        Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF8A95AC))),
+        Text(
+          val,
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: color),
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF8A95AC),
+          ),
+        ),
       ],
     );
   }
@@ -146,7 +191,9 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
                 decoration: BoxDecoration(
                   color: isSelected ? const Color(0xFF0D9488) : Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: isSelected ? Colors.transparent : const Color(0xFFDDE6F7)),
+                  border: Border.all(
+                    color: isSelected ? Colors.transparent : const Color(0xFFDDE6F7),
+                  ),
                 ),
                 child: Text(
                   f,
@@ -173,7 +220,7 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
-          (context, index) => _buildServiceCard(filtered[index]),
+              (context, index) => _buildServiceCard(filtered[index]),
           childCount: filtered.length,
         ),
       ),
@@ -181,7 +228,9 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
   }
 
   Widget _buildServiceCard(Map<String, dynamic> data) {
-    final statusColor = _getStatusColor(data['status']);
+    final status = data['status']?.toString() ?? 'Chờ thực hiện';
+    final type = data['type']?.toString() ?? '';
+    final statusColor = _getStatusColor(status);
     final isPriority = data['priority'] == 1;
 
     return Container(
@@ -189,7 +238,13 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -202,8 +257,11 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
                   children: [
                     Container(
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                      child: Icon(_getServiceIcon(data['type']), color: statusColor, size: 24),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(_getServiceIcon(type), color: statusColor, size: 24),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -212,21 +270,48 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
                         children: [
                           Row(
                             children: [
-                              Text(data['patientName'], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF15233D))),
+                              Flexible(
+                                child: Text(
+                                  data['patientName']?.toString() ?? 'Bệnh nhân',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                    color: Color(0xFF15233D),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
                               if (isPriority)
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   margin: const EdgeInsets.only(left: 8),
-                                  decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
-                                  child: const Text('KHẨN', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.redAccent)),
+                                  decoration: BoxDecoration(
+                                    color: Colors.redAccent.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'KHẨN',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.redAccent,
+                                    ),
+                                  ),
                                 ),
                             ],
                           ),
-                          Text(data['service'], style: TextStyle(fontSize: 13, color: statusColor, fontWeight: FontWeight.w800)),
+                          Text(
+                            data['service']?.toString() ?? 'Dịch vụ',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: statusColor,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    _statusBadge(data['status'], statusColor),
+                    _statusBadge(status, statusColor),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -236,33 +321,69 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
                   children: [
                     const Icon(Icons.person_outline_rounded, size: 14, color: Color(0xFF8A95AC)),
                     const SizedBox(width: 6),
-                    Text('Chỉ định bởi: ', style: TextStyle(fontSize: 12, color: const Color(0xFF8A95AC), fontWeight: FontWeight.w600)),
-                    Text(data['orderedBy'], style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF15233D))),
-                    const Spacer(),
-                    Text(data['time'], style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF5A6680))),
+                    const Text(
+                      'Chỉ định bởi: ',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF8A95AC),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        data['orderedBy']?.toString() ?? 'Bác sĩ',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF15233D),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      data['time']?.toString() ?? '',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF5A6680),
+                      ),
+                    ),
                   ],
                 ),
-                if (data['notes'] != null && data['status'] != 'Hoàn tất') ...[
+                if (data['notes'] != null && status != 'Hoàn tất') ...[
                   const SizedBox(height: 10),
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: const Color(0xFFF8FAFD), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF0F4FA))),
-                    child: Text('Ghi chú: ${data['notes']}', style: const TextStyle(fontSize: 11, color: Color(0xFF5A6680), fontStyle: FontStyle.italic)),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFD),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFF0F4FA)),
+                    ),
+                    child: Text(
+                      'Ghi chú: ${data['notes']}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF5A6680),
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
                   ),
                 ],
               ],
             ),
           ),
-          if (data['status'] != 'Hoàn tất')
-            _buildActionButtons(data),
+          if (status != 'Hoàn tất') _buildActionButtons(data),
         ],
       ),
     );
   }
 
   Widget _buildActionButtons(Map<String, dynamic> data) {
-    final isWaiting = data['status'] == 'Chờ thực hiện';
+    final status = data['status']?.toString() ?? 'Chờ thực hiện';
+    final isWaiting = status == 'Chờ thực hiện';
+    final itemKey = _itemKey(data);
+    final isProcessing = _processingItems.contains(itemKey);
 
     return Container(
       padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
@@ -270,11 +391,7 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
         children: [
           Expanded(
             child: ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  data['status'] = isWaiting ? 'Đang thực hiện' : 'Hoàn tất';
-                });
-              },
+              onPressed: isProcessing ? null : () => _handleServiceAction(data),
               style: ElevatedButton.styleFrom(
                 backgroundColor: isWaiting ? const Color(0xFF0D9488) : const Color(0xFF10B981),
                 foregroundColor: Colors.white,
@@ -282,13 +399,26 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
-              child: Text(isWaiting ? 'THỰC HIỆN NGAY' : 'TRẢ KẾT QUẢ', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5)),
+              child: isProcessing
+                  ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              )
+                  : Text(
+                isWaiting ? 'THỰC HIỆN NGAY' : 'TRẢ KẾT QUẢ',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12,
+                  letterSpacing: 0.5,
+                ),
+              ),
             ),
           ),
           if (!isWaiting) ...[
             const SizedBox(width: 12),
             IconButton(
-              onPressed: () {},
+              onPressed: isProcessing ? null : () {},
               icon: const Icon(Icons.camera_alt_outlined, color: Color(0xFF0D9488)),
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFF3F6FC),
@@ -302,11 +432,79 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
     );
   }
 
+  Future<void> _handleServiceAction(Map<String, dynamic> data) async {
+    final itemKey = _itemKey(data);
+    if (_processingItems.contains(itemKey)) return;
+
+    final isWaiting = data['status'] == 'Chờ thực hiện';
+    final nextStatus = isWaiting ? 'Đang thực hiện' : 'Hoàn tất';
+
+    setState(() {
+      _processingItems.add(itemKey);
+      data['status'] = nextStatus;
+    });
+
+    try {
+      if (nextStatus == 'Hoàn tất') {
+        final currentDoctorId = FirebaseAuth.instance.currentUser?.uid ?? '';
+        final patientId = data['patientId']?.toString() ?? '';
+        final doctorId = (data['doctorId']?.toString().isNotEmpty == true)
+            ? data['doctorId'].toString()
+            : currentDoctorId;
+        final appointmentId = data['appointmentId']?.toString() ?? '';
+
+        if (patientId.isEmpty || doctorId.isEmpty || appointmentId.isEmpty) {
+          debugPrint(
+            'Không gửi được thông báo trả kết quả vì thiếu patientId/doctorId/appointmentId.',
+          );
+        } else {
+          await NotificationFacade.onServiceResultSubmitted(
+            patientId: patientId,
+            doctorId: doctorId,
+            patientName: data['patientName']?.toString() ?? 'Bệnh nhân',
+            serviceName: data['service']?.toString() ?? 'dịch vụ',
+            appointmentId: appointmentId,
+          );
+        }
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            nextStatus == 'Hoàn tất'
+                ? 'Đã trả kết quả và gửi thông báo.'
+                : 'Đã chuyển sang trạng thái đang thực hiện.',
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Notification error after service result: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Đã cập nhật trạng thái nhưng gửi thông báo lỗi: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _processingItems.remove(itemKey));
+      }
+    }
+  }
+
+  String _itemKey(Map<String, dynamic> data) {
+    final appointmentId = data['appointmentId']?.toString() ?? '';
+    final service = data['service']?.toString() ?? '';
+    return '$appointmentId-$service';
+  }
+
   Widget _statusBadge(String status, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(8)),
-      child: Text(status.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: color)),
+      child: Text(
+        status.toUpperCase(),
+        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: color),
+      ),
     );
   }
 

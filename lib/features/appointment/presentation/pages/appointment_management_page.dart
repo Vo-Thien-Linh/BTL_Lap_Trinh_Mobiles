@@ -8,6 +8,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/routes/app_routes.dart';
 import '../../data/models/appointment_models.dart';
 import '../../../home/presentation/widgets/premium_login_required.dart';
+import '../../../notification/presentation/utils/notification_facade.dart';
 
 class AppointmentManagementPage extends StatefulWidget {
   const AppointmentManagementPage({super.key});
@@ -126,14 +127,14 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const SizedBox.shrink();
-        
+
         final appointments = snapshot.data!.docs
             .map((d) => HospitalAppointmentModel.fromFirestore(d))
             .where((a) => a.status != 'cancelled' && a.status != 'completed' && a.appointmentDate.isAfter(DateTime.now()))
             .toList();
-        
+
         if (appointments.isEmpty) return const SizedBox.shrink();
-        
+
         appointments.sort((a, b) => a.appointmentDate.compareTo(b.appointmentDate));
         final next = appointments.first;
         final difference = next.appointmentDate.difference(DateTime.now());
@@ -502,7 +503,12 @@ class _MedicalTicketCard extends StatelessWidget {
                               const SizedBox(width: 12),
                               _ActionIcon(icon: Icons.info_outline_rounded, color: AppColors.success, onTap: () => _showPrepGuide(context)),
                               const SizedBox(width: 12),
-                              _ActionIcon(icon: Icons.cancel_outlined, color: AppColors.error, onTap: () {}),
+                              if (_canCancelAppointment())
+                                _ActionIcon(
+                                  icon: Icons.cancel_outlined,
+                                  color: AppColors.error,
+                                  onTap: () => _confirmCancelAppointment(context),
+                                ),
                             ],
                           ),
                         ],
@@ -537,6 +543,75 @@ class _MedicalTicketCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  bool _canCancelAppointment() {
+    final isActiveStatus = appointment.status == 'pending' || appointment.status == 'confirmed';
+    final isNotTooLate = appointment.appointmentDate.isAfter(
+      DateTime.now().subtract(const Duration(hours: 1)),
+    );
+    return isActiveStatus && isNotTooLate;
+  }
+
+  Future<void> _confirmCancelAppointment(BuildContext context) async {
+    final shouldCancel = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Hủy lịch khám?'),
+        content: Text(
+          'Bạn có chắc muốn hủy lịch khám với ${appointment.doctorName} vào '
+              '${DateFormat('dd/MM/yyyy').format(appointment.appointmentDate)} lúc ${appointment.timeSlot}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('KHÔNG'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('HỦY LỊCH'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldCancel != true) return;
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('Appointments')
+          .doc(appointment.id)
+          .update({
+        'status': 'cancelled',
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      try {
+        await NotificationFacade.onAppointmentCancelled(
+          appointmentId: appointment.id,
+          patientId: appointment.patientId,
+          doctorId: appointment.doctorId,
+          doctorName: appointment.doctorName,
+          patientEmail: FirebaseAuth.instance.currentUser?.email,
+        );
+      } catch (e) {
+        debugPrint('Notification error after appointment cancellation: $e');
+      }
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã hủy lịch khám thành công.')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Không thể hủy lịch khám: $e')),
+      );
+    }
   }
 
   void _showPrepGuide(BuildContext context) {
@@ -700,7 +775,7 @@ class _CompactHistoryCard extends StatelessWidget {
     return InkWell(
       onTap: () {
         if (appointment.status == 'completed') {
-           Navigator.pushNamed(context, AppRoutes.examinationDetail, arguments: appointment);
+          Navigator.pushNamed(context, AppRoutes.examinationDetail, arguments: appointment);
         }
       },
       child: Container(
