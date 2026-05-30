@@ -18,7 +18,7 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
   @override
   void initState() {
     super.initState();
-    _checkAndSeedData();
+    // _checkAndSeedData(); // Bỏ tự động tạo dữ liệu mẫu cho user mới
   }
 
   Future<void> _checkAndSeedData() async {

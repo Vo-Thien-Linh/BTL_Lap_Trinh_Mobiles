@@ -298,13 +298,21 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
   }
 
   Widget _buildSmartCommandHub() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('Appointments')
-          .where('doctorId', isEqualTo: _currentDoctorId)
-          .where('status', isEqualTo: 'pending')
-          .snapshots(),
-      builder: (context, snapshot) {
+    return FutureBuilder<QuerySnapshot>(
+      future: FirebaseFirestore.instance.collection('Doctors').where('userId', isEqualTo: _currentDoctorId).limit(1).get(),
+      builder: (context, doctorSnap) {
+        String actualDoctorId = _currentDoctorId ?? '';
+        if (doctorSnap.hasData && doctorSnap.data!.docs.isNotEmpty) {
+          actualDoctorId = doctorSnap.data!.docs.first.id;
+        }
+
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('Appointments')
+              .where('doctorId', isEqualTo: actualDoctorId)
+              .where('status', isEqualTo: 'pending')
+              .snapshots(),
+          builder: (context, snapshot) {
         final waitingCount = snapshot.data?.docs.length ?? 0;
 
         return SliverToBoxAdapter(
@@ -353,6 +361,8 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
             ),
           ),
         );
+      }
+    );
       }
     );
   }
@@ -432,12 +442,24 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
       return const SliverFillRemaining(child: Center(child: Text('Vui lòng đăng nhập')));
     }
 
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('Appointments')
-          .where('doctorId', isEqualTo: _currentDoctorId)
-          .snapshots(),
-      builder: (context, snapshot) {
+    return FutureBuilder<QuerySnapshot>(
+      future: FirebaseFirestore.instance.collection('Doctors').where('userId', isEqualTo: _currentDoctorId).limit(1).get(),
+      builder: (context, doctorSnap) {
+        if (doctorSnap.connectionState == ConnectionState.waiting) {
+          return const SliverToBoxAdapter(child: Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator())));
+        }
+        
+        String actualDoctorId = _currentDoctorId!;
+        if (doctorSnap.hasData && doctorSnap.data!.docs.isNotEmpty) {
+          actualDoctorId = doctorSnap.data!.docs.first.id;
+        }
+
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('Appointments')
+              .where('doctorId', isEqualTo: actualDoctorId)
+              .snapshots(),
+          builder: (context, snapshot) {
         if (snapshot.hasError) return SliverToBoxAdapter(child: Center(child: Text('Lỗi: ${snapshot.error}')));
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SliverToBoxAdapter(child: Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator())));
@@ -475,6 +497,8 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
             ),
           ),
         );
+      },
+    );
       },
     );
   }

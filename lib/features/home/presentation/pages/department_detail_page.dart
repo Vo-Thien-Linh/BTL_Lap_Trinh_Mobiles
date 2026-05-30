@@ -316,6 +316,87 @@ class _DepartmentDetailPageState extends State<DepartmentDetailPage> {
     );
   }
 
+  List<DoctorEntity> _getLocalMockDoctors(String deptId, String deptName) {
+    final cleanId = deptId.toLowerCase();
+    final cleanName = deptName.toLowerCase();
+
+    if (cleanId.contains('cardio') || cleanId.contains('tim') || cleanName.contains('tim')) {
+      return [
+        const DoctorModel(id: 'dr_cardio_1', userId: 'u1', name: 'GS.TS. Nguyễn Mạnh Phan', specialization: 'Tim mạch can thiệp', departmentId: 'dept_cardio', departmentName: 'Tim mạch', yearsOfExperience: 35, consultationFee: 800000.0, isActive: true, licenseNumber: 'LIC-C1', imageUrl: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_cardio_2', userId: 'u2', name: 'TS.BS. Lê Thị Kim Anh', specialization: 'Tim mạch nhi', departmentId: 'dept_cardio', departmentName: 'Tim mạch', yearsOfExperience: 22, consultationFee: 600000.0, isActive: true, licenseNumber: 'LIC-C2', imageUrl: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_cardio_3', userId: 'u3', name: 'ThS.BS. Trần Quốc Bảo', specialization: 'Loạn nhịp tim', departmentId: 'dept_cardio', departmentName: 'Tim mạch', yearsOfExperience: 15, consultationFee: 500000.0, isActive: true, licenseNumber: 'LIC-C3', imageUrl: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_cardio_4', userId: 'u4', name: 'BS.CKII. Phạm Hoàng Minh', specialization: 'Phẫu thuật tim mạch', departmentId: 'dept_cardio', departmentName: 'Tim mạch', yearsOfExperience: 18, consultationFee: 700000.0, isActive: true, licenseNumber: 'LIC-C4', imageUrl: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b1a8?q=80&w=256&h=256&auto=format&fit=crop'),
+      ];
+    } else if (cleanId.contains('internal') || cleanId.contains('noi_tong') || cleanName.contains('nội tổng')) {
+      return [
+        const DoctorModel(id: 'dr_internal_1', userId: 'u5', name: 'PGS.TS.BS. Nguyễn Văn Kính', specialization: 'Nội tiêu hóa', departmentId: 'dept_internal', departmentName: 'Nội tổng quát', yearsOfExperience: 30, consultationFee: 600000.0, isActive: true, licenseNumber: 'LIC-I1', imageUrl: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_internal_2', userId: 'u6', name: 'TS.BS. Phạm Hồng Hải', specialization: 'Nội hô hấp', departmentId: 'dept_internal', departmentName: 'Nội tổng quát', yearsOfExperience: 25, consultationFee: 500000.0, isActive: true, licenseNumber: 'LIC-I2', imageUrl: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_internal_3', userId: 'u7', name: 'BS.CKII. Lê Hoàng Nam', specialization: 'Nội nội tiết', departmentId: 'dept_internal', departmentName: 'Nội tổng quát', yearsOfExperience: 20, consultationFee: 450000.0, isActive: true, licenseNumber: 'LIC-I3', imageUrl: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b1a8?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_internal_5', userId: 'u8', name: 'BS.CKI. Vũ Trường Phi', specialization: 'Nội tổng quát', departmentId: 'dept_internal', departmentName: 'Nội tổng quát', yearsOfExperience: 10, consultationFee: 350000.0, isActive: true, licenseNumber: 'LIC-I5', imageUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=256&h=256&auto=format&fit=crop'),
+      ];
+    } else if (cleanId.contains('pedia') || cleanId.contains('nhi') || cleanName.contains('nhi')) {
+      return [
+        const DoctorModel(id: 'dr_pedia_1', userId: 'u9', name: 'BS. Đặng Lê Nguyên Vũ', specialization: 'Nhi sơ sinh', departmentId: 'dept_pedia', departmentName: 'Nhi khoa', yearsOfExperience: 25, consultationFee: 350000.0, isActive: true, licenseNumber: 'LIC-P1', imageUrl: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b1a8?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_pedia_2', userId: 'u10', name: 'BS. Mai Kiều Liên', specialization: 'Dinh dưỡng nhi', departmentId: 'dept_pedia', departmentName: 'Nhi khoa', yearsOfExperience: 30, consultationFee: 300000.0, isActive: true, licenseNumber: 'LIC-P2', imageUrl: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_pedia_3', userId: 'u11', name: 'PGS.TS. Nguyễn Thanh Liêm', specialization: 'Ngoại nhi', departmentId: 'dept_pedia', departmentName: 'Nhi khoa', yearsOfExperience: 38, consultationFee: 800000.0, isActive: true, licenseNumber: 'LIC-P3', imageUrl: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=256&h=256&auto=format&fit=crop'),
+      ];
+    } else if (cleanId.contains('obgyn') || cleanId.contains('sản') || cleanName.contains('sản') || cleanName.contains('phụ')) {
+      return [
+        const DoctorModel(id: 'dr_obgyn_1', userId: 'u12', name: 'GS.TS.BS. Nguyễn Thị Ngọc Phượng', specialization: 'Sản khoa', departmentId: 'dept_obgyn', departmentName: 'Phụ sản', yearsOfExperience: 32, consultationFee: 700000.0, isActive: true, licenseNumber: 'LIC-O1', imageUrl: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_obgyn_2', userId: 'u13', name: 'BS.CKII. Huỳnh Thị Thu Thủy', specialization: 'Phụ khoa', departmentId: 'dept_obgyn', departmentName: 'Phụ sản', yearsOfExperience: 26, consultationFee: 550000.0, isActive: true, licenseNumber: 'LIC-O2', imageUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=256&h=256&auto=format&fit=crop'),
+      ];
+    } else if (cleanId.contains('derma') || cleanId.contains('da_lieu') || cleanName.contains('da liễu')) {
+      return [
+        const DoctorModel(id: 'dr_derma_1', userId: 'u14', name: 'BS. Trương Mỹ Lan', specialization: 'Da liễu thẩm mỹ', departmentId: 'dept_dermatology', departmentName: 'Da liễu', yearsOfExperience: 12, consultationFee: 400000.0, isActive: true, licenseNumber: 'LIC-D1', imageUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_derma_2', userId: 'u15', name: 'BS. Quách Thành Danh', specialization: 'Laser thẩm mỹ', departmentId: 'dept_dermatology', departmentName: 'Da liễu', yearsOfExperience: 18, consultationFee: 600000.0, isActive: true, licenseNumber: 'LIC-D2', imageUrl: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_derma_3', userId: 'u16', name: 'TS.BS. Trần Ngọc Ánh', specialization: 'Da liễu tổng quát', departmentId: 'dept_dermatology', departmentName: 'Da liễu', yearsOfExperience: 24, consultationFee: 500000.0, isActive: true, licenseNumber: 'LIC-D3', imageUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=256&h=256&auto=format&fit=crop'),
+      ];
+    } else if (cleanId.contains('tai_mui_hong') || cleanName.contains('tai mũi họng')) {
+      return [
+        const DoctorModel(id: 'dr_tmh_1', userId: 'u17', name: 'BS. Ngô Bảo K', specialization: 'Tai Mũi Họng', departmentId: 'tai_mui_hong', departmentName: 'Tai Mũi Họng', yearsOfExperience: 15, consultationFee: 380000.0, isActive: true, licenseNumber: 'LIC-T1', imageUrl: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_tmh_2', userId: 'u18', name: 'TS.BS. Nguyễn Thị Mai', specialization: 'Nội soi tai mũi họng', departmentId: 'tai_mui_hong', departmentName: 'Tai Mũi Họng', yearsOfExperience: 18, consultationFee: 450000.0, isActive: true, licenseNumber: 'LIC-T2', imageUrl: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_ent_1', userId: 'u_ent_1', name: 'PGS.TS.BS. Nhan Trừng Sơn', specialization: 'Tai Mũi Họng Nhi', departmentId: 'tai_mui_hong', departmentName: 'Tai Mũi Họng', yearsOfExperience: 35, consultationFee: 600000.0, isActive: true, licenseNumber: 'LIC-ENT1', imageUrl: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_ent_2', userId: 'u_ent_2', name: 'BS.CKII. Nguyễn Thanh Tuấn', specialization: 'Phẫu thuật Tai Mũi Họng', departmentId: 'tai_mui_hong', departmentName: 'Tai Mũi Họng', yearsOfExperience: 20, consultationFee: 500000.0, isActive: true, licenseNumber: 'LIC-ENT2', imageUrl: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b1a8?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_ent_3', userId: 'u_ent_3', name: 'ThS.BS. Đinh Văn Sang', specialization: 'Khám Tai Mũi Họng', departmentId: 'tai_mui_hong', departmentName: 'Tai Mũi Họng', yearsOfExperience: 15, consultationFee: 400000.0, isActive: true, licenseNumber: 'LIC-ENT3', imageUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_ent_4', userId: 'u_ent_4', name: 'BS.CKI. Lê Văn Dũng', specialization: 'Tai Mũi Họng', departmentId: 'tai_mui_hong', departmentName: 'Tai Mũi Họng', yearsOfExperience: 12, consultationFee: 350000.0, isActive: true, licenseNumber: 'LIC-ENT4', imageUrl: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_ent_5', userId: 'u_ent_5', name: 'BS. Trần Hữu Phúc', specialization: 'Tai Mũi Họng', departmentId: 'tai_mui_hong', departmentName: 'Tai Mũi Họng', yearsOfExperience: 10, consultationFee: 300000.0, isActive: true, licenseNumber: 'LIC-ENT5', imageUrl: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_ent_6', userId: 'u_ent_6', name: 'ThS.BS. Phạm Hữu Tài', specialization: 'Thính học', departmentId: 'tai_mui_hong', departmentName: 'Tai Mũi Họng', yearsOfExperience: 14, consultationFee: 450000.0, isActive: true, licenseNumber: 'LIC-ENT6', imageUrl: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_ent_7', userId: 'u_ent_7', name: 'BS.CKII. Hoàng Tuấn', specialization: 'Phẫu thuật đầu cổ', departmentId: 'tai_mui_hong', departmentName: 'Tai Mũi Họng', yearsOfExperience: 25, consultationFee: 550000.0, isActive: true, licenseNumber: 'LIC-ENT7', imageUrl: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b1a8?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_ent_8', userId: 'u_ent_8', name: 'BS. Vũ Đức Hải', specialization: 'Tai Mũi Họng', departmentId: 'tai_mui_hong', departmentName: 'Tai Mũi Họng', yearsOfExperience: 8, consultationFee: 300000.0, isActive: true, licenseNumber: 'LIC-ENT8', imageUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=256&h=256&auto=format&fit=crop'),
+        const DoctorModel(id: 'dr_ent_9', userId: 'u_ent_9', name: 'BS. Lê Minh Tiến', specialization: 'Nội soi tai mũi họng', departmentId: 'tai_mui_hong', departmentName: 'Tai Mũi Họng', yearsOfExperience: 11, consultationFee: 400000.0, isActive: true, licenseNumber: 'LIC-ENT9', imageUrl: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=256&h=256&auto=format&fit=crop'),
+      ];
+    } else if (cleanId.contains('rang_ham_mat') || cleanName.contains('răng hàm mặt')) {
+      return [
+        const DoctorModel(id: 'dr_rhm_1', userId: 'u19', name: 'BS. Phan Thanh H', specialization: 'Răng Hàm Mặt', departmentId: 'rang_ham_mat', departmentName: 'Răng Hàm Mặt', yearsOfExperience: 12, consultationFee: 400000.0, isActive: true, licenseNumber: 'LIC-R1', imageUrl: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b1a8?q=80&w=256&h=256&auto=format&fit=crop'),
+      ];
+    } else if (cleanId.contains('mat') || cleanName.contains('mắt') || cleanName.contains('nhãn khoa')) {
+      return [
+        const DoctorModel(id: 'dr_mat_1', userId: 'u20', name: 'BS. Đặng Minh G', specialization: 'Nhãn khoa', departmentId: 'mat', departmentName: 'Mắt', yearsOfExperience: 14, consultationFee: 400000.0, isActive: true, licenseNumber: 'LIC-M1', imageUrl: 'https://images.unsplash.com/photo-1622902046580-2b47f47f0871?q=80&w=256&h=256&auto=format&fit=crop'),
+      ];
+    } else if (cleanId.contains('noi_tiet') || cleanName.contains('nội tiết')) {
+      return [
+        const DoctorModel(id: 'dr_nt_1', userId: 'u21', name: 'BS. Lý Tiểu L', specialization: 'Nội tiết', departmentId: 'noi_tiet', departmentName: 'Nội tiết', yearsOfExperience: 11, consultationFee: 420000.0, isActive: true, licenseNumber: 'LIC-N1', imageUrl: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?q=80&w=256&h=256&auto=format&fit=crop'),
+      ];
+    }
+
+    // Default fallback
+    return [
+      DoctorModel(
+        id: 'dr_default',
+        userId: 'udef',
+        name: 'BS. Nguyễn Văn A',
+        specialization: 'Chuyên khoa tổng quát',
+        departmentId: deptId,
+        departmentName: deptName,
+        yearsOfExperience: 10,
+        consultationFee: 300000.0,
+        isActive: true,
+        licenseNumber: 'LIC-DEF',
+        imageUrl: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=256&h=256&auto=format&fit=crop',
+      ),
+    ];
+  }
+
   Widget _buildDoctorsList() {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -323,8 +404,17 @@ class _DepartmentDetailPageState extends State<DepartmentDetailPage> {
         future: FirebaseFirestore.instance.collection('Doctors').where('departmentId', isEqualTo: widget.department.id).get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) return const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator()));
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const SliverToBoxAdapter(child: Center(child: Text('Chưa có thông tin bác sĩ.')));
-          final doctors = snapshot.data!.docs.map(DoctorModel.fromFirestore).toList();
+          
+          List<DoctorEntity> doctors = [];
+          if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+            doctors = snapshot.data!.docs.map(DoctorModel.fromFirestore).toList();
+          }
+
+          // Local fallback if empty
+          if (doctors.isEmpty) {
+            doctors = _getLocalMockDoctors(widget.department.id, widget.department.name);
+          }
+
           return SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) => GestureDetector(onTap: () => _onDoctorProfileTap(doctors[index]), child: _buildDoctorCard(context, doctors[index])),

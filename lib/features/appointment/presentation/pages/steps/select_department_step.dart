@@ -57,11 +57,12 @@ class SelectDepartmentStep extends StatelessWidget {
 
   IconData _getIconForDept(String id) {
     switch (id) {
-      case 'tim_mach': return Icons.favorite_rounded;
-      case 'nhi_khoa': return Icons.child_care_rounded;
-      case 'noi_tiet': return Icons.biotech_rounded;
-      case 'than_kinh': return Icons.psychology_rounded;
-      case 'xuong_khop': return Icons.accessibility_new_rounded;
+      case 'dept_cardio': return Icons.favorite_rounded;
+      case 'dept_pedia': return Icons.child_care_rounded;
+      case 'dept_internal': return Icons.biotech_rounded;
+      case 'dept_obgyn': return Icons.pregnant_woman_rounded;
+      case 'dept_dermatology': return Icons.healing_rounded;
+      case 'dept_ent': return Icons.face_rounded;
       default: return Icons.local_hospital_rounded;
     }
   }

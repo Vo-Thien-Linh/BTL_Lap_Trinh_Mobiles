@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../app/settings/app_settings_controller.dart';
 import '../../../../config/service_locator.dart';
 import '../../../../shared/utils/app_i18n.dart';
+import '../../../../app/routes/app_routes.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -174,6 +175,34 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     _SuggestionLine(
                       text: context.tr('settings.suggestion.help'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              _buildSection(
+                context: context,
+                title: 'Thông tin & Điều khoản',
+                child: Column(
+                  children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.description_outlined),
+                      title: const Text('Điều khoản sử dụng'),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () {
+                        Navigator.pushNamed(context, AppRoutes.termsOfUse);
+                      },
+                    ),
+                    const Divider(height: 6),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.security_outlined),
+                      title: const Text('Chính sách bảo mật'),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () {
+                        Navigator.pushNamed(context, AppRoutes.privacyPolicy);
+                      },
                     ),
                   ],
                 ),

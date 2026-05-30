@@ -26,6 +26,7 @@ class UserModel {
   final List<String>? chronicConditions;
   final double? weight;
   final double? height;
+  final String? membership;
 
   const UserModel({
     required this.uid,
@@ -50,6 +51,7 @@ class UserModel {
     this.chronicConditions,
     this.weight,
     this.height,
+    this.membership,
   });
 
   factory UserModel.empty() {
@@ -66,6 +68,7 @@ class UserModel {
       emailVerified: false,
       createdAt: now,
       updatedAt: now,
+      membership: 'STANDARD',
     );
   }
 
@@ -92,6 +95,7 @@ class UserModel {
     List<String>? chronicConditions,
     double? weight,
     double? height,
+    String? membership,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -117,6 +121,7 @@ class UserModel {
       chronicConditions: chronicConditions ?? this.chronicConditions,
       weight: weight ?? this.weight,
       height: height ?? this.height,
+      membership: membership ?? this.membership,
     );
   }
 
@@ -144,6 +149,7 @@ class UserModel {
       'chronicConditions': chronicConditions,
       'weight': weight,
       'height': height,
+      'membership': membership,
     };
   }
 
@@ -171,6 +177,7 @@ class UserModel {
       chronicConditions: map['chronicConditions'] != null ? List<String>.from(map['chronicConditions']) : null,
       weight: (map['weight'] as num?)?.toDouble(),
       height: (map['height'] as num?)?.toDouble(),
+      membership: map['membership'] as String?,
     );
   }
 

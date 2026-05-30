@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../../notification/presentation/utils/notification_facade.dart';
@@ -15,77 +16,58 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
   final Set<String> _processingItems = <String>{};
   final List<String> _filters = ['Tất cả', 'Xét nghiệm', 'Siêu âm', 'X-Quang', 'CT Scan'];
 
-  /// Đây vẫn là dữ liệu demo giống file cũ.
-  /// Khi nối dữ liệu thật từ Firestore, mỗi phiếu dịch vụ cần có đủ:
-  /// appointmentId, patientId, doctorId, patientName, service, type, status.
-  final List<Map<String, dynamic>> _serviceQueue = [
-    {
-      'appointmentId': 'demo_appointment_001',
-      'patientId': 'demo_patient_001',
-      'doctorId': '',
-      'patientName': 'Phạm Hải Đăng',
-      'service': 'Xét nghiệm máu',
-      'type': 'Xét nghiệm',
-      'orderedBy': 'BS. Vũ Trường Phi',
-      'time': '10:30',
-      'status': 'Chờ thực hiện',
-      'priority': 0,
-      'notes': 'Kiểm tra đường huyết và mỡ máu.',
-    },
-    {
-      'appointmentId': 'demo_appointment_002',
-      'patientId': 'demo_patient_002',
-      'doctorId': '',
-      'patientName': 'Nguyễn Thị Hoa',
-      'service': 'Siêu âm tim',
-      'type': 'Siêu âm',
-      'orderedBy': 'BS. Trần Thị D1',
-      'time': '11:15',
-      'status': 'Đang thực hiện',
-      'priority': 1,
-      'notes': 'Nghi ngờ hở van 2 lá.',
-    },
-    {
-      'appointmentId': 'demo_appointment_003',
-      'patientId': 'demo_patient_003',
-      'doctorId': '',
-      'patientName': 'Trần Văn Mạnh',
-      'service': 'Chụp X-Quang phổi',
-      'type': 'X-Quang',
-      'orderedBy': 'BS. Lê Văn C',
-      'time': '14:00',
-      'status': 'Chờ thực hiện',
-      'priority': 0,
-      'notes': 'Theo dõi viêm phổi thùy.',
-    },
-    {
-      'appointmentId': 'demo_appointment_004',
-      'patientId': 'demo_patient_004',
-      'doctorId': '',
-      'patientName': 'Lê Hoàng Nam',
-      'service': 'Chụp CT Sọ não',
-      'type': 'CT Scan',
-      'orderedBy': 'BS. Vũ Trường Phi',
-      'time': '14:30',
-      'status': 'Hoàn tất',
-      'priority': 1,
-      'notes': 'Khẩn cấp - Chấn thương sọ não.',
-    },
-  ];
+  final String? _currentUid = FirebaseAuth.instance.currentUser?.uid;
 
   @override
   Widget build(BuildContext context) {
+    if (_currentUid == null) {
+      return const Scaffold(body: Center(child: Text('Vui lòng đăng nhập')));
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4FA),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          _buildAppBar(),
-          _buildSummaryStats(),
-          _buildCategoryFilters(),
-          _buildServiceList(),
-          const SliverToBoxAdapter(child: SizedBox(height: 40)),
-        ],
+      body: FutureBuilder<QuerySnapshot>(
+        future: FirebaseFirestore.instance.collection('Doctors').where('userId', isEqualTo: _currentUid).limit(1).get(),
+        builder: (context, doctorSnap) {
+          if (doctorSnap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          String actualDoctorId = _currentUid!;
+          if (doctorSnap.hasData && doctorSnap.data!.docs.isNotEmpty) {
+            actualDoctorId = doctorSnap.data!.docs.first.id;
+          }
+
+          return StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('ServiceRequests')
+                .where('doctorId', isEqualTo: actualDoctorId)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final allDocs = snapshot.data?.docs ?? [];
+              final List<Map<String, dynamic>> serviceQueue = allDocs.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                data['requestId'] = doc.id;
+                return data;
+              }).toList();
+
+              return CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  _buildAppBar(),
+                  _buildSummaryStats(serviceQueue),
+                  _buildCategoryFilters(),
+                  _buildServiceList(serviceQueue),
+                  const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                ],
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -121,10 +103,10 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
     );
   }
 
-  Widget _buildSummaryStats() {
-    final total = _serviceQueue.length;
-    final waiting = _serviceQueue.where((q) => q['status'] == 'Chờ thực hiện').length;
-    final done = _serviceQueue.where((q) => q['status'] == 'Hoàn tất').length;
+  Widget _buildSummaryStats(List<Map<String, dynamic>> queue) {
+    final total = queue.length;
+    final waiting = queue.where((q) => q['status'] == 'Chờ thực hiện').length;
+    final done = queue.where((q) => q['status'] == 'Hoàn tất').length;
 
     return SliverToBoxAdapter(
       child: Container(
@@ -211,10 +193,18 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
     );
   }
 
-  Widget _buildServiceList() {
+  Widget _buildServiceList(List<Map<String, dynamic>> queue) {
     final filtered = _activeFilter == 'Tất cả'
-        ? _serviceQueue
-        : _serviceQueue.where((q) => q['type'] == _activeFilter).toList();
+        ? queue
+        : queue.where((q) => q['type'] == _activeFilter).toList();
+
+    if (filtered.isEmpty) {
+      return const SliverFillRemaining(
+        child: Center(
+          child: Text('Không có dịch vụ nào', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+        ),
+      );
+    }
 
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),

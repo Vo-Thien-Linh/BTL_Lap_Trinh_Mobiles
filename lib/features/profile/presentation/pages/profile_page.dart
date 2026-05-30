@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../../../../app/routes/app_routes.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../data/models/user_model.dart';
-import '../../../../shared/utils/firebase_data_seeder.dart';
 import '../../../../shared/utils/app_i18n.dart';
 import '../../../home/presentation/pages/examination_history_page.dart';
 
@@ -46,20 +45,33 @@ class _ProfilePageState extends State<ProfilePage>
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         // Load User Profile
-        final doc = await FirebaseFirestore.instance
-            .collection('Users')
+        var doc = await FirebaseFirestore.instance
+            .collection('users')
             .doc(user.uid)
             .get();
+        if (!doc.exists) {
+          doc = await FirebaseFirestore.instance
+              .collection('Users')
+              .doc(user.uid)
+              .get();
+        }
         if (doc.exists) {
           _userModel = UserModel.fromDocument(doc);
         }
 
         // Load Family Members
-        final familySnapshot = await FirebaseFirestore.instance
-            .collection('Users')
+        var familySnapshot = await FirebaseFirestore.instance
+            .collection('users')
             .doc(user.uid)
             .collection('FamilyMembers')
             .get();
+        if (familySnapshot.docs.isEmpty) {
+          familySnapshot = await FirebaseFirestore.instance
+              .collection('Users')
+              .doc(user.uid)
+              .collection('FamilyMembers')
+              .get();
+        }
 
         _familyMembers = familySnapshot.docs.map((d) => d.data()).toList();
 
@@ -292,7 +304,10 @@ class _ProfilePageState extends State<ProfilePage>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildMemberInfoChip('THÀNH VIÊN', 'PREMIUM'),
+                      _buildMemberInfoChip(
+                        'THÀNH VIÊN',
+                        user.membership == 'PREMIUM' ? 'PREMIUM' : 'TIÊU CHUẨN',
+                      ),
                       GestureDetector(
                         onTap: () => _showQRCodeDialog(user),
                         child: Container(
@@ -345,11 +360,21 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildHealthVitalsGrid(UserModel user) {
-    double bmi =
-        (user.weight ?? 0) /
-            (((user.height ?? 1) / 100) * ((user.height ?? 1) / 100));
-    String bmiStatus = _getBMIStatus(bmi);
-    Color bmiColor = _getBMIColor(bmi);
+    final hasWeight = user.weight != null && user.weight! > 0;
+    final hasHeight = user.height != null && user.height! > 0;
+    final hasBloodType = user.bloodType != null && user.bloodType!.trim().isNotEmpty;
+
+    double bmi = 0.0;
+    String bmiValueStr = '--';
+    String bmiStatus = 'Chưa có dữ liệu';
+    Color bmiColor = AppColors.textHint;
+
+    if (hasWeight && hasHeight) {
+      bmi = user.weight! / (((user.height!) / 100) * ((user.height!) / 100));
+      bmiValueStr = bmi.toStringAsFixed(1);
+      bmiStatus = _getBMIStatus(bmi);
+      bmiColor = _getBMIColor(bmi);
+    }
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -371,7 +396,7 @@ class _ProfilePageState extends State<ProfilePage>
               Expanded(
                 child: _buildInteractiveVitalCard(
                   'BMI',
-                  bmi.toStringAsFixed(1),
+                  bmiValueStr,
                   bmiStatus,
                   Icons.analytics_rounded,
                   bmiColor,
@@ -381,10 +406,10 @@ class _ProfilePageState extends State<ProfilePage>
               Expanded(
                 child: _buildInteractiveVitalCard(
                   'NHÓM MÁU',
-                  user.bloodType ?? 'O+',
-                  'Tương thích cao',
+                  hasBloodType ? user.bloodType! : '--',
+                  hasBloodType ? 'Tương thích cao' : 'Chưa cập nhật',
                   Icons.water_drop_rounded,
-                  const Color(0xFFEF4444),
+                  hasBloodType ? const Color(0xFFEF4444) : AppColors.textHint,
                 ),
               ),
             ],
@@ -395,20 +420,24 @@ class _ProfilePageState extends State<ProfilePage>
               Expanded(
                 child: _buildInteractiveVitalCard(
                   'CHIỀU CAO',
-                  '${user.height ?? "--"} cm',
-                  'Tăng 1.2% year',
+                  hasHeight
+                      ? '${user.height!.toInt() == user.height ? user.height!.toInt() : user.height} cm'
+                      : '-- cm',
+                  hasHeight ? 'Tăng 1.2% year' : 'Chưa cập nhật',
                   Icons.straighten_rounded,
-                  const Color(0xFF3B82F6),
+                  hasHeight ? const Color(0xFF3B82F6) : AppColors.textHint,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _buildInteractiveVitalCard(
                   'CÂN NẶNG',
-                  '${user.weight ?? "--"} kg',
-                  'Ổn định',
+                  hasWeight
+                      ? '${user.weight!.toInt() == user.weight ? user.weight!.toInt() : user.weight} kg'
+                      : '-- kg',
+                  hasWeight ? 'Ổn định' : 'Chưa cập nhật',
                   Icons.monitor_weight_rounded,
-                  const Color(0xFF10B981),
+                  hasWeight ? const Color(0xFF10B981) : AppColors.textHint,
                 ),
               ),
             ],
@@ -582,18 +611,51 @@ class _ProfilePageState extends State<ProfilePage>
                 'Số điện thoại',
                 user.phone,
                 AppColors.primary,
+                onTap: () async {
+                  final result = await Navigator.pushNamed(
+                    context,
+                    AppRoutes.editProfile,
+                    arguments: user,
+                  );
+                  if (mounted && result == true) {
+                    setState(() => _isLoading = true);
+                    await _loadUserProfile();
+                  }
+                },
               ),
               _buildMenuItem(
                 Icons.email_rounded,
                 'Email liên hệ',
                 user.email,
                 AppColors.primary,
+                onTap: () async {
+                  final result = await Navigator.pushNamed(
+                    context,
+                    AppRoutes.editProfile,
+                    arguments: user,
+                  );
+                  if (mounted && result == true) {
+                    setState(() => _isLoading = true);
+                    await _loadUserProfile();
+                  }
+                },
               ),
               _buildMenuItem(
                 Icons.location_on_rounded,
                 'Địa chỉ thường trú',
                 user.address ?? 'Chưa cập nhật',
                 AppColors.primary,
+                onTap: () async {
+                  final result = await Navigator.pushNamed(
+                    context,
+                    AppRoutes.editProfile,
+                    arguments: user,
+                  );
+                  if (mounted && result == true) {
+                    setState(() => _isLoading = true);
+                    await _loadUserProfile();
+                  }
+                },
               ),
             ],
           ),
@@ -623,6 +685,17 @@ class _ProfilePageState extends State<ProfilePage>
                 'Người liên hệ khẩn cấp',
                 user.emergencyPhone ?? 'Chưa thiết lập',
                 AppColors.error,
+                onTap: () async {
+                  final result = await Navigator.pushNamed(
+                    context,
+                    AppRoutes.emergencyContact,
+                  );
+
+                  if (mounted && result == true) {
+                    setState(() => _isLoading = true);
+                    await _loadUserProfile();
+                  }
+                },
               ),
             ],
           ),
@@ -630,8 +703,6 @@ class _ProfilePageState extends State<ProfilePage>
           _buildUpdateProfileButton(user),
           const SizedBox(height: 12),
           _buildSettingsButton(),
-          const SizedBox(height: 12),
-          _buildSyncDataButton(user),
           const SizedBox(height: 12),
           _buildLogoutButton(),
           const SizedBox(height: 40),
@@ -776,53 +847,6 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Widget _buildSyncDataButton(UserModel user) {
-    return OutlinedButton(
-      onPressed: () async {
-        setState(() => _isLoading = true);
-        try {
-          await FirebaseDataSeeder.seedAll(user.uid);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'Đã đồng bộ 14 bác sĩ Tim mạch và dữ liệu mẫu thành công!',
-                ),
-                backgroundColor: AppColors.success,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-            _loadUserProfile(); // Refresh the page data
-          }
-        } catch (e) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Lỗi đồng bộ: $e'),
-                backgroundColor: AppColors.error,
-              ),
-            );
-          }
-        } finally {
-          if (mounted) setState(() => _isLoading = false);
-        }
-      },
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 54),
-        side: const BorderSide(color: AppColors.primary),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      ),
-      child: const Text(
-        'ĐỒNG BỘ DỮ LIỆU MẪU (DEV)',
-        style: TextStyle(
-          color: AppColors.primary,
-          fontWeight: FontWeight.w900,
-          fontSize: 13,
-          letterSpacing: 1.0,
-        ),
-      ),
-    );
-  }
 
   Widget _buildSettingsButton() {
     return OutlinedButton.icon(

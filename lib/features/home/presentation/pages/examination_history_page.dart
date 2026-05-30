@@ -180,7 +180,6 @@ class _ExaminationHistoryPageState extends State<ExaminationHistoryPage> {
         if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
         
         var list = snapshot.data?.docs.map((d) => HospitalAppointmentModel.fromFirestore(d)).toList() ?? [];
-        if (list.isEmpty) list = _getMockHistory();
 
         // Filtering
         if (_selectedFilter != 'Tất cả') {

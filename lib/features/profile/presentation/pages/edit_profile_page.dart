@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
+import 'package:dvhcvn/dvhcvn.dart' as dvhcvn;
 import '../../../../data/models/user_model.dart';
 
 class EditProfilePage extends StatefulWidget {
@@ -25,6 +26,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _dobController;
   late TextEditingController _cccdController;
   late TextEditingController _healthInsuranceController;
+  late TextEditingController _emailController;
+  late TextEditingController _streetController;
+  dvhcvn.Level1? _selectedProvince;
+  dvhcvn.Level2? _selectedDistrict;
+  dvhcvn.Level3? _selectedWard;
+  List<dvhcvn.Level1> _provincesList = [];
+  List<dvhcvn.Level2> _districtsList = [];
+  List<dvhcvn.Level3> _wardsList = [];
   
   String? _selectedGender;
   String? _avatarUrl;
@@ -40,6 +49,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _dobController = TextEditingController(text: widget.user.dateOfBirth ?? '');
     _cccdController = TextEditingController(text: widget.user.cccd);
     _healthInsuranceController = TextEditingController(text: widget.user.healthInsuranceNumber ?? '');
+    _emailController = TextEditingController(text: widget.user.email);
+    _streetController = TextEditingController();
+    _provincesList = List.from(dvhcvn.level1s)..sort((a, b) => a.name.compareTo(b.name));
+    _parseAddress(widget.user.address);
     
     _avatarUrl = widget.user.avatarUrl;
     
@@ -49,6 +62,94 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
+  void _parseAddress(String? addressStr) {
+    if (addressStr == null || addressStr.trim().isEmpty) return;
+    final parts = addressStr.split(',').map((e) => e.trim()).toList();
+    if (parts.length >= 4) {
+      final provinceName = parts[parts.length - 1];
+      final districtName = parts[parts.length - 2];
+      final wardName = parts[parts.length - 3];
+      final streetName = parts.sublist(0, parts.length - 3).join(', ');
+
+      // Find Province
+      final provinceObj = _provincesList.cast<dvhcvn.Level1?>().firstWhere(
+        (p) => p?.name.toLowerCase() == provinceName.toLowerCase(),
+        orElse: () => null,
+      );
+
+      if (provinceObj != null) {
+        _selectedProvince = provinceObj;
+        _districtsList = List.from(provinceObj.children)..sort((a, b) => a.name.compareTo(b.name));
+
+        // Find District
+        final districtObj = _districtsList.cast<dvhcvn.Level2?>().firstWhere(
+          (d) => d?.name.toLowerCase() == districtName.toLowerCase(),
+          orElse: () => null,
+        );
+
+        if (districtObj != null) {
+          _selectedDistrict = districtObj;
+          _wardsList = List.from(districtObj.children)..sort((a, b) => a.name.compareTo(b.name));
+
+          // Find Ward
+          final wardObj = _wardsList.cast<dvhcvn.Level3?>().firstWhere(
+            (w) => w?.name.toLowerCase() == wardName.toLowerCase(),
+            orElse: () => null,
+          );
+
+          if (wardObj != null) {
+            _selectedWard = wardObj;
+          }
+        }
+      }
+      _streetController.text = streetName;
+    } else if (parts.length == 3) {
+      final provinceName = parts[2];
+      final districtName = parts[1];
+      final streetName = parts[0];
+
+      // Find Province
+      final provinceObj = _provincesList.cast<dvhcvn.Level1?>().firstWhere(
+        (p) => p?.name.toLowerCase() == provinceName.toLowerCase(),
+        orElse: () => null,
+      );
+
+      if (provinceObj != null) {
+        _selectedProvince = provinceObj;
+        _districtsList = List.from(provinceObj.children)..sort((a, b) => a.name.compareTo(b.name));
+
+        // Find District
+        final districtObj = _districtsList.cast<dvhcvn.Level2?>().firstWhere(
+          (d) => d?.name.toLowerCase() == districtName.toLowerCase(),
+          orElse: () => null,
+        );
+
+        if (districtObj != null) {
+          _selectedDistrict = districtObj;
+          _wardsList = List.from(districtObj.children)..sort((a, b) => a.name.compareTo(b.name));
+        }
+      }
+      _streetController.text = streetName;
+    } else {
+      _streetController.text = addressStr;
+    }
+  }
+
+  String _buildFullAddress() {
+    final street = _streetController.text.trim();
+    final ward = _selectedWard?.name ?? '';
+    final district = _selectedDistrict?.name ?? '';
+    final province = _selectedProvince?.name ?? '';
+
+    final parts = <String>[];
+    if (street.isNotEmpty) parts.add(street);
+    if (ward.isNotEmpty) parts.add(ward);
+    if (district.isNotEmpty) parts.add(district);
+    if (province.isNotEmpty) parts.add(province);
+
+    return parts.join(', ');
+  }
+
   @override
   void dispose() {
     _fullNameController.dispose();
@@ -56,6 +157,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _dobController.dispose();
     _cccdController.dispose();
     _healthInsuranceController.dispose();
+    _emailController.dispose();
+    _streetController.dispose();
     super.dispose();
   }
 
@@ -137,15 +240,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   String? _validateBHYT(String? val) {
     if (val == null || val.trim().isEmpty) {
-      // Allow empty if age >= 60
-      if (_dobController.text.isNotEmpty) {
-        try {
-          final dob = DateFormat('dd/MM/yyyy').parseLoose(_dobController.text);
-          final age = DateTime.now().year - dob.year;
-          if (age >= 60) return null;
-        } catch (_) {}
-      }
-      return 'Bắt buộc nhập mã BHYT đối với người dưới 60 tuổi';
+      return null;
     }
 
     final trimmed = val.trim();
@@ -175,13 +270,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
         'gender': _selectedGender,
         'cccd': _cccdController.text.trim(),
         'healthInsuranceNumber': _healthInsuranceController.text.trim(),
+        'address': _buildFullAddress(),
+        'email': _emailController.text.trim(),
         if (_avatarUrl != null) 'avatarUrl': _avatarUrl,
       };
 
-      await FirebaseFirestore.instance
-          .collection('Users')
-          .doc(widget.user.uid)
-          .update(updatedData);
+      final batch = FirebaseFirestore.instance.batch();
+      final usersRef = FirebaseFirestore.instance.collection('users').doc(widget.user.uid);
+      final upperUsersRef = FirebaseFirestore.instance.collection('Users').doc(widget.user.uid);
+
+      batch.set(usersRef, updatedData, SetOptions(merge: true));
+      batch.set(upperUsersRef, updatedData, SetOptions(merge: true));
+
+      await batch.commit();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -380,6 +481,165 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 label: 'Số điện thoại',
                 icon: Icons.phone_outlined,
                 keyboardType: TextInputType.phone,
+              ),
+              _buildTextField(
+                controller: _emailController,
+                label: 'Email liên hệ',
+                icon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+                validator: (val) {
+                  if (val == null || val.trim().isEmpty) {
+                    return 'Vui lòng nhập email liên hệ';
+                  }
+                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(val.trim())) {
+                    return 'Email không đúng định dạng';
+                  }
+                  return null;
+                },
+              ),
+              // Tỉnh / Thành phố dropdown
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: DropdownButtonFormField<dvhcvn.Level1>(
+                  value: _selectedProvince,
+                  items: _provincesList.map((dvhcvn.Level1 province) {
+                    return DropdownMenuItem<dvhcvn.Level1>(
+                      value: province,
+                      child: Text(province.name),
+                    );
+                  }).toList(),
+                  onChanged: (newProvince) {
+                    setState(() {
+                      _selectedProvince = newProvince;
+                      _selectedDistrict = null;
+                      _selectedWard = null;
+                      _districtsList = newProvince != null 
+                          ? (List.from(newProvince.children)..sort((a, b) => a.name.compareTo(b.name)))
+                          : [];
+                      _wardsList = [];
+                    });
+                  },
+                  style: const TextStyle(
+                    color: Color(0xFF131826),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                  decoration: _buildInputDecoration(
+                    label: 'Tỉnh / Thành phố',
+                    icon: Icons.map_outlined,
+                  ),
+                  validator: (val) {
+                    final hasAnyValue = _selectedProvince != null ||
+                        _selectedDistrict != null ||
+                        _selectedWard != null ||
+                        _streetController.text.trim().isNotEmpty;
+                    if (hasAnyValue && val == null) {
+                      return 'Vui lòng chọn Tỉnh/Thành phố';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+
+              // Quận / Huyện dropdown
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: DropdownButtonFormField<dvhcvn.Level2>(
+                  value: _selectedDistrict,
+                  items: _districtsList.map((dvhcvn.Level2 district) {
+                    return DropdownMenuItem<dvhcvn.Level2>(
+                      value: district,
+                      child: Text(district.name),
+                    );
+                  }).toList(),
+                  onChanged: _selectedProvince == null
+                      ? null
+                      : (newDistrict) {
+                          setState(() {
+                            _selectedDistrict = newDistrict;
+                            _selectedWard = null;
+                            _wardsList = newDistrict != null 
+                                ? (List.from(newDistrict.children)..sort((a, b) => a.name.compareTo(b.name)))
+                                : [];
+                          });
+                        },
+                  style: const TextStyle(
+                    color: Color(0xFF131826),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                  decoration: _buildInputDecoration(
+                    label: 'Quận / Huyện',
+                    icon: Icons.location_city_outlined,
+                  ),
+                  validator: (val) {
+                    final hasAnyValue = _selectedProvince != null ||
+                        _selectedDistrict != null ||
+                        _selectedWard != null ||
+                        _streetController.text.trim().isNotEmpty;
+                    if (hasAnyValue && val == null) {
+                      return 'Vui lòng chọn Quận/Huyện';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+
+              // Phường / Xã dropdown
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: DropdownButtonFormField<dvhcvn.Level3>(
+                  value: _selectedWard,
+                  items: _wardsList.map((dvhcvn.Level3 ward) {
+                    return DropdownMenuItem<dvhcvn.Level3>(
+                      value: ward,
+                      child: Text(ward.name),
+                    );
+                  }).toList(),
+                  onChanged: _selectedDistrict == null
+                      ? null
+                      : (newWard) {
+                          setState(() {
+                            _selectedWard = newWard;
+                          });
+                        },
+                  style: const TextStyle(
+                    color: Color(0xFF131826),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                  decoration: _buildInputDecoration(
+                    label: 'Phường / Xã',
+                    icon: Icons.domain_outlined,
+                  ),
+                  validator: (val) {
+                    final hasAnyValue = _selectedProvince != null ||
+                        _selectedDistrict != null ||
+                        _selectedWard != null ||
+                        _streetController.text.trim().isNotEmpty;
+                    if (hasAnyValue && val == null) {
+                      return 'Vui lòng chọn Phường/Xã';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+
+              // Số nhà, tên đường
+              _buildTextField(
+                controller: _streetController,
+                label: 'Số nhà, tên đường',
+                icon: Icons.home_outlined,
+                validator: (val) {
+                  final hasAnyValue = _selectedProvince != null ||
+                      _selectedDistrict != null ||
+                      _selectedWard != null ||
+                      _streetController.text.trim().isNotEmpty;
+                  if (hasAnyValue && (val == null || val.trim().isEmpty)) {
+                    return 'Vui lòng nhập số nhà, tên đường';
+                  }
+                  return null;
+                },
               ),
               
               const SizedBox(height: 40),

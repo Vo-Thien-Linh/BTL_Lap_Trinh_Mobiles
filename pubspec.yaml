@@ -60,6 +60,7 @@ dependencies:
   timezone: ^0.9.1
   dartz: ^0.10.1
   bloc: ^8.1.4
+  dvhcvn: ^2.1.20250301
 
 dev_dependencies:
   flutter_test:

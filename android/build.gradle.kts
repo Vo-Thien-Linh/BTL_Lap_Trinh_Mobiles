@@ -17,6 +17,11 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+
+    // Suppress warnings from third-party plugins regarding Java 8 obsolescence and deprecated/unchecked APIs
+    tasks.withType<JavaCompile>().configureEach {
+        options.compilerArgs.addAll(listOf("-Xlint:-options", "-Xlint:-deprecation", "-Xlint:-unchecked"))
+    }
 }
 
 tasks.register<Delete>("clean") {

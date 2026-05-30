@@ -12,9 +12,13 @@ import '../../../auth/domain/usecases/logout_usecase.dart';
 import 'department_detail_page.dart';
 import '../widgets/doctor_profile_sheet.dart';
 import '../../../health_insurance/presentation/utils/health_insurance_reminder.dart';
+import '../../../appointment/presentation/pages/appointment_management_page.dart';
+import '../../../notification/presentation/pages/notifications_page.dart';
+import '../../../profile/presentation/pages/profile_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final int initialTabIndex;
+  const HomePage({super.key, this.initialTabIndex = 0});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -26,11 +30,14 @@ class _HomePageState extends State<HomePage> {
   late Future<List<DoctorEntity>> _featuredDoctorsFuture;
 
   bool _isLoggingOut = false;
-  int _appointmentNotificationCount = 5; // Starting notification count
+  late int _currentIndex;
+  late PageController _pageController;
 
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialTabIndex;
+    _pageController = PageController(initialPage: _currentIndex);
     _departmentsFuture = _loadDepartments();
     _featuredDoctorsFuture = _loadFeaturedDoctors();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -38,9 +45,26 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant HomePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialTabIndex != widget.initialTabIndex) {
+      setState(() {
+        _currentIndex = widget.initialTabIndex;
+      });
+      _pageController.jumpToPage(widget.initialTabIndex);
+    }
+  }
+
   Future<List<DepartmentEntity>> _loadDepartments() async {
     final departments = await getIt<GetDepartmentsUsecase>()();
-    return departments.take(4).toList();
+    return departments.toList();
   }
 
   Future<List<DoctorEntity>> _loadFeaturedDoctors() async {
@@ -56,38 +80,39 @@ class _HomePageState extends State<HomePage> {
   }
 
 
-  _DepartmentVisual _departmentVisual(int index) {
-    switch (index % 6) {
-      case 0:
+  _DepartmentVisual _departmentVisual(String id) {
+    switch (id) {
+      case 'dept_cardio':
         return const _DepartmentVisual(
           label: 'Tim mạch',
           icon: Icons.favorite_rounded,
           colors: [Color(0xFFEC5D5D), Color(0xFFB91C1C)],
         );
-      case 1:
+      case 'dept_internal':
         return const _DepartmentVisual(
-          label: 'Xét nghiệm',
+          label: 'Nội tổng quát',
           icon: Icons.biotech_rounded,
           colors: [Color(0xFF2DD4BF), Color(0xFF0F766E)],
         );
-      case 2:
+      case 'dept_pedia':
         return const _DepartmentVisual(
           label: 'Nhi khoa',
           icon: Icons.child_care_rounded,
           colors: [Color(0xFF60A5FA), Color(0xFF2563EB)],
         );
-      case 3:
+      case 'dept_obgyn':
         return const _DepartmentVisual(
           label: 'Phụ sản',
-          icon: Icons.medical_services_rounded,
+          icon: Icons.pregnant_woman_rounded,
           colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
         );
-      case 4:
+      case 'dept_ent':
         return const _DepartmentVisual(
-          label: 'Nhãn khoa',
-          icon: Icons.visibility_rounded,
+          label: 'Tai Mũi Họng',
+          icon: Icons.face_rounded,
           colors: [Color(0xFF818CF8), Color(0xFF4F46E5)],
         );
+      case 'dept_dermatology':
       default:
         return const _DepartmentVisual(
           label: 'Da liễu',
@@ -155,7 +180,7 @@ class _HomePageState extends State<HomePage> {
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final department = departments[index];
-                    final visual = _departmentVisual(index);
+                    final visual = _departmentVisual(department.id);
 
                     return InkWell(
                       onTap: () {
@@ -408,7 +433,7 @@ class _HomePageState extends State<HomePage> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _isLoggingOut = false);
-      _showMessage('Khong the dang xuat. Vui long thu lai.');
+      _showMessage('Không thể đăng xuất. Vui lòng thử lại.');
       return;
     }
 
@@ -426,28 +451,45 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 22),
-              _buildSearch(),
-              const SizedBox(height: 22),
-              _buildUpcomingCard(),
-              const SizedBox(height: 22),
-              _buildActionGrid(),
-              const SizedBox(height: 22),
-              _buildCategorySection(),
-              const SizedBox(height: 26),
-              _buildDoctorSection(),
-            ],
-          ),
-        ),
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        children: [
+          KeepAliveWrapper(child: _buildHomeBody()),
+          const KeepAliveWrapper(child: AppointmentManagementPage()),
+          const KeepAliveWrapper(child: NotificationsPage()),
+          const KeepAliveWrapper(child: ProfilePage(initialTab: 0)),
+        ],
       ),
       bottomNavigationBar: _buildBottomNavigation(),
+    );
+  }
+
+  Widget _buildHomeBody() {
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 22),
+            _buildSearch(),
+            const SizedBox(height: 22),
+            _buildUpcomingCard(),
+            const SizedBox(height: 22),
+            _buildActionGrid(),
+            const SizedBox(height: 22),
+            _buildCategorySection(),
+            const SizedBox(height: 26),
+            _buildDoctorSection(),
+          ],
+        ),
+      ),
     );
   }
 
@@ -625,7 +667,7 @@ class _HomePageState extends State<HomePage> {
               )
                   : const Icon(Icons.logout_rounded, size: 18),
               label: Text(
-                _isLoggingOut ? '...' : 'Dang xuat',
+                _isLoggingOut ? '...' : 'Đăng xuất',
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -739,7 +781,7 @@ class _HomePageState extends State<HomePage> {
 
               if (snapshot.hasError) {
                 return _buildEmptyUpcomingCard(
-                  message: 'Khong tai duoc lich hen.',
+                  message: 'Không tải được lịch hẹn.',
                 );
               }
 
@@ -1050,7 +1092,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _navigateToDetail(DepartmentEntity department, int index) {
-    final visual = _departmentVisual(index);
+    final visual = _departmentVisual(department.id);
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -1117,13 +1159,15 @@ class _HomePageState extends State<HomePage> {
                 );
               }
 
+              final displayDepartments = departments.take(4).toList();
+
               return ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: departments.length,
+                itemCount: displayDepartments.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 12),
                 itemBuilder: (context, index) {
-                  final department = departments[index];
-                  final visual = _departmentVisual(index);
+                  final department = displayDepartments[index];
+                  final visual = _departmentVisual(department.id);
 
                   // Intelligent Label Fallback logic
                   String title = department.name.replaceAll('Khoa ', '');
@@ -1292,7 +1336,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildBottomNavigation() {
-    const labels = ['TRANG CHU', 'LICH HEN', 'THONG BAO', 'HO SO'];
+    const labels = ['TRANG CHỦ', 'LỊCH HẸN', 'THÔNG BÁO', 'HỒ SƠ'];
     const icons = [
       Icons.home_rounded,
       Icons.calendar_today_rounded,
@@ -1318,22 +1362,18 @@ class _HomePageState extends State<HomePage> {
         ),
         child: Row(
           children: List.generate(labels.length, (index) {
-            final selected = index == 0;
+            final selected = index == _currentIndex;
             return Expanded(
               child: GestureDetector(
                 onTap: () {
-                  if (index == 1) {
-                    setState(() {
-                      if (_appointmentNotificationCount > 0) {
-                        _appointmentNotificationCount--;
-                      }
-                    });
-                    Navigator.pushNamed(context, AppRoutes.appointmentManagement);
-                  } else if (index == 2) {
-                    Navigator.pushNamed(context, AppRoutes.notifications);
-                  } else if (index == 3) {
-                    Navigator.pushNamed(context, AppRoutes.profile);
-                  }
+                  setState(() {
+                    _currentIndex = index;
+                  });
+                  _pageController.animateToPage(
+                    index,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 220),
@@ -1350,7 +1390,8 @@ class _HomePageState extends State<HomePage> {
                           stream: FirebaseAuth.instance.currentUser != null
                               ? FirebaseFirestore.instance
                               .collection('Notifications')
-                              .where('patientId', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+                              .where('userId', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+                              .where('recipientRole', isEqualTo: 'patient')
                               .where('isRead', isEqualTo: false)
                               .snapshots()
                               : const Stream.empty(),
@@ -1369,15 +1410,39 @@ class _HomePageState extends State<HomePage> {
                           },
                         )
                       else if (index == 1)
-                        Badge(
-                          label: Text(_appointmentNotificationCount.toString()),
-                          isLabelVisible: _appointmentNotificationCount > 0,
-                          backgroundColor: AppColors.error,
-                          child: Icon(
-                            icons[index],
-                            size: 24,
-                            color: selected ? Colors.white : const Color(0xFF7B7F8D),
-                          ),
+                        StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseAuth.instance.currentUser != null
+                              ? FirebaseFirestore.instance
+                              .collection('Appointments')
+                              .where('patientId', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+                              .snapshots()
+                              : const Stream.empty(),
+                          builder: (context, snapshot) {
+                            int count = 0;
+                            if (snapshot.hasData) {
+                              final docs = snapshot.data!.docs;
+                              final now = DateTime.now().subtract(const Duration(hours: 1));
+                              count = docs.where((doc) {
+                                final data = doc.data() as Map<String, dynamic>?;
+                                if (data == null) return false;
+                                final status = data['status'] as String?;
+                                if (status == 'cancelled' || status == 'completed') return false;
+                                final ts = data['appointmentDate'];
+                                if (ts is! Timestamp) return false;
+                                return ts.toDate().isAfter(now);
+                              }).length;
+                            }
+                            return Badge(
+                              label: Text(count.toString()),
+                              isLabelVisible: count > 0,
+                              backgroundColor: AppColors.error,
+                              child: Icon(
+                                icons[index],
+                                size: 24,
+                                color: selected ? Colors.white : const Color(0xFF7B7F8D),
+                              ),
+                            );
+                          },
                         )
                       else
                         Icon(
@@ -1675,4 +1740,23 @@ class _DoctorCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class KeepAliveWrapper extends StatefulWidget {
+  final Widget child;
+  const KeepAliveWrapper({super.key, required this.child});
+
+  @override
+  State<KeepAliveWrapper> createState() => _KeepAliveWrapperState();
+}
+
+class _KeepAliveWrapperState extends State<KeepAliveWrapper> with AutomaticKeepAliveClientMixin {
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
+  }
+
+  @override
+  bool get wantKeepAlive => true;
 }

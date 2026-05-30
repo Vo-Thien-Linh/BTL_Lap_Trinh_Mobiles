@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'app/app.dart';
@@ -11,6 +13,7 @@ import 'config/service_locator.dart' as sl;
 import 'features/notification/data/datasources/notification_service.dart';
 import 'features/notification/data/datasources/notification_template_seeder.dart';
 import 'features/notification/domain/repositories/notification_repository.dart';
+import 'features/onboarding/domain/usecases/has_seen_onboarding_usecase.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,6 +22,38 @@ Future<void> main() async {
   await _safeInitializeFirebase();
 
   await sl.setupServiceLocator();
+
+  // Determine initial route based on onboarding and auth state
+  String initialRoute;
+  final hasSeenOnboardingUsecase = sl.getIt<HasSeenOnboardingUsecase>();
+  final hasSeen = await hasSeenOnboardingUsecase();
+
+  if (!hasSeen) {
+    initialRoute = AppRoutes.onboarding;
+  } else {
+    // Luôn đưa vào trang đăng nhập nếu là lần 2, 3 theo yêu cầu (ngay cả khi đã login, hoặc tuỳ chọn)
+    // Nếu muốn tự động vào trang chủ thì kiểm tra FirebaseAuth.instance.currentUser != null
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        if (userDoc.exists) {
+          final role = userDoc.data()?['role']?.toString().toLowerCase() ?? 'patient';
+          if (role == 'doctor') {
+            initialRoute = AppRoutes.doctorHome;
+          } else {
+            initialRoute = AppRoutes.home;
+          }
+        } else {
+          initialRoute = AppRoutes.home;
+        }
+      } catch (_) {
+        initialRoute = AppRoutes.home;
+      }
+    } else {
+      initialRoute = AppRoutes.login;
+    }
+  }
 
   final settingsController = AppSettingsController(
     sharedPreferences: sl.getIt(),
@@ -32,7 +67,7 @@ Future<void> main() async {
 
   runApp(
     HospitalBookingApp(
-      initialRoute: AppRoutes.login,
+      initialRoute: initialRoute,
       settingsController: settingsController,
     ),
   );

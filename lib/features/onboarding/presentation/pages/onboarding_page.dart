@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../app/routes/app_routes.dart';
 import '../../../../config/service_locator.dart';
+import '../../../../app/theme/app_colors.dart';
 import '../../domain/usecases/complete_onboarding_usecase.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -36,9 +37,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   final Color _bgDark = const Color(
     0xFFE6EDF5,
   ); // Xám xanh bạc (Frost Silver) - Rất dịu mắt, không bị chói
-  final Color _neonGreen = const Color(
-    0xFF0F766E,
-  ); // Xanh Teal đậm (Tính y tế, chuyên môn cao)
+  final Color _neonGreen = AppColors.primary; // Đồng bộ với màu chủ đạo
   final Color _accentGold = const Color(0xFF0369A1); // Xanh dương sậm (AI)
   final Color _textGrey = const Color(0xFF475569); // Xám đậm chữ phụ
   final Color _cardDark = const Color(0xFFFFFFFF); // Khối nền nổi bật màu trắng
@@ -77,7 +76,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       "metric2Label": "Bệnh nhân hài lòng",
       "metric3": "24/7",
       "metric3Label": "Hỗ trợ trực tuyến",
-      "cardTitle": "Quy trình chuẩn quốc tế WHO",
+      "cardTitle": "Đây là báo cáo đồ án của sinh viên phục vụ mục đích môn học",
       "cardDesc":
           "Toàn bộ quy trình thăm khám diễn ra riêng tư, nhanh chóng và đề cao sự thoải mái của bạn.",
       "feature1Icon": Icons.person_outline,
@@ -147,8 +146,15 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bgDark,
-      body: SafeArea(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF7FCFF), Color(0xFFEAF7FF)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
         child: Column(
           children: [
             // Top App Bar
@@ -602,6 +608,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             ),
           ],
         ),
+      ),
       ),
     );
   }

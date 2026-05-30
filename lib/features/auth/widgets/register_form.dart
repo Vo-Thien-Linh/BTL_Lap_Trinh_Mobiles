@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../app/routes/app_routes.dart';
 import '../../../../app/theme/app_colors.dart';
@@ -39,7 +40,8 @@ class _RegisterFormState extends State<RegisterForm> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
-  bool _acceptedTerms = true;
+  bool _acceptedTerms = false;
+  String _verificationMethod = 'email';
 
   @override
   void initState() {
@@ -66,6 +68,168 @@ class _RegisterFormState extends State<RegisterForm> {
     super.dispose();
   }
 
+  Future<void> _showOtpDialog() async {
+    final phone = _phoneController.text.trim();
+    if (phone.isEmpty) {
+      _showMessage('Vui lòng nhập số điện thoại trước.');
+      return;
+    }
+
+    final otpController = TextEditingController();
+    final otpFormKey = GlobalKey<FormState>();
+    bool isVerifying = false;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: const Row(
+                children: [
+                  Icon(Icons.phone_android_rounded, color: Color(0xFF1565C0)),
+                  SizedBox(width: 8),
+                  Text(
+                    'Xác thực mã OTP',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                ],
+              ),
+              content: Form(
+                key: otpFormKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Hệ thống đã gửi một mã OTP gồm 6 chữ số đến số điện thoại $phone.',
+                      style: const TextStyle(fontSize: 14, color: Color(0xFF5B6780)),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Mã OTP thử nghiệm là: 123456',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF2E7D32),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: otpController,
+                      keyboardType: TextInputType.number,
+                      maxLength: 6,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 8,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: '000000',
+                        hintStyle: TextStyle(
+                          color: Colors.grey,
+                          letterSpacing: 8,
+                        ),
+                        counterText: '',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().length != 6) {
+                          return 'Vui lòng nhập đủ 6 chữ số.';
+                        }
+                        if (value.trim() != '123456') {
+                          return 'Mã OTP không chính xác.';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isVerifying ? null : () => Navigator.pop(context),
+                  child: const Text('Hủy'),
+                ),
+                ElevatedButton(
+                  onPressed: isVerifying
+                      ? null
+                      : () async {
+                          if (!otpFormKey.currentState!.validate()) return;
+                          
+                          setDialogState(() {
+                            isVerifying = true;
+                          });
+
+                          try {
+                            await _registerUsecase.call(
+                              RegisterRequestEntity(
+                                fullName: _fullNameController.text.trim(),
+                                phone: _phoneController.text.trim(),
+                                cccd: _cccdController.text.trim(),
+                                email: _emailController.text.trim(),
+                                password: _passwordController.text,
+                              ),
+                            );
+
+                            final currentUser = FirebaseAuth.instance.currentUser;
+                            if (currentUser != null) {
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(currentUser.uid)
+                                  .update({'emailVerified': true});
+                              
+                              await FirebaseFirestore.instance
+                                  .collection('Users')
+                                  .doc(currentUser.uid)
+                                  .set({'emailVerified': true}, SetOptions(merge: true));
+                            }
+
+                            if (context.mounted) {
+                              Navigator.pop(context); // Close OTP Dialog
+                              _showMessage('Đăng ký và xác thực SĐT thành công!', isError: false);
+                              Navigator.pushReplacementNamed(context, AppRoutes.home);
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Lỗi đăng ký: $e'),
+                                  backgroundColor: const Color(0xFFB3261E),
+                                ),
+                              );
+                            }
+                          } finally {
+                            setDialogState(() {
+                              isVerifying = false;
+                            });
+                          }
+                        },
+                  child: isVerifying
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Xác nhận'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<void> _handleRegister() async {
     FocusScope.of(context).unfocus();
 
@@ -77,7 +241,12 @@ class _RegisterFormState extends State<RegisterForm> {
     }
 
     if (!_acceptedTerms) {
-      _showMessage('Bạn cần đồng ý điều khoản.');
+      _showMessage('Bạn cần đồng ý với Điều khoản sử dụng và Chính sách bảo mật.');
+      return;
+    }
+
+    if (_verificationMethod == 'phone') {
+      await _showOtpDialog();
       return;
     }
 
@@ -263,22 +432,163 @@ class _RegisterFormState extends State<RegisterForm> {
                 },
               ),
             ),
-            const SizedBox(height: 12),
-            CheckboxListTile(
-              value: _acceptedTerms,
-              onChanged: _isLoading
-                  ? null
-                  : (value) {
+            const SizedBox(height: 16),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Phương thức xác thực tài khoản',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF13223E),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () {
                       setState(() {
-                        _acceptedTerms = value ?? false;
+                        _verificationMethod = 'email';
                       });
                     },
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              title: const Text(
-                'Tôi đồng ý với điều khoản sử dụng của hệ thống.',
-                style: TextStyle(fontSize: 13),
-              ),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                      decoration: BoxDecoration(
+                        color: _verificationMethod == 'email'
+                            ? const Color(0xFFEAF1FF)
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _verificationMethod == 'email'
+                              ? const Color(0xFF1565C0)
+                              : const Color(0xFFE2E8F0),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: const Column(
+                        children: [
+                          Icon(Icons.email_outlined, color: Color(0xFF1565C0)),
+                          SizedBox(height: 6),
+                          Text(
+                            'Xác thực Email',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF13223E),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        _verificationMethod = 'phone';
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                      decoration: BoxDecoration(
+                        color: _verificationMethod == 'phone'
+                            ? const Color(0xFFEAF1FF)
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _verificationMethod == 'phone'
+                              ? const Color(0xFF1565C0)
+                              : const Color(0xFFE2E8F0),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: const Column(
+                        children: [
+                          Icon(Icons.phone_android_outlined, color: Color(0xFF1565C0)),
+                          SizedBox(height: 6),
+                          Text(
+                            'Xác thực OTP SĐT',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF13223E),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Checkbox(
+                  value: _acceptedTerms,
+                  onChanged: _isLoading
+                      ? null
+                      : (value) {
+                          setState(() {
+                            _acceptedTerms = value ?? false;
+                          });
+                        },
+                  activeColor: AppColors.primary,
+                ),
+                Expanded(
+                  child: RichText(
+                    text: TextSpan(
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textBody,
+                        height: 1.4,
+                      ),
+                      children: [
+                        const TextSpan(text: 'Tôi đã đọc và đồng ý với '),
+                        WidgetSpan(
+                          alignment: PlaceholderAlignment.middle,
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.pushNamed(context, AppRoutes.termsOfUse);
+                            },
+                            child: const Text(
+                              'Điều khoản sử dụng',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const TextSpan(text: ' và '),
+                        WidgetSpan(
+                          alignment: PlaceholderAlignment.middle,
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.pushNamed(context, AppRoutes.privacyPolicy);
+                            },
+                            child: const Text(
+                              'Chính sách bảo mật',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const TextSpan(text: ' của ứng dụng.'),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             CustomButton(
