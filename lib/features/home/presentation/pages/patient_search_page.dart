@@ -1,5 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../appointment/data/models/appointment_models.dart';
+import '../../../appointment/domain/entities/appointment_entities.dart';
+import '../widgets/doctor_profile_sheet.dart';
+import 'department_detail_page.dart';
 
 class PatientSearchPage extends StatefulWidget {
   const PatientSearchPage({super.key});
@@ -13,6 +18,10 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
   final FocusNode _focusNode = FocusNode();
   String _searchQuery = '';
 
+  List<DoctorEntity> _allDoctors = [];
+  List<DepartmentEntity> _allDepartments = [];
+  bool _isLoadingData = true;
+
   @override
   void initState() {
     super.initState();
@@ -23,6 +32,7 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) _focusNode.requestFocus();
     });
+    _loadFirebaseData();
   }
 
   @override
@@ -30,6 +40,71 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
     _searchController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadFirebaseData() async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      
+      // Load departments
+      final deptsSnapshot = await firestore.collection('Departments').get();
+      final depts = deptsSnapshot.docs.map(DepartmentModel.fromFirestore).toList();
+
+      // Load doctors
+      final docsSnapshot = await firestore.collection('Doctors').get();
+      final docs = docsSnapshot.docs.map(DoctorModel.fromFirestore).toList();
+
+      if (mounted) {
+        setState(() {
+          _allDepartments = depts;
+          _allDoctors = docs;
+          _isLoadingData = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading search data: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingData = false;
+        });
+      }
+    }
+  }
+
+
+  _DepartmentVisual _getDepartmentVisual(String name) {
+    final cleanName = name.toLowerCase();
+    if (cleanName.contains('tim mạch')) {
+      return const _DepartmentVisual(
+        icon: Icons.favorite_rounded,
+        colors: [Color(0xFFEC5D5D), Color(0xFFB91C1C)],
+      );
+    } else if (cleanName.contains('xét nghiệm') || cleanName.contains('lab')) {
+      return const _DepartmentVisual(
+        icon: Icons.biotech_rounded,
+        colors: [Color(0xFF2DD4BF), Color(0xFF0F766E)],
+      );
+    } else if (cleanName.contains('nhi')) {
+      return const _DepartmentVisual(
+        icon: Icons.child_care_rounded,
+        colors: [Color(0xFF60A5FA), Color(0xFF2563EB)],
+      );
+    } else if (cleanName.contains('sản') || cleanName.contains('obgyn')) {
+      return const _DepartmentVisual(
+        icon: Icons.medical_services_rounded,
+        colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+      );
+    } else if (cleanName.contains('nhãn') || cleanName.contains('mắt')) {
+      return const _DepartmentVisual(
+        icon: Icons.visibility_rounded,
+        colors: [Color(0xFF818CF8), Color(0xFF4F46E5)],
+      );
+    } else {
+      return const _DepartmentVisual(
+        icon: Icons.healing_rounded,
+        colors: [Color(0xFF34D399), Color(0xFF059669)],
+      );
+    }
   }
 
   @override
@@ -73,6 +148,14 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
   }
 
   Widget _buildSuggestions() {
+    if (_isLoadingData) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    final suggestedDoctors = _allDoctors.take(3).toList();
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -90,20 +173,19 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
               _searchChip('Nhi khoa'),
               _searchChip('Tim mạch'),
               _searchChip('Da liễu'),
-              _searchChip('Xét nghiệm máu'),
-              _searchChip('Khám tổng quát'),
-              _searchChip('Nội soi'),
+              _searchChip('Xét nghiệm'),
+              _searchChip('Nội tổng quát'),
             ],
           ),
           const SizedBox(height: 32),
-          const Text(
-            'BÁC SĨ GỢI Ý',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8B92A6), letterSpacing: 1.0),
-          ),
-          const SizedBox(height: 16),
-          _suggestionDoctor('BS. Nguyễn Minh Đức', 'TIM MẠCH'),
-          _suggestionDoctor('BS. Trần Thu Hà', 'NHI KHOA'),
-          _suggestionDoctor('BS. Lê Quang Vinh', 'XÉT NGHIỆM'),
+          if (suggestedDoctors.isNotEmpty) ...[
+            const Text(
+              'BÁC SĨ GỢI Ý',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8B92A6), letterSpacing: 1.0),
+            ),
+            const SizedBox(height: 16),
+            ...suggestedDoctors.map((doctor) => _suggestionDoctor(doctor)),
+          ],
         ],
       ),
     );
@@ -123,73 +205,210 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
     );
   }
 
-  Widget _suggestionDoctor(String name, String specialty) {
+  Widget _suggestionDoctor(DoctorEntity doctor) {
+    final deptVisual = _getDepartmentVisual(doctor.departmentName);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        children: [
-          const CircleAvatar(
-            radius: 20,
-            backgroundColor: Color(0xFFF0F4FF),
-            child: Icon(Icons.person_outline_rounded, color: Color(0xFF0E47B5), size: 20),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            final dept = _allDepartments.firstWhere(
+              (d) => d.id == doctor.departmentId,
+              orElse: () => DepartmentEntity(
+                id: doctor.departmentId,
+                name: doctor.departmentName,
+                description: '',
+                location: '',
+                phone: '',
+              ),
+            );
+            DoctorProfileSheet.show(context, doctor, dept, deptVisual.colors);
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+            child: Row(
               children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: Color(0xFF131826))),
-                Text(specialty, style: const TextStyle(color: Color(0xFF8B92A6), fontSize: 11, fontWeight: FontWeight.w800)),
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: const Color(0xFFF0F4FF),
+                  backgroundImage: doctor.imageUrl != null ? NetworkImage(doctor.imageUrl!) : null,
+                  child: doctor.imageUrl == null
+                      ? const Icon(Icons.person_outline_rounded, color: Color(0xFF0E47B5), size: 20)
+                      : null,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(doctor.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: Color(0xFF131826))),
+                      Text(doctor.specialization.toUpperCase(), style: const TextStyle(color: Color(0xFF8B92A6), fontSize: 11, fontWeight: FontWeight.w800)),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildSearchResults() {
-    // Basic mock filtering
+    if (_isLoadingData) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final query = _searchQuery.trim().toLowerCase();
+
+    final matchedDoctors = _allDoctors.where((doctor) {
+      return doctor.name.toLowerCase().contains(query) ||
+             doctor.specialization.toLowerCase().contains(query) ||
+             doctor.departmentName.toLowerCase().contains(query);
+    }).toList();
+
+    final matchedDepts = _allDepartments.where((dept) {
+      return dept.name.toLowerCase().contains(query) ||
+             dept.location.toLowerCase().contains(query) ||
+             dept.description.toLowerCase().contains(query);
+    }).toList();
+
+    if (matchedDoctors.isEmpty && matchedDepts.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off_rounded, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            const Text(
+              'Không tìm thấy bác sĩ hoặc chuyên khoa nào',
+              style: TextStyle(color: Color(0xFF5C6477), fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      );
+    }
+
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        _resultItem('Bác sĩ Vũ Trường Phi', 'Nội tổng quát', Icons.person_search_rounded),
-        _resultItem('Khoa Tim mạch', 'Tầng 2 - Khu A', Icons.domain_rounded),
-        _resultItem('Xét nghiệm tổng quát', 'Dịch vụ y tế', Icons.analytics_rounded),
+        if (matchedDoctors.isNotEmpty) ...[
+          const Text(
+            'BÁC SĨ TÌM THẤY',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8B92A6), letterSpacing: 1.0),
+          ),
+          const SizedBox(height: 12),
+          ...matchedDoctors.map((doctor) {
+            final deptVisual = _getDepartmentVisual(doctor.departmentName);
+            return _resultItem(
+              doctor.name,
+              '${doctor.specialization} - ${doctor.departmentName}',
+              Icons.person_rounded,
+              imageUrl: doctor.imageUrl,
+              onTap: () {
+                final dept = _allDepartments.firstWhere(
+                  (d) => d.id == doctor.departmentId,
+                  orElse: () => DepartmentEntity(
+                    id: doctor.departmentId,
+                    name: doctor.departmentName,
+                    description: '',
+                    location: '',
+                    phone: '',
+                  ),
+                );
+                DoctorProfileSheet.show(context, doctor, dept, deptVisual.colors);
+              },
+            );
+          }),
+          const SizedBox(height: 20),
+        ],
+        if (matchedDepts.isNotEmpty) ...[
+          const Text(
+            'CHUYÊN KHOA TÌM THẤY',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8B92A6), letterSpacing: 1.0),
+          ),
+          const SizedBox(height: 12),
+          ...matchedDepts.map((dept) {
+            final deptVisual = _getDepartmentVisual(dept.name);
+            return _resultItem(
+              dept.name,
+              dept.location.isNotEmpty ? dept.location : dept.description,
+              deptVisual.icon,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DepartmentDetailPage(
+                      department: dept,
+                      icon: deptVisual.icon,
+                      colors: deptVisual.colors,
+                    ),
+                  ),
+                );
+              },
+            );
+          }),
+        ],
       ],
     );
   }
 
-  Widget _resultItem(String title, String subtitle, IconData icon) {
+  Widget _resultItem(String title, String subtitle, IconData icon, {String? imageUrl, VoidCallback? onTap}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFF1F4F9)),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: const Color(0xFFF7F8FC), borderRadius: BorderRadius.circular(14)),
-            child: Icon(icon, color: AppColors.primary, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF131826))),
-                const SizedBox(height: 2),
-                Text(subtitle, style: const TextStyle(color: Color(0xFF5C6477), fontSize: 13)),
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF7F8FC),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: imageUrl != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: Image.network(imageUrl, fit: BoxFit.cover),
+                        )
+                      : Icon(icon, color: AppColors.primary, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF131826))),
+                      const SizedBox(height: 2),
+                      Text(subtitle, style: const TextStyle(color: Color(0xFF5C6477), fontSize: 13)),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: Color(0xFFD7DCE6)),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right_rounded, color: Color(0xFFD7DCE6)),
-        ],
+        ),
       ),
     );
   }
+}
+
+class _DepartmentVisual {
+  final IconData icon;
+  final List<Color> colors;
+  const _DepartmentVisual({required this.icon, required this.colors});
 }

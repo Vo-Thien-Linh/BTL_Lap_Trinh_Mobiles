@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -45,7 +46,7 @@ class _LoginFormState extends State<LoginForm> {
     if (_isLoading) return;
 
     if (!_formKey.currentState!.validate()) {
-      _showMessage('Vui lòng kiểm tra lại email hoặc mật khẩu.');
+      _showMessage('Vui lòng kiểm tra lại tài khoản hoặc mật khẩu.');
       return;
     }
 
@@ -64,10 +65,11 @@ class _LoginFormState extends State<LoginForm> {
 
       if (!mounted) return;
 
-      if (user != null && !user.emailVerified) {
+      final isVerified = appUser.emailVerified || (user != null && user.emailVerified);
+      if (!isVerified) {
         _showMessage(
-          'Email chưa được xác thực. Vui lòng kiểm tra hộp thư.',
-          isError: false,
+          'Tài khoản chưa được xác thực. Vui lòng kiểm tra hộp thư hoặc mã OTP.',
+          isError: true,
         );
 
         Navigator.pushReplacementNamed(context, AppRoutes.verifyEmail);
@@ -76,6 +78,11 @@ class _LoginFormState extends State<LoginForm> {
 
       // đã verify
       _showMessage('Đăng nhập thành công.', isError: false);
+
+      // Seed/update data mẫu (bác sĩ, khoa...) mỗi lần đăng nhập
+      if (user != null) {
+        unawaited(FirebaseDataSeeder.seedAll(user.uid));
+      }
 
       final targetRoute = _resolveHomeRouteByRole(appUser.role);
       Navigator.pushReplacementNamed(context, targetRoute);
@@ -91,49 +98,7 @@ class _LoginFormState extends State<LoginForm> {
     }
   }
 
-  Future<void> _handleDemoLogin() async {
-    if (_isLoading) return;
-    setState(() => _isLoading = true);
 
-    try {
-      const email = 'demo@medical.com';
-      const password = 'Password123!';
-
-      UserCredential userCredential;
-      try {
-        userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: email,
-          password: password,
-        );
-      } on FirebaseAuthException catch (e) {
-        if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
-          // Tạo tài khoản demo nều chưa có
-          userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-            email: email,
-            password: password,
-          );
-        } else {
-          rethrow;
-        }
-      }
-
-      final uid = userCredential.user!.uid;
-      
-      // Seed dữ liệu
-      await FirebaseDataSeeder.seedAll(uid);
-
-      if (!mounted) return;
-      _showMessage('Chào mừng bạn đến với bản thử nghiệm!', isError: false);
-      
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
-    } catch (e) {
-      if (!mounted) return;
-      _showMessage('Lỗi khởi tạo Demo: ${e.toString()}');
-    } finally {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-    }
-  }
 
   String _resolveHomeRouteByRole(String role) {
     switch (role.toLowerCase()) {
@@ -150,11 +115,11 @@ class _LoginFormState extends State<LoginForm> {
   String _mapAuthError(FirebaseAuthException error) {
     switch (error.code) {
       case 'invalid-email':
-        return 'Email không hợp lệ.';
+        return 'Tài khoản (Email/SĐT) không hợp lệ.';
       case 'invalid-credential':
       case 'user-not-found':
       case 'wrong-password':
-        return 'Email hoặc mật khẩu không đúng.';
+        return 'Tài khoản hoặc mật khẩu không đúng.';
       case 'user-disabled':
         return 'Tài khoản đã bị vô hiệu hóa.';
       case 'too-many-requests':
@@ -205,11 +170,11 @@ class _LoginFormState extends State<LoginForm> {
             const SizedBox(height: 28),
             CustomTextField(
               controller: _emailController,
-              label: 'Email',
-              hintText: 'Nhập email của bạn',
-              prefixIcon: Icons.email_outlined,
-              keyboardType: TextInputType.emailAddress,
-              validator: Validators.validateEmail,
+              label: 'Email hoặc Số điện thoại',
+              hintText: 'Nhập email hoặc số điện thoại của bạn',
+              prefixIcon: Icons.person_outline,
+              keyboardType: TextInputType.text,
+              validator: Validators.validateEmailOrPhone,
               textInputAction: TextInputAction.next,
               onFieldSubmitted: (_) {
                 FocusScope.of(context).requestFocus(_passwordFocusNode);
@@ -257,28 +222,7 @@ class _LoginFormState extends State<LoginForm> {
               isLoading: _isLoading,
               onPressed: _handleLogin,
             ),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: _isLoading ? null : _handleDemoLogin,
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 54),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                side: const BorderSide(color: AppColors.primary, width: 1),
-                foregroundColor: AppColors.primary,
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.auto_awesome_rounded, size: 20),
-                  SizedBox(width: 10),
-                  Text(
-                    'TRẢI NGHIỆM DEMO (1-CHẠM)',
-                    style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 18),
+
             FormSwitchText(
               normalText: 'Bạn chưa có tài khoản? ',
               actionText: 'Đăng ký ngay',

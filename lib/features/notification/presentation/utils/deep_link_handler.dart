@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../appointment/presentation/pages/appointment_management_page.dart';
+import '../../../appointment/presentation/pages/patient_appointment_detail_page.dart';
 import '../../../doctor/presentation/pages/doctor_examination_list_page.dart';
 import '../../../doctor/presentation/pages/doctor_queue_page.dart';
 import '../../../doctor/presentation/pages/doctor_schedule_page.dart';
@@ -32,7 +33,11 @@ class DeepLinkHandler {
     }
 
     if (path.contains('appointment-detail')) {
-      return _buildRoute(_PlaceholderPage(title: 'Chi tiết lịch hẹn', id: queryParams['id'] ?? ''));
+      final id = queryParams['id'] ?? '';
+      if (id.isNotEmpty) {
+        return _buildRoute(PatientAppointmentDetailPage(appointmentId: id));
+      }
+      return _buildRoute(_PlaceholderPage(title: 'Chi tiết lịch hẹn', id: id));
     }
 
     if (path.contains('prescription-detail')) {

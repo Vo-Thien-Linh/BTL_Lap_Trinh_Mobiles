@@ -122,7 +122,7 @@ class RegisterSuccessPage extends StatelessWidget {
                       border: Border.all(color: const Color(0xFFDFE9FD)),
                     ),
                     child: const Text(
-                      'Neu chua thay mail, hay kiem tra Thu rac/Spam hoac doi 1-2 phut roi thu lai.',
+                      'Nếu chưa thấy mail, hãy kiểm tra Thư rác/Spam hoặc đợi 1-2 phút rồi thử lại.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 12.5,

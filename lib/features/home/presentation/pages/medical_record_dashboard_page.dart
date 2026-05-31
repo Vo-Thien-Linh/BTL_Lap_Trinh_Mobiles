@@ -14,6 +14,25 @@ class MedicalRecordDashboardPage extends StatefulWidget {
 }
 
 class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage> {
+  Stream<DocumentSnapshot> _getUserStream(String uid) async* {
+    final lowerRef = FirebaseFirestore.instance.collection('users').doc(uid);
+    final upperRef = FirebaseFirestore.instance.collection('Users').doc(uid);
+    final lowerSnap = await lowerRef.get();
+    if (lowerSnap.exists) {
+      yield* lowerRef.snapshots();
+    } else {
+      yield* upperRef.snapshots();
+    }
+  }
+
+  Stream<QuerySnapshot> _getLatestAppointmentStream(String uid) {
+    return FirebaseFirestore.instance
+        .collection('Appointments')
+        .where('patientId', isEqualTo: uid)
+        .where('status', isEqualTo: 'completed')
+        .snapshots();
+  }
+
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -21,46 +40,61 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
     return Scaffold(
       backgroundColor: AppColors.background,
       body: StreamBuilder<DocumentSnapshot>(
-        stream: uid == null 
-            ? null 
-            : FirebaseFirestore.instance.collection('Users').doc(uid).snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+        stream: uid == null ? null : _getUserStream(uid),
+        builder: (context, userSnapshot) {
+          if (userSnapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          UserModel user = snapshot.hasData && snapshot.data!.exists
-              ? UserModel.fromDocument(snapshot.data!)
+          UserModel user = userSnapshot.hasData && userSnapshot.data!.exists
+              ? UserModel.fromDocument(userSnapshot.data!)
               : UserModel.empty();
 
-          return CustomScrollView(
-            slivers: [
-              _buildSliverAppBar(context, user),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildEmergencyBanner(context, user),
-                      const SizedBox(height: 24),
-                      _buildSectionTitle('CHỈ SỐ SINH HIỆU MỚI NHẤT'),
-                      const SizedBox(height: 16),
-                      _buildVitalsGrid(user),
-                      const SizedBox(height: 32),
-                      _buildSectionTitle('THÔNG TIN LÂM SÀNG'),
-                      const SizedBox(height: 16),
-                      _buildClinicalSection(user),
-                      const SizedBox(height: 32),
-                      _buildSectionTitle('KHO DỮ LIỆU SỨC KHỎE'),
-                      const SizedBox(height: 16),
-                      _buildVaultNavigation(context),
-                      const SizedBox(height: 100),
-                    ],
+          return StreamBuilder<QuerySnapshot>(
+            stream: uid == null ? null : _getLatestAppointmentStream(uid),
+            builder: (context, apptSnapshot) {
+              Map<String, dynamic> vitals = {};
+              if (apptSnapshot.hasData && apptSnapshot.data!.docs.isNotEmpty) {
+                final docs = apptSnapshot.data!.docs.toList();
+                docs.sort((a, b) {
+                  final da = (a.data() as Map<String, dynamic>)['appointmentDate'] as Timestamp;
+                  final db = (b.data() as Map<String, dynamic>)['appointmentDate'] as Timestamp;
+                  return db.compareTo(da);
+                });
+                final latestApptData = docs.first.data() as Map<String, dynamic>;
+                vitals = latestApptData['vitals'] as Map<String, dynamic>? ?? {};
+              }
+
+              return CustomScrollView(
+                slivers: [
+                  _buildSliverAppBar(context, user),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildEmergencyBanner(context, user),
+                          const SizedBox(height: 24),
+                          _buildSectionTitle('CHỈ SỐ SINH HIỆU MỚI NHẤT'),
+                          const SizedBox(height: 16),
+                          _buildVitalsGrid(user, vitals),
+                          const SizedBox(height: 32),
+                          _buildSectionTitle('THÔNG TIN LÂM SÀNG'),
+                          const SizedBox(height: 16),
+                          _buildClinicalSection(user),
+                          const SizedBox(height: 32),
+                          _buildSectionTitle('KHO DỮ LIỆU SỨC KHỎE'),
+                          const SizedBox(height: 16),
+                          _buildVaultNavigation(context),
+                          const SizedBox(height: 100),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           );
         },
       ),
@@ -161,7 +195,7 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
                           const SizedBox(height: 12),
                           Row(
                             children: [
-                              _buildBioTag('NHÓM MÁU: ${user.bloodType ?? "AB+"}'),
+                              _buildBioTag('NHÓM MÁU: ${user.bloodType ?? "--"}'),
                               const SizedBox(width: 8),
                               _buildBioTag('TUỔI: ${_calculateAge(user.dateOfBirth)}'),
                             ],
@@ -226,7 +260,16 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
     );
   }
 
-  Widget _buildVitalsGrid(UserModel user) {
+  Widget _buildVitalsGrid(UserModel user, Map<String, dynamic> vitals) {
+    final heartRate = vitals['heartRate'] ?? vitals['pulse'];
+    final bloodPressure = vitals['bloodPressure'] ?? vitals['pressure'];
+    final spO2 = vitals['spO2'];
+    
+    final hasHeartRate = heartRate != null && heartRate.toString().trim().isNotEmpty && heartRate.toString() != '--';
+    final hasBloodPressure = bloodPressure != null && bloodPressure.toString().trim().isNotEmpty && bloodPressure.toString() != '--/--';
+    final hasSpO2 = spO2 != null && spO2.toString().trim().isNotEmpty && spO2.toString() != '--';
+    final hasWeight = user.weight != null && user.weight! > 0;
+
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -235,10 +278,38 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
       crossAxisSpacing: 16,
       childAspectRatio: 1.5,
       children: [
-        _buildVitalCard('Nhịp tim', '72', 'bpm', Icons.favorite_rounded, Colors.red, 'up'),
-        _buildVitalCard('Huyết áp', '120/80', 'mmHg', Icons.bloodtype_rounded, Colors.blue, 'even'),
-        _buildVitalCard('SpO2', '98', '%', Icons.air_rounded, Colors.cyan, 'even'),
-        _buildVitalCard('Cân nặng', '${user.weight ?? 65.5}', 'kg', Icons.monitor_weight_rounded, Colors.orange, 'down'),
+        _buildVitalCard(
+          'Nhịp tim',
+          hasHeartRate ? heartRate.toString() : '--',
+          'bpm',
+          Icons.favorite_rounded,
+          Colors.red,
+          hasHeartRate ? 'up' : 'even',
+        ),
+        _buildVitalCard(
+          'Huyết áp',
+          hasBloodPressure ? bloodPressure.toString() : '--/--',
+          'mmHg',
+          Icons.bloodtype_rounded,
+          Colors.blue,
+          hasBloodPressure ? 'even' : 'even',
+        ),
+        _buildVitalCard(
+          'SpO2',
+          hasSpO2 ? spO2.toString() : '--',
+          '%',
+          Icons.air_rounded,
+          Colors.cyan,
+          hasSpO2 ? 'even' : 'even',
+        ),
+        _buildVitalCard(
+          'Cân nặng',
+          hasWeight ? '${user.weight!.toInt() == user.weight ? user.weight!.toInt() : user.weight}' : '--',
+          'kg',
+          Icons.monitor_weight_rounded,
+          Colors.orange,
+          hasWeight ? 'down' : 'even',
+        ),
       ],
     );
   }

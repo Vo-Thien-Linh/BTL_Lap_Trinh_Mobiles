@@ -78,9 +78,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Column(
                         children: [
-                          _buildNextPatientSpotlight(),
-                          const SizedBox(height: 24),
-                          _buildSmartMetricsRow(),
+                          _buildRealtimeDashboard(authUser?.uid),
                           const SizedBox(height: 32),
                           _buildSectionHeader('CÔNG CỤ ĐIỀU HÀNH'),
                           const SizedBox(height: 16),
@@ -250,7 +248,100 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
     );
   }
 
-  Widget _buildNextPatientSpotlight() {
+  Widget _buildRealtimeDashboard(String? authUid) {
+    if (authUid == null) return const SizedBox.shrink();
+
+    return FutureBuilder<QuerySnapshot>(
+      future: FirebaseFirestore.instance.collection('Doctors').where('userId', isEqualTo: authUid).limit(1).get(),
+      builder: (context, doctorSnap) {
+        if (doctorSnap.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        // If not found by userId, maybe fallback to using authUid directly just in case it was created differently
+        String actualDoctorId = authUid;
+        if (doctorSnap.hasData && doctorSnap.data!.docs.isNotEmpty) {
+          actualDoctorId = doctorSnap.data!.docs.first.id;
+        }
+
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('Appointments')
+              .where('doctorId', isEqualTo: actualDoctorId)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+        final allDocs = snapshot.data!.docs;
+        int pendingCount = 0;
+        int callingCount = 0;
+        int completedCount = 0;
+        
+        Map<String, dynamic>? nextPatientData;
+        int minQueue = 9999;
+        
+        final now = DateTime.now();
+        final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+        for (var doc in allDocs) {
+          final data = doc.data() as Map<String, dynamic>;
+          
+          String apptDateStr = '';
+          if (data['appointmentDate'] is Timestamp) {
+            final date = (data['appointmentDate'] as Timestamp).toDate();
+            apptDateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+          } else if (data['appointmentDate'] != null) {
+            apptDateStr = data['appointmentDate'].toString();
+          }
+          
+          if (!apptDateStr.startsWith(todayStr) && apptDateStr != todayStr) {
+            continue; // Bỏ qua nếu không phải lịch hôm nay
+          }
+
+          final status = data['status'] as String? ?? 'pending';
+          if (status == 'pending' || status == 'scheduled') {
+            pendingCount++;
+            final qNum = int.tryParse(data['queueNumber']?.toString() ?? '0') ?? 0;
+            if (qNum < minQueue || nextPatientData == null) {
+              minQueue = qNum;
+              nextPatientData = data;
+              nextPatientData['id'] = doc.id;
+            }
+          } else if (status == 'calling' || status == 'ongoing') {
+            callingCount++;
+          } else if (status == 'completed') {
+            completedCount++;
+          }
+        }
+
+        return Column(
+          children: [
+            if (nextPatientData != null) ...[
+              _buildNextPatientSpotlightDynamic(nextPatientData),
+              const SizedBox(height: 24),
+            ],
+            _buildSmartMetricsRowDynamic(pendingCount, callingCount, completedCount),
+          ],
+        );
+      },
+    );
+      },
+    );
+  }
+
+  Widget _buildNextPatientSpotlightDynamic(Map<String, dynamic> data) {
+    final patientName = data['patientName']?.toString() ?? 'Bệnh nhân';
+    final gender = data['patientGender']?.toString() ?? '-';
+    final symptoms = data['symptoms']?.toString() ?? 'Không rõ';
+    
+    // Giả lập chỉ số sinh tồn hoặc lấy từ vitals nếu có
+    final vitals = data['vitals'] as Map<String, dynamic>?;
+    final bp = vitals != null ? '${vitals['bloodPressureSystolic']}/${vitals['bloodPressureDiastolic']}' : '120/80';
+    final hr = vitals != null ? '${vitals['heartRate']} bpm' : '72 bpm';
+    final spo2 = vitals != null ? '${vitals['spO2']}%' : '98%';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -278,12 +369,12 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                 child: const Icon(Icons.person_rounded, color: Color(0xFF0E47B5)),
               ),
               const SizedBox(width: 16),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Trần Thị Bình', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF15233D))),
-                    Text('29 tuổi • Nữ • Khám tức ngực', style: TextStyle(fontSize: 12, color: Color(0xFF5A6680))),
+                    Text(patientName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF15233D))),
+                    Text('Giới tính: $gender • Khám: $symptoms', style: const TextStyle(fontSize: 12, color: Color(0xFF5A6680)), maxLines: 1, overflow: TextOverflow.ellipsis),
                   ],
                 ),
               ),
@@ -298,9 +389,9 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _spotlightVital('Huyết áp', '160/100', Colors.red),
-              _spotlightVital('Nhịp tim', '112 bpm', Colors.orange),
-              _spotlightVital('SpO2', '92%', Colors.red),
+              _spotlightVital('Huyết áp', bp, Colors.red),
+              _spotlightVital('Nhịp tim', hr, Colors.orange),
+              _spotlightVital('SpO2', spo2, Colors.red),
             ],
           ),
           const SizedBox(height: 24),
@@ -313,7 +404,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
               elevation: 0,
             ),
-            child: const Text('MỜI VÀO PHÒNG KHÁM', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+            child: const Text('MỞ HÀNG ĐỢI & GỌI KHÁM', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
           ),
         ],
       ),
@@ -329,14 +420,14 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
     );
   }
 
-  Widget _buildSmartMetricsRow() {
+  Widget _buildSmartMetricsRowDynamic(int pending, int calling, int completed) {
     return Row(
       children: [
-        _metricCard('CHỜ KHÁM', '12', const Color(0xFF0E47B5), Icons.hourglass_empty_rounded),
+        _metricCard('CHỜ KHÁM', pending.toString(), const Color(0xFF0E47B5), Icons.hourglass_empty_rounded),
         const SizedBox(width: 14),
-        _metricCard('KHẨN CẤP', '02', const Color(0xFFEF4444), Icons.notification_important_rounded, hasPulse: true),
+        _metricCard('ĐANG GỌI', calling.toString(), const Color(0xFFD97706), Icons.campaign_rounded, hasPulse: true),
         const SizedBox(width: 14),
-        _metricCard('ĐÃ KHÁM', '24', const Color(0xFF10B981), Icons.task_alt_rounded),
+        _metricCard('ĐÃ KHÁM', completed.toString(), const Color(0xFF10B981), Icons.task_alt_rounded),
       ],
     );
   }
@@ -367,7 +458,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
       {'icon': Icons.groups_rounded, 'label': 'Hàng đợi', 'color': const Color(0xFF0E47B5), 'target': const DoctorQueuePage()},
       {'icon': Icons.medical_services_rounded, 'label': 'Khám bệnh', 'color': const Color(0xFF1A56CE), 'target': const DoctorExaminationListPage()},
       {'icon': Icons.biotech_rounded, 'label': 'Xét nghiệm', 'color': const Color(0xFF10B981), 'target': const DoctorServiceQueuePage()},
-      {'icon': Icons.event_note_rounded, 'label': 'Lịch làm', 'color': const Color(0xFFD97706), 'target': const DoctorSchedulePage()},
+      {'icon': Icons.event_note_rounded, 'label': 'Lịch hẹn', 'color': const Color(0xFFD97706), 'target': const DoctorSchedulePage()},
       {'icon': Icons.folder_shared_rounded, 'label': 'Hồ sơ BN', 'color': const Color(0xFF0EA5E9), 'target': const DoctorPatientRecordsPage()},
       {'icon': Icons.medication_rounded, 'label': 'Kê đơn', 'color': const Color(0xFF8B5CF6), 'target': const DoctorPrescriptionBuilderPage()},
     ];

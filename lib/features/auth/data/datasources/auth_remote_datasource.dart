@@ -57,6 +57,7 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       emailVerified: user.emailVerified,
       createdAt: now,
       updatedAt: now,
+      membership: 'STANDARD',
     );
 
     final patientModel = PatientModel.empty(user.uid);
@@ -89,9 +90,39 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
     print('--- [PERF] 1. Bat dau dang nhap Firebase...');
 
     try {
+      final inputStr = email.trim();
+      final isEmail = inputStr.contains('@');
+      String targetEmail = inputStr;
+
+      if (!isEmail) {
+        try {
+          // Query Firestore users collection for document where 'phone' == input phone
+          final phoneQuery = await firestore
+              .collection('users')
+              .where('phone', isEqualTo: inputStr)
+              .limit(1)
+              .get();
+
+          if (phoneQuery.docs.isEmpty) {
+            throw Exception('Không tìm thấy tài khoản liên kết với số điện thoại này.');
+          }
+          
+          final retrievedEmail = phoneQuery.docs.first.data()['email'] as String?;
+          if (retrievedEmail == null || retrievedEmail.isEmpty) {
+            throw Exception('Tài khoản số điện thoại này không có email liên kết.');
+          }
+          targetEmail = retrievedEmail;
+        } on FirebaseException catch (e) {
+          if (e.code == 'permission-denied') {
+            throw Exception('Vui lòng sử dụng Email để đăng nhập (tìm kiếm bằng SĐT bị chặn bởi quyền bảo mật).');
+          }
+          rethrow;
+        }
+      }
+
       // Thêm timeout 15 giây để tránh bị treo vô hạn do App Check/Emulator lag
       final credential = await firebaseAuth.signInWithEmailAndPassword(
-        email: email.trim(),
+        email: targetEmail,
         password: password,
       ).timeout(const Duration(seconds: 15), onTimeout: () {
         print('--- [PERF] ERROR: Firebase Auth bi timeout sau 15s!');
@@ -105,21 +136,42 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       final currentUser = firebaseAuth.currentUser;
       if (currentUser == null) throw Exception('Không thể tải thông tin người dùng.');
 
-      final userRef = firestore.collection('users').doc(currentUser.uid);
+      DocumentSnapshot<Map<String, dynamic>>? doc;
       
       print('--- [PERF] 3. Bat dau lay Firestore...');
       final startTimeFirestore = stopwatch.elapsedMilliseconds;
-      final doc = await userRef.get();
-      print('--- [PERF] 4. Lay Firestore xong trong: ${stopwatch.elapsedMilliseconds - startTimeFirestore}ms');
-
-      if (!doc.exists) {
-        throw Exception('Không tìm thấy hồ sơ người dùng.');
+      try {
+        final userRef = firestore.collection('users').doc(currentUser.uid);
+        doc = await userRef.get();
+      } on FirebaseException catch (e) {
+        if (e.code == 'permission-denied') {
+           print('--- [PERF] users collection denied, trying Users...');
+           // fallback if rules deny missing document in 'users'
+        } else {
+           rethrow;
+        }
       }
+
+      if (doc == null || !doc.exists) {
+        // Fallback to 'Users' (uppercase) due to inconsistency in seeder/database
+        try {
+          final upperDoc = await firestore.collection('Users').doc(currentUser.uid).get();
+          if (upperDoc.exists) {
+             doc = upperDoc;
+          } else {
+             throw Exception('Không tìm thấy hồ sơ người dùng trong hệ thống.');
+          }
+        } catch (e) {
+           throw Exception('Không tìm thấy hồ sơ người dùng hoặc lỗi quyền truy cập.');
+        }
+      }
+      print('--- [PERF] 4. Lay Firestore xong trong: ${stopwatch.elapsedMilliseconds - startTimeFirestore}ms');
 
       final userData = doc.data() ?? <String, dynamic>{};
       
       // Chạy các cập nhật ngầm, không dùng await để không làm chậm login
-      _runBackgroundUpdates(userRef, currentUser, userData);
+      final finalUserRef = firestore.collection('users').doc(currentUser.uid);
+      _runBackgroundUpdates(finalUserRef, currentUser, userData);
 
       print('--- [PERF] TOTAL LOGIN TIME: ${stopwatch.elapsedMilliseconds}ms');
       return UserModel.fromDocument(doc);

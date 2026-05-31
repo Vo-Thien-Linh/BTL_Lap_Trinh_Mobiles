@@ -31,15 +31,12 @@ class NotificationRemoteDataSource {
     NotificationRecipientRole? role,
     int limit = 100,
   }) {
-    final field = role == NotificationRecipientRole.doctor
-        ? 'doctorId'
-        : role == NotificationRecipientRole.patient
-            ? 'patientId'
-            : 'userId';
+    Query query = firestore.collection(notificationsCollection).where('userId', isEqualTo: userId);
+    if (role != null) {
+      query = query.where('recipientRole', isEqualTo: role.name);
+    }
 
-    return firestore
-        .collection(notificationsCollection)
-        .where(field, isEqualTo: userId)
+    return query
         .limit(limit)
         .snapshots()
         .map((snapshot) {
@@ -58,15 +55,12 @@ class NotificationRemoteDataSource {
     NotificationRecipientRole? role,
     int limit = 100,
   }) async {
-    final field = role == NotificationRecipientRole.doctor
-        ? 'doctorId'
-        : role == NotificationRecipientRole.patient
-            ? 'patientId'
-            : 'userId';
+    Query query = firestore.collection(notificationsCollection).where('userId', isEqualTo: userId);
+    if (role != null) {
+      query = query.where('recipientRole', isEqualTo: role.name);
+    }
 
-    final snapshot = await firestore
-        .collection(notificationsCollection)
-        .where(field, isEqualTo: userId)
+    final snapshot = await query
         .limit(limit)
         .get();
 
@@ -90,15 +84,12 @@ class NotificationRemoteDataSource {
     String userId, {
     NotificationRecipientRole? role,
   }) async {
-    final field = role == NotificationRecipientRole.doctor
-        ? 'doctorId'
-        : role == NotificationRecipientRole.patient
-            ? 'patientId'
-            : 'userId';
-
-    final snapshot = await firestore
-        .collection(notificationsCollection)
-        .where(field, isEqualTo: userId)
+    Query query = firestore.collection(notificationsCollection).where('userId', isEqualTo: userId);
+    if (role != null) {
+      query = query.where('recipientRole', isEqualTo: role.name);
+    }
+    
+    final snapshot = await query
         .where('isRead', isEqualTo: false)
         .get();
 

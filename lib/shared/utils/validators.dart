@@ -32,6 +32,28 @@ class Validators {
     return null;
   }
 
+  static String? validateEmailOrPhone(String? value) {
+    final input = value?.trim() ?? '';
+
+    if (input.isEmpty) {
+      return 'Vui lòng nhập email hoặc số điện thoại.';
+    }
+
+    if (input.contains('@')) {
+      final emailRegex = RegExp(r'^[\w.\-]+@([\w\-]+\.)+[a-zA-Z]{2,}$');
+      if (!emailRegex.hasMatch(input)) {
+        return 'Email không đúng định dạng.';
+      }
+    } else {
+      final phoneRegex = RegExp(r'^(0|\+84)[0-9]{9,10}$');
+      if (!phoneRegex.hasMatch(input)) {
+        return 'Số điện thoại không hợp lệ.';
+      }
+    }
+
+    return null;
+  }
+
   static String? validatePhone(String? value) {
     final input = value?.trim() ?? '';
 

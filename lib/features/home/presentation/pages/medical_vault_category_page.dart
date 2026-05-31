@@ -80,7 +80,7 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
           if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
             appointments = snapshot.data!.docs.map((d) => HospitalAppointmentModel.fromFirestore(d)).toList();
           } else {
-            appointments = _getMockAppointments();
+            appointments = [];
           }
 
           if (widget.category == 'Sổ Xét Nghiệm') return _buildLabsList(appointments);
@@ -293,6 +293,8 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
   }
 
   Widget _buildImagingGrid(List<HospitalAppointmentModel> appointments) {
+    if (appointments.isEmpty) return _buildEmptyState();
+
     return GridView.builder(
       padding: const EdgeInsets.all(20),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

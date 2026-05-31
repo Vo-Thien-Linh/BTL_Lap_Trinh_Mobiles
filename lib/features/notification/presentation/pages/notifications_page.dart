@@ -19,6 +19,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
   NotificationCategory? _filter;
 
   @override
+  void initState() {
+    super.initState();
+    // Tự động đánh dấu đã đọc khi người dùng vào tab Thông báo
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _repository.markAllAsRead(user.uid, role: NotificationRecipientRole.patient);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DoctorSchedulePage extends StatefulWidget {
   const DoctorSchedulePage({super.key});
@@ -8,13 +10,17 @@ class DoctorSchedulePage extends StatefulWidget {
 }
 
 class _DoctorSchedulePageState extends State<DoctorSchedulePage> {
-  DateTime _currentWeekStart = DateTime(2026, 2, 2); // Mock: Mon, Feb 2, 2026
+  late DateTime _currentWeekStart;
   late DateTime _selectedDay;
 
   @override
   void initState() {
     super.initState();
-    _selectedDay = _currentWeekStart;
+    final now = DateTime.now();
+    _selectedDay = DateTime(now.year, now.month, now.day);
+    // Find Monday of the current week
+    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+    _currentWeekStart = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
   }
 
   void _changeWeek(int delta) {
@@ -29,7 +35,7 @@ class _DoctorSchedulePageState extends State<DoctorSchedulePage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4FA),
       appBar: AppBar(
-        title: const Text('Lịch làm việc', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
+        title: const Text('Lịch hẹn', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
         backgroundColor: const Color(0xFF0E47B5),
         centerTitle: true,
         elevation: 0,
@@ -40,7 +46,7 @@ class _DoctorSchedulePageState extends State<DoctorSchedulePage> {
               setState(() {});
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Đang cập nhật lịch làm việc...'),
+                  content: Text('Đang cập nhật lịch hẹn...'),
                   duration: Duration(seconds: 1),
                   backgroundColor: Color(0xFF0E47B5),
                 ),
@@ -138,133 +144,104 @@ class _DoctorSchedulePageState extends State<DoctorSchedulePage> {
   }
 
   Widget _buildDailySchedule() {
-    final Map<int, List<Map<String, dynamic>>> mockSchedules = {
-      1: [
-        {
-          'title': 'Ca sáng', 
-          'time': '07:30 - 11:30', 
-          'dept': 'Khoa Nội tổng quát', 
-          'room': 'P.402 (Lầu 4)',
-          'count': '15/30', 
-          'color': const Color(0xFF0E47B5), 
-          'status': 'Đang diễn ra',
-          'patients': ['Nguyễn Văn A', 'Trần B', 'Lê C']
-        },
-      ],
-      2: [
-        {
-          'title': 'Ca chiều', 
-          'time': '13:30 - 17:30', 
-          'dept': 'Khoa Nội tổng quát', 
-          'room': 'P.101 (Trệt)',
-          'count': '0/30', 
-          'color': const Color(0xFF0E9F6E), 
-          'status': 'Sắp tới',
-          'patients': []
-        },
-      ],
-      3: [
-        {
-          'title': 'Hội chẩn', 
-          'time': '09:00 - 10:30', 
-          'dept': 'Hội trường B', 
-          'room': 'Khu A',
-          'count': 'Chuyên khoa', 
-          'color': const Color(0xFF7C3AED), 
-          'status': 'Xác nhận',
-          'patients': ['BS. Hưng', 'BS. Lan']
-        },
-        {
-          'title': 'Ca chiều', 
-          'time': '13:30 - 17:30', 
-          'dept': 'Khoa Nội tổng quát', 
-          'room': 'P.402 (Lầu 4)',
-          'count': '5/10', 
-          'color': const Color(0xFF0E9F6E), 
-          'status': 'Sắp tới',
-          'patients': ['Đỗ Thị P', 'Lý Hải']
+    final String? currentUid = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUid == null) return const Center(child: Text('Vui lòng đăng nhập'));
+
+    return FutureBuilder<QuerySnapshot>(
+      future: FirebaseFirestore.instance.collection('Doctors').where('userId', isEqualTo: currentUid).limit(1).get(),
+      builder: (context, doctorSnap) {
+        if (doctorSnap.connectionState == ConnectionState.waiting) {
+          return const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator()));
         }
-      ],
-      5: [
-        {
-          'title': 'Ca sáng', 
-          'time': '07:30 - 11:30', 
-          'dept': 'Khoa Nội tổng quát', 
-          'room': 'P.402 (Lầu 4)',
-          'count': '10/30', 
-          'color': const Color(0xFF0E47B5), 
-          'status': 'Xác nhận',
-          'patients': ['Phan Văn X']
+
+        String actualDoctorId = currentUid;
+        if (doctorSnap.hasData && doctorSnap.data!.docs.isNotEmpty) {
+          actualDoctorId = doctorSnap.data!.docs.first.id;
         }
-      ],
-    };
 
-    final dayIndex = _selectedDay.weekday;
-    final dayShifts = mockSchedules[dayIndex] ?? [];
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('Appointments')
+              .where('doctorId', isEqualTo: actualDoctorId)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator()));
+            }
 
-    // Helper to determine status dynamically
-    Map<String, dynamic> _getDynamicStatus(String timeRange, DateTime day) {
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final selected = DateTime(day.year, day.month, day.day);
+            final allDocs = snapshot.data?.docs ?? [];
+            
+            // Lọc các appointment vào đúng ngày được chọn
+            final selectedDateStr = '${_selectedDay.year}-${_selectedDay.month.toString().padLeft(2, '0')}-${_selectedDay.day.toString().padLeft(2, '0')}';
+            
+            final todayAppointments = allDocs.where((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              String apptDateStr = '';
+              if (data['appointmentDate'] is Timestamp) {
+                final date = (data['appointmentDate'] as Timestamp).toDate();
+                apptDateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+              } else if (data['appointmentDate'] != null) {
+                apptDateStr = data['appointmentDate'].toString();
+              }
+              return apptDateStr.startsWith(selectedDateStr) || apptDateStr == selectedDateStr;
+            }).toList();
 
-      if (selected.isBefore(today)) {
-        return {'label': 'Đã kết thúc', 'color': Colors.grey};
-      } else if (selected.isAfter(today)) {
-        return {'label': 'Sắp tới', 'color': const Color(0xFF0E9F6E)};
-      } else {
-        // Logics for TODAY
-        try {
-          final times = timeRange.split(' - ');
-          final startParts = times[0].split(':');
-          final endParts = times[1].split(':');
-          
-          final startTime = now.copyWith(hour: int.parse(startParts[0]), minute: int.parse(startParts[1]));
-          final endTime = now.copyWith(hour: int.parse(endParts[0]), minute: int.parse(endParts[1]));
+            if (todayAppointments.isEmpty) {
+              return _buildEmptyState('Bạn không có lịch hẹn nào vào ngày này');
+            }
+            
+            // Sort by time
+            todayAppointments.sort((a, b) {
+              final tA = (a.data() as Map<String, dynamic>)['appointmentTime'] ?? '00:00';
+              final tB = (b.data() as Map<String, dynamic>)['appointmentTime'] ?? '00:00';
+              return tA.compareTo(tB);
+            });
 
-          if (now.isBefore(startTime)) {
-            return {'label': 'Sắp tới', 'color': const Color(0xFF0E9F6E)};
-          } else if (now.isAfter(endTime)) {
-            return {'label': 'Đã kết thúc', 'color': Colors.grey};
-          } else {
-            return {'label': 'Đang diễn ra', 'color': const Color(0xFFEB4D4B)}; // Red color for urgency
-          }
-        } catch (_) {
-          return {'label': 'Xác nhận', 'color': const Color(0xFF0E47B5)};
-        }
-      }
-    }
-
-    if (dayShifts.isEmpty) {
-      return _buildEmptyState('Hôm nay bạn không có lịch trực');
-    }
-
-    return Column(
-      children: dayShifts.asMap().entries.map((entry) {
-        final index = entry.key;
-        final shift = entry.value;
-        final statusInfo = _getDynamicStatus(shift['time'], _selectedDay);
-        
-        return _buildTimelineEntry(
-          index: index,
-          isLast: index == dayShifts.length - 1,
-          shift: {...shift, 'status': statusInfo['label'], 'color': statusInfo['color']},
+            return Column(
+              children: todayAppointments.asMap().entries.map((entry) {
+                final index = entry.key;
+                final doc = entry.value;
+                final data = doc.data() as Map<String, dynamic>;
+                
+                return _buildTimelineEntry(
+                  index: index,
+                  isLast: index == todayAppointments.length - 1,
+                  data: data,
+                );
+              }).toList(),
+            );
+          },
         );
-      }).toList(),
+      },
     );
   }
 
-  Widget _buildTimelineEntry({required int index, required bool isLast, required Map<String, dynamic> shift}) {
+  Widget _buildTimelineEntry({required int index, required bool isLast, required Map<String, dynamic> data}) {
+    final status = data['status']?.toString() ?? 'pending';
+    Color color = const Color(0xFF0E47B5);
+    String displayStatus = 'Sắp tới';
+    
+    if (status == 'completed') {
+      color = Colors.grey;
+      displayStatus = 'Đã khám';
+    } else if (status == 'ongoing' || status == 'calling') {
+      color = const Color(0xFFEB4D4B);
+      displayStatus = 'Đang khám';
+    } else if (status == 'cancelled') {
+      color = Colors.red;
+      displayStatus = 'Đã hủy';
+    }
+
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTimelineIndicator(shift['color'], isLast),
+          _buildTimelineIndicator(color, isLast),
           const SizedBox(width: 16),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 32),
-              child: _buildPremiumShiftCard(shift),
+              child: _buildAppointmentCard(data, color, displayStatus),
             ),
           ),
         ],
@@ -296,8 +273,12 @@ class _DoctorSchedulePageState extends State<DoctorSchedulePage> {
     );
   }
 
-  Widget _buildPremiumShiftCard(Map<String, dynamic> shift) {
-    final Color color = shift['color'];
+  Widget _buildAppointmentCard(Map<String, dynamic> data, Color color, String displayStatus) {
+    final patientName = data['patientName'] ?? 'Bệnh nhân';
+    final time = data['appointmentTime'] ?? '00:00';
+    final reason = data['reason'] ?? 'Khám bệnh';
+    final age = data['patientAge']?.toString() ?? '??';
+    final gender = data['patientGender']?.toString() ?? 'Chưa rõ';
 
     return Container(
       decoration: BoxDecoration(
@@ -325,24 +306,23 @@ class _DoctorSchedulePageState extends State<DoctorSchedulePage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                      child: Text(shift['status'], style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color)),
+                      child: Text(displayStatus, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color)),
                     ),
-                    Text(shift['time'], style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8A95AC))),
+                    Text(time, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF15233D))),
                   ],
                 ),
                 const SizedBox(height: 12),
-                Text(shift['title'], style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: color.withOpacity(0.7))),
-                Text(shift['dept'], style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF15233D))),
+                Text(patientName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF15233D))),
+                const SizedBox(height: 4),
+                Text('$age tuổi • $gender', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF8A95AC))),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Icon(Icons.location_on_rounded, size: 14, color: color),
-                    const SizedBox(width: 4),
-                    Text(shift['room'], style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
-                    const Spacer(),
-                    Icon(Icons.people_alt_rounded, size: 14, color: Colors.grey[400]),
-                    const SizedBox(width: 4),
-                    Text(shift['count'], style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF5A6680))),
+                    Icon(Icons.notes_rounded, size: 14, color: color),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(reason, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color.withOpacity(0.8)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ),
                   ],
                 ),
               ],

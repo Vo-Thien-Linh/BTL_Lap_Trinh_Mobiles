@@ -6,12 +6,15 @@ import '../../features/appointment/data/models/invoice_models.dart';
 import '../../features/appointment/domain/entities/appointment_entities.dart';
 import '../../features/appointment/presentation/pages/appointment_management_page.dart';
 import '../../features/appointment/presentation/pages/booking_flow_page.dart';
+import '../../features/appointment/presentation/pages/patient_appointment_detail_page.dart';
 import '../../features/appointment/presentation/payment_management_bloc/payment_bloc.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/register_success_page.dart';
 import '../../features/auth/presentation/pages/verify_email_page.dart';
+import '../../features/auth/presentation/pages/terms_of_use_page.dart';
+import '../../features/auth/presentation/pages/privacy_policy_page.dart';
 import '../../features/doctor/presentation/pages/doctor_appointment_detail_page.dart';
 import '../../features/doctor/presentation/pages/doctor_examination_list_page.dart';
 import '../../features/doctor/presentation/pages/doctor_home_page.dart';
@@ -41,6 +44,7 @@ import '../../features/profile/presentation/pages/edit_profile_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/health_insurance/presentation/pages/health_insurance_page.dart';
+import '../../features/profile/presentation/pages/emergency_contact_page.dart';
 
 class AppRoutes {
   static const String onboarding = '/onboarding';
@@ -49,12 +53,15 @@ class AppRoutes {
   static const String registerSuccess = '/register-success';
   static const String forgotPassword = '/forgot-password';
   static const String verifyEmail = '/verify-email';
+  static const String termsOfUse = '/terms-of-use';
+  static const String privacyPolicy = '/privacy-policy';
 
   static const String home = '/home';
   static const String doctorHome = '/doctor-home';
 
   static const String booking = '/booking';
   static const String appointmentManagement = '/appointment-management';
+  static const String appointmentDetail = '/appointment-detail';
 
   static const String profile = '/profile';
   static const String editProfile = '/edit-profile';
@@ -73,6 +80,7 @@ class AppRoutes {
 
   static const String patientSearch = '/patient-search';
   static const String healthInsurance = '/health-insurance';
+  static const String emergencyContact = '/emergency-contact';
 
   static const String examinationDetail = '/examination-detail';
   static const String examinationHistory = '/examination-history';
@@ -121,8 +129,15 @@ class AppRoutes {
       case verifyEmail:
         return _buildRoute(const VerifyEmailPage());
 
+      case termsOfUse:
+        return _buildRoute(const TermsOfUsePage());
+
+      case privacyPolicy:
+        return _buildRoute(const PrivacyPolicyPage());
+
       case home:
-        return _buildRoute(const HomePage());
+        final tabIndex = routeSettings.arguments as int? ?? 0;
+        return _buildRoute(HomePage(initialTabIndex: tabIndex));
 
       case doctorHome:
         return _buildRoute(const DoctorHomePage());
@@ -147,11 +162,22 @@ class AppRoutes {
         );
 
       case appointmentManagement:
-        return _buildRoute(const AppointmentManagementPage());
+        return _buildRoute(const HomePage(initialTabIndex: 1));
+
+      case appointmentDetail:
+        final args = routeSettings.arguments;
+        String id = '';
+        if (args is String) id = args;
+        else if (args is Map<String, dynamic>) id = (args['appointmentId'] ?? args['id'] ?? '').toString();
+        else if (args != null && args is HospitalAppointment) id = args.id;
+        
+        if (id.isNotEmpty) {
+          return _buildRoute(PatientAppointmentDetailPage(appointmentId: id));
+        }
+        return _buildErrorRoute('Thiếu mã lịch hẹn.');
 
       case profile:
-        final tab = routeSettings.arguments as int? ?? 0;
-        return _buildRoute(ProfilePage(initialTab: tab));
+        return _buildRoute(const HomePage(initialTabIndex: 3));
 
       case editProfile:
         final args = routeSettings.arguments;
@@ -164,7 +190,7 @@ class AppRoutes {
         return _buildRoute(const SettingsPage());
 
       case notifications:
-        return _buildRoute(const NotificationsPage());
+        return _buildRoute(const HomePage(initialTabIndex: 2));
 
       case doctorNotifications:
         return _buildRoute(const DoctorNotificationsPage());
@@ -274,6 +300,9 @@ class AppRoutes {
 
       case healthInsurance:
         return _buildRoute(const HealthInsurancePage());
+
+      case emergencyContact:
+        return _buildRoute(const EmergencyContactPage());
 
       default:
         return _buildRoute(const LoginPage());

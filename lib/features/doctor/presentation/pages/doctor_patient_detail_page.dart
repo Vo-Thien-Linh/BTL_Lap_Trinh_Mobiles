@@ -72,6 +72,9 @@ class DoctorPatientDetailPage extends StatelessWidget {
   }
 
   Widget _buildProfileHeader() {
+    String bhyt = patient['healthInsuranceNumber']?.toString() ?? 'Chưa có';
+    if (bhyt.length > 8) bhyt = '${bhyt.substring(0, 8)}...';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.only(left: 20, right: 20, bottom: 30, top: 10),
@@ -87,18 +90,23 @@ class DoctorPatientDetailPage extends StatelessWidget {
             child: CircleAvatar(
               radius: 40,
               backgroundColor: Colors.white,
-              child: Text(patient['name'][0], style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF0E47B5))),
+              backgroundImage: patient['avatarUrl'] != null && patient['avatarUrl'].toString().isNotEmpty 
+                  ? NetworkImage(patient['avatarUrl']) 
+                  : null,
+              child: (patient['avatarUrl'] == null || patient['avatarUrl'].toString().isEmpty) 
+                  ? Text(patient['name'] != null && patient['name'].isNotEmpty ? patient['name'][0].toUpperCase() : '?', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF0E47B5)))
+                  : null,
             ),
           ),
           const SizedBox(height: 16),
-          Text(patient['name'], style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white)),
+          Text(patient['name'] ?? 'Bệnh nhân', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white)),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _headerChip('Mã: ${patient['id'].toString().substring(0, min(8, patient['id'].toString().length))}'),
               const SizedBox(width: 8),
-              _headerChip(patient['blood'] != null ? 'Nhóm: ${patient['blood']}' : 'Nhóm: ?'),
+              _headerChip(patient['bloodType'] != null ? 'Nhóm máu: ${patient['bloodType']}' : 'Nhóm máu: Chưa rõ'),
             ],
           ),
           const SizedBox(height: 20),
@@ -108,11 +116,11 @@ class DoctorPatientDetailPage extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _headerInfo('SĐT', patient['phone'] ?? 'N/A'),
+                _headerInfo('SĐT', patient['phoneNumber'] ?? patient['phone'] ?? 'Chưa có'),
                 _verticalDivider(),
-                _headerInfo('GIỚI TÍNH', patient['gender'] ?? 'N/A'),
+                _headerInfo('GIỚI TÍNH', patient['gender'] ?? 'Chưa rõ'),
                 _verticalDivider(),
-                _headerInfo('BHYT', (patient['insurance'] ?? 'N/A').toString().split('...')[0]),
+                _headerInfo('BHYT', bhyt),
               ],
             ),
           ),
@@ -146,6 +154,12 @@ class DoctorPatientDetailPage extends StatelessWidget {
   }
 
   Widget _buildAllergyAlert() {
+    final String allergies = patient['allergies']?.toString() ?? '';
+    
+    if (allergies.isEmpty) {
+      return const SizedBox.shrink(); // Hide if no allergy
+    }
+
     return Container(
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.all(16),
@@ -154,16 +168,16 @@ class DoctorPatientDetailPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFFFD1D1), width: 1),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.warning_amber_rounded, color: Color(0xFFE02424)),
+          const Icon(Icons.warning_amber_rounded, color: Color(0xFFE02424)),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('DỊ ỨNG & CẢNH BÁO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFFE02424))),
-                Text('Dị ứng Penicillin, Phấn hoa', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF9B1C1C))),
+                const Text('DỊ ỨNG & CẢNH BÁO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFFE02424))),
+                Text(allergies, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF9B1C1C))),
               ],
             ),
           ),
@@ -178,7 +192,7 @@ class DoctorPatientDetailPage extends StatelessWidget {
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Text('CHỈ SỐ SINH TỒN (LATEST)', style: TextStyle(fontSize: 10, letterSpacing: 2.0, fontWeight: FontWeight.w900, color: Color(0xFF8A95AC))),
+          child: Text('CHỈ SỐ SINH TỒN (GẦN NHẤT)', style: TextStyle(fontSize: 10, letterSpacing: 2.0, fontWeight: FontWeight.w900, color: Color(0xFF8A95AC))),
         ),
         const SizedBox(height: 16),
         SizedBox(
@@ -188,9 +202,9 @@ class DoctorPatientDetailPage extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             children: [
               _vitalStat('Huyết áp', vitals['bloodPressure'] ?? '--/--', 'mmHg', Icons.monitor_heart_rounded, const Color(0xFF0E47B5)),
-              _vitalStat('Nhịp tim', vitals['heartRate'] ?? '--', 'bpm', Icons.favorite_rounded, const Color(0xFFE02424)),
-              _vitalStat('SpO2', vitals['spO2'] ?? '--', '%', Icons.bloodtype_rounded, const Color(0xFF0E9F6E)),
-              _vitalStat('Nhiệt độ', vitals['temperature'] ?? '--', '°C', Icons.thermostat_rounded, const Color(0xFFD97706)),
+              _vitalStat('Nhịp tim', vitals['heartRate']?.toString() ?? '--', 'bpm', Icons.favorite_rounded, const Color(0xFFE02424)),
+              _vitalStat('SpO2', vitals['spO2']?.toString() ?? '--', '%', Icons.bloodtype_rounded, const Color(0xFF0E9F6E)),
+              _vitalStat('Nhiệt độ', vitals['temperature']?.toString() ?? '--', '°C', Icons.thermostat_rounded, const Color(0xFFD97706)),
             ],
           ),
         ),
@@ -241,20 +255,21 @@ class DoctorPatientDetailPage extends StatelessWidget {
           child: Text('HÌNH ẢNH & XÉT NGHIỆM', style: TextStyle(fontSize: 10, letterSpacing: 2.0, fontWeight: FontWeight.w900, color: Color(0xFF8A95AC))),
         ),
         const SizedBox(height: 16),
-        SizedBox(
-          height: 100,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            children: [
-              _assetThumbnail(
-                context, 
-                'Xét nghiệm máu', 
-                Icons.picture_as_pdf_rounded, 
-                const Color(0xFFE02424),
-                () => _showAssetViewer(context, 'Xét nghiệm máu', 'lab_result'),
-              ),
-            ],
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.all(20),
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFF0F4FA)),
+          ),
+          child: const Center(
+            child: Text(
+              'Bệnh nhân chưa có hình ảnh hoặc kết quả xét nghiệm.',
+              style: TextStyle(color: Color(0xFF8A95AC), fontSize: 12, fontWeight: FontWeight.w500),
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
       ],
@@ -607,6 +622,20 @@ class DoctorPatientDetailPage extends StatelessWidget {
   }
 
   Widget _buildIdentityCard() {
+    String ageStr = patient['age']?.toString() ?? 'Chưa rõ';
+    if (patient['dateOfBirth'] != null || patient['dob'] != null) {
+      try {
+        final dobStr = (patient['dateOfBirth'] ?? patient['dob']).toString();
+        final parts = dobStr.split('/');
+        if (parts.length == 3) {
+          final year = int.parse(parts[2]);
+          ageStr = '${DateTime.now().year - year}';
+        }
+      } catch (_) {}
+    }
+
+    final hasInsurance = patient['healthInsuranceNumber'] != null && patient['healthInsuranceNumber'].toString().isNotEmpty;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -632,7 +661,7 @@ class DoctorPatientDetailPage extends StatelessWidget {
                   border: Border.all(color: Colors.white.withOpacity(0.2), width: 2),
                 ),
                 child: Center(
-                  child: Text(patient['name'][0], style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
+                  child: Text(patient['name'] != null && patient['name'].isNotEmpty ? patient['name'][0].toUpperCase() : '?', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
                 ),
               ),
               const SizedBox(width: 16),
@@ -640,7 +669,7 @@ class DoctorPatientDetailPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(patient['name'].toString().toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                    Text((patient['name'] ?? 'Bệnh nhân').toString().toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                     const SizedBox(height: 4),
                     Row(
                       children: [
@@ -665,9 +694,9 @@ class DoctorPatientDetailPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _identityStat('NHÓM MÁU', patient['blood'] ?? '?', Icons.bloodtype_rounded, Colors.redAccent),
-              _identityStat('TUỔI', '${patient['age'] ?? '??'} Tuổi', Icons.cake_rounded, Colors.orangeAccent),
-              _identityStat('BHYT', 'HỢP LỆ', Icons.verified_user_rounded, Colors.blueAccent),
+              _identityStat('NHÓM MÁU', patient['bloodType'] ?? '?', Icons.bloodtype_rounded, Colors.redAccent),
+              _identityStat('TUỔI', '$ageStr Tuổi', Icons.cake_rounded, Colors.orangeAccent),
+              _identityStat('BHYT', hasInsurance ? 'HỢP LỆ' : 'KHÔNG CÓ', Icons.verified_user_rounded, hasInsurance ? Colors.blueAccent : Colors.grey),
             ],
           ),
         ],
@@ -853,13 +882,6 @@ class DoctorPatientDetailPage extends StatelessWidget {
   }
 
   void _handleActivityLog(BuildContext context) {
-    final activities = [
-      {'time': '10:30 Hôm nay', 'event': 'Bác sĩ cập nhật đơn thuốc mới', 'icon': Icons.medication_rounded, 'color': Colors.blue},
-      {'time': '09:15 Hôm nay', 'event': 'Kết quả xét nghiệm máu đã được tải lên', 'icon': Icons.science_rounded, 'color': Colors.red},
-      {'time': 'Hôm qua, 14:20', 'event': 'Khai báo tiền sử bệnh (Dị ứng phấn hoa)', 'icon': Icons.warning_amber_rounded, 'color': Colors.orange},
-      {'time': '12/04/2026', 'event': 'Khởi tạo hồ sơ bệnh án điện tử', 'icon': Icons.create_new_folder_rounded, 'color': Colors.green},
-    ];
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -874,33 +896,63 @@ class DoctorPatientDetailPage extends StatelessWidget {
             const Text('NHẬT KÝ THAY ĐỔI', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
             const SizedBox(height: 24),
             Expanded(
-              child: ListView.builder(
-                itemCount: activities.length,
-                itemBuilder: (context, index) {
-                  final act = activities[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 24),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(color: (act['color'] as Color).withOpacity(0.1), shape: BoxShape.circle),
-                          child: Icon(act['icon'] as IconData, color: act['color'] as Color, size: 20),
+              child: FutureBuilder<QuerySnapshot>(
+                future: FirebaseFirestore.instance.collection('Appointments').where('patientId', isEqualTo: patient['id']).orderBy('appointmentDate', descending: true).get(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  
+                  final docs = snapshot.data?.docs ?? [];
+                  if (docs.isEmpty) {
+                    return const Center(
+                      child: Text('Chưa có hoạt động nào được ghi nhận.', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: docs.length,
+                    itemBuilder: (context, index) {
+                      final doc = docs[index];
+                      final data = doc.data() as Map<String, dynamic>;
+                      
+                      String timeStr = 'N/A';
+                      if (data['appointmentDate'] != null) {
+                        try {
+                          final date = (data['appointmentDate'] as Timestamp).toDate();
+                          timeStr = DateFormat('dd/MM/yyyy').format(date);
+                        } catch (_) {}
+                      }
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 24),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), shape: BoxShape.circle),
+                              child: const Icon(Icons.medical_services_rounded, color: Colors.blue, size: 20),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Khám bệnh', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                  const SizedBox(height: 4),
+                                  Text(timeStr, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                                  if (data['diagnosis'] != null) ...[
+                                    const SizedBox(height: 4),
+                                    Text('Chẩn đoán: ${data['diagnosis']}', style: const TextStyle(fontSize: 12, color: Color(0xFF5A6680))),
+                                  ]
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(act['event'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                              const SizedBox(height: 4),
-                              Text(act['time'] as String, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   );
                 },
               ),

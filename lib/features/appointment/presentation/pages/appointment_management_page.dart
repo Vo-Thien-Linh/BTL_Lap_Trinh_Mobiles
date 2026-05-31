@@ -688,49 +688,52 @@ class _MedicalTicketCard extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(40),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(34)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'XÁC NHẬN ĐIỂM DANH',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: 1.5),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Vui lòng đưa mã này vào máy quét tại sảnh chờ',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.08), blurRadius: 40)],
-                border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+      isScrollControlled: true,
+      builder: (context) => SingleChildScrollView(
+        child: Container(
+          padding: const EdgeInsets.all(40),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(34)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'XÁC NHẬN ĐIỂM DANH',
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: 1.5),
               ),
-              child: QrImageView(
-                data: appointment.id,
-                version: QrVersions.auto,
-                size: 220.0,
-                eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.circle, color: AppColors.primary),
-                dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.circle, color: AppColors.primary),
+              const SizedBox(height: 12),
+              const Text(
+                'Vui lòng đưa mã này vào máy quét tại sảnh chờ',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
+                textAlign: TextAlign.center,
               ),
-            ),
-            const SizedBox(height: 32),
-            Text(
-              'STT: #${appointment.queueNumber}',
-              style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.primary, fontSize: 18, letterSpacing: 2),
-            ),
-            const SizedBox(height: 32),
-          ],
+              const SizedBox(height: 32),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.08), blurRadius: 40)],
+                  border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+                ),
+                child: QrImageView(
+                  data: appointment.id,
+                  version: QrVersions.auto,
+                  size: 220.0,
+                  eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.circle, color: AppColors.primary),
+                  dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.circle, color: AppColors.primary),
+                ),
+              ),
+              const SizedBox(height: 32),
+              Text(
+                'STT: #${appointment.queueNumber}',
+                style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.primary, fontSize: 18, letterSpacing: 2),
+              ),
+              const SizedBox(height: 32),
+            ],
+          ),
         ),
       ),
     );

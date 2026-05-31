@@ -7,6 +7,17 @@ import '../../../../app/theme/app_colors.dart';
 class MedicalEmergencyIdPage extends StatelessWidget {
   const MedicalEmergencyIdPage({super.key});
 
+  Stream<DocumentSnapshot> _getUserStream(String uid) async* {
+    final lowerRef = FirebaseFirestore.instance.collection('users').doc(uid);
+    final upperRef = FirebaseFirestore.instance.collection('Users').doc(uid);
+    final lowerSnap = await lowerRef.get();
+    if (lowerSnap.exists) {
+      yield* lowerRef.snapshots();
+    } else {
+      yield* upperRef.snapshots();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -25,9 +36,7 @@ class MedicalEmergencyIdPage extends StatelessWidget {
         ),
       ),
       body: StreamBuilder<DocumentSnapshot>(
-        stream: uid == null 
-            ? null 
-            : FirebaseFirestore.instance.collection('Users').doc(uid).snapshots(),
+        stream: uid == null ? null : _getUserStream(uid),
         builder: (context, snapshot) {
           UserModel user = snapshot.hasData && snapshot.data!.exists
               ? UserModel.fromDocument(snapshot.data!)
