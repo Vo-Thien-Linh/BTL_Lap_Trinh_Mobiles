@@ -8,8 +8,10 @@ class DepartmentModel extends DepartmentEntity {
     required super.description,
     required super.location,
     required super.phone,
+    super.rooms,
     super.doctorCount = 0,
     super.isActive = true,
+    super.imageUrl,
   });
 
   factory DepartmentModel.fromFirestore(DocumentSnapshot doc) {
@@ -20,8 +22,10 @@ class DepartmentModel extends DepartmentEntity {
       description: data['description']?.toString() ?? '',
       location: data['location']?.toString() ?? '',
       phone: data['phone']?.toString() ?? '',
+      rooms: _stringList(data['rooms']),
       doctorCount: int.tryParse(data['doctorCount']?.toString() ?? '0') ?? 0,
       isActive: (data['isActive'] ?? true) as bool,
+      imageUrl: data['imageUrl']?.toString(),
     );
   }
 
@@ -31,9 +35,21 @@ class DepartmentModel extends DepartmentEntity {
       'description': description,
       'location': location,
       'phone': phone,
+      'rooms': rooms,
       'doctorCount': doctorCount,
       'isActive': isActive,
+      'imageUrl': imageUrl,
     };
+  }
+
+  static List<String> _stringList(dynamic value) {
+    if (value is Iterable) {
+      return value
+          .map((item) => item?.toString().trim() ?? '')
+          .where((item) => item.isNotEmpty)
+          .toList();
+    }
+    return const [];
   }
 }
 
@@ -55,7 +71,7 @@ class DoctorModel extends DoctorEntity {
   factory DoctorModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     final id = doc.id;
-    
+
     // Fallback name map
     final fallbackNames = {
       // Cardio
@@ -109,7 +125,12 @@ class DoctorModel extends DoctorEntity {
       'dr_nt_1': 'BS Lý Tiểu L',
     };
 
-    String rawName = data['name']?.toString() ?? '';
+    String rawName = _firstText(data, const [
+      'fullName',
+      'doctorName',
+      'name',
+      'displayName',
+    ]);
     if (rawName.isEmpty) {
       rawName = fallbackNames[id] ?? '';
     }
@@ -120,9 +141,13 @@ class DoctorModel extends DoctorEntity {
       final spec = data['specialization']?.toString() ?? '';
       if (spec == 'tim_mach' || id.contains('cardio') || id.contains('tim')) {
         rawDeptId = 'dept_cardio';
-      } else if (spec == 'da_lieu' || id.contains('derma') || id.contains('da')) {
+      } else if (spec == 'da_lieu' ||
+          id.contains('derma') ||
+          id.contains('da')) {
         rawDeptId = 'dept_dermatology';
-      } else if (spec == 'nhi_khoa' || id.contains('pedia') || id.contains('nhi')) {
+      } else if (spec == 'nhi_khoa' ||
+          id.contains('pedia') ||
+          id.contains('nhi')) {
         rawDeptId = 'dept_pedia';
       } else if (spec == 'obgyn' || id.contains('obgyn')) {
         rawDeptId = 'dept_obgyn';
@@ -153,39 +178,72 @@ class DoctorModel extends DoctorEntity {
     }
 
     final fallbackImages = {
-      'dr_cardio_1': 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_cardio_2': 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_cardio_3': 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_cardio_4': 'https://images.unsplash.com/photo-1612349317150-e413f6a5b1a8?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_cardio_5': 'https://images.unsplash.com/photo-1622902046580-2b47f47f0871?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_cardio_6': 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_cardio_7': 'https://images.unsplash.com/photo-1625492930267-31779628bb14?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_cardio_8': 'https://images.unsplash.com/photo-1527613426441-4316671f66ef?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_cardio_9': 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_cardio_10': 'https://images.unsplash.com/photo-1643297654416-05795d62e39c?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_cardio_11': 'https://images.unsplash.com/photo-1614608682850-e0d6ed316d47?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_cardio_12': 'https://images.unsplash.com/photo-1605684954278-9f015ab553c6?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_cardio_13': 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_cardio_14': 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_derma_1': 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_derma_2': 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_derma_3': 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_derma_4': 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_derma_5': 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_pedia_1': 'https://images.unsplash.com/photo-1612349317150-e413f6a5b1a8?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_pedia_2': 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_pedia_3': 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_pedia_4': 'https://images.unsplash.com/photo-1612349317150-e413f6a5b1a8?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_pedia_5': 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_internal_1': 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_internal_2': 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_internal_3': 'https://images.unsplash.com/photo-1612349317150-e413f6a5b1a8?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_internal_4': 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_internal_5': 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_obgyn_1': 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_obgyn_2': 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_obgyn_3': 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=256&h=256&auto=format&fit=crop',
-      'dr_obgyn_4': 'https://images.unsplash.com/photo-1643297654416-05795d62e39c?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_cardio_1':
+          'https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_cardio_2':
+          'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_cardio_3':
+          'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_cardio_4':
+          'https://images.unsplash.com/photo-1612349317150-e413f6a5b1a8?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_cardio_5':
+          'https://images.unsplash.com/photo-1622902046580-2b47f47f0871?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_cardio_6':
+          'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_cardio_7':
+          'https://images.unsplash.com/photo-1625492930267-31779628bb14?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_cardio_8':
+          'https://images.unsplash.com/photo-1527613426441-4316671f66ef?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_cardio_9':
+          'https://images.unsplash.com/photo-1582750433449-648ed127bb54?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_cardio_10':
+          'https://images.unsplash.com/photo-1643297654416-05795d62e39c?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_cardio_11':
+          'https://images.unsplash.com/photo-1614608682850-e0d6ed316d47?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_cardio_12':
+          'https://images.unsplash.com/photo-1605684954278-9f015ab553c6?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_cardio_13':
+          'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_cardio_14':
+          'https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_derma_1':
+          'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_derma_2':
+          'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_derma_3':
+          'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_derma_4':
+          'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_derma_5':
+          'https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_pedia_1':
+          'https://images.unsplash.com/photo-1612349317150-e413f6a5b1a8?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_pedia_2':
+          'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_pedia_3':
+          'https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_pedia_4':
+          'https://images.unsplash.com/photo-1612349317150-e413f6a5b1a8?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_pedia_5':
+          'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_internal_1':
+          'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_internal_2':
+          'https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_internal_3':
+          'https://images.unsplash.com/photo-1612349317150-e413f6a5b1a8?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_internal_4':
+          'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_internal_5':
+          'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_obgyn_1':
+          'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_obgyn_2':
+          'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_obgyn_3':
+          'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=256&h=256&auto=format&fit=crop',
+      'dr_obgyn_4':
+          'https://images.unsplash.com/photo-1643297654416-05795d62e39c?q=80&w=256&h=256&auto=format&fit=crop',
     };
 
     String? imageUrl = data['imageUrl']?.toString();
@@ -195,17 +253,56 @@ class DoctorModel extends DoctorEntity {
 
     return DoctorModel(
       id: id,
-      userId: data['userId']?.toString() ?? '',
+      userId: _firstText(data, const ['userId', 'uid']),
       name: rawName,
       specialization: data['specialization']?.toString() ?? '',
       departmentId: rawDeptId,
       departmentName: rawDeptName,
-      yearsOfExperience: int.tryParse(data['yearsOfExperience']?.toString() ?? '0') ?? 0,
-      consultationFee: double.tryParse(data['consultationFee']?.toString() ?? '0') ?? 0.0,
+      yearsOfExperience:
+          int.tryParse(data['yearsOfExperience']?.toString() ?? '0') ?? 0,
+      consultationFee:
+          double.tryParse(data['consultationFee']?.toString() ?? '0') ?? 0.0,
       isActive: (data['isActive'] ?? true) as bool,
       licenseNumber: data['licenseNumber']?.toString() ?? '',
       imageUrl: imageUrl,
     );
+  }
+
+  factory DoctorModel.withUserProfile(
+    DoctorModel doctor,
+    Map<String, dynamic>? userData,
+  ) {
+    final data = userData ?? const <String, dynamic>{};
+    final imageUrl = _firstText(data, const ['avatarUrl']);
+    return DoctorModel(
+      id: doctor.id,
+      userId: doctor.userId,
+      name: _firstText(data, const [
+        'fullName',
+        'name',
+        'displayName',
+      ], fallback: doctor.name),
+      specialization: doctor.specialization,
+      departmentId: doctor.departmentId,
+      departmentName: doctor.departmentName,
+      yearsOfExperience: doctor.yearsOfExperience,
+      consultationFee: doctor.consultationFee,
+      isActive: doctor.isActive,
+      licenseNumber: doctor.licenseNumber,
+      imageUrl: imageUrl.isEmpty ? doctor.imageUrl : imageUrl,
+    );
+  }
+
+  static String _firstText(
+    Map<String, dynamic> data,
+    List<String> keys, {
+    String fallback = '',
+  }) {
+    for (final key in keys) {
+      final value = data[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+    return fallback;
   }
 
   Map<String, dynamic> toFirestore() {
@@ -261,6 +358,9 @@ class ScheduleModel extends ScheduleEntity {
     required super.departmentId,
     required super.shiftId,
     required super.date,
+    super.roomId,
+    super.roomNumber,
+    required super.maxSlots,
     required super.availableSlots,
     required super.isActive,
   });
@@ -273,7 +373,11 @@ class ScheduleModel extends ScheduleEntity {
       departmentId: data['departmentId'] ?? '',
       shiftId: data['shiftId'] ?? '',
       date: (data['scheduleDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      availableSlots: int.tryParse(data['availableSlots']?.toString() ?? '0') ?? 0,
+      roomId: data['roomId'] as String?,
+      roomNumber: data['roomNumber'] as String?,
+      maxSlots: int.tryParse(data['maxSlots']?.toString() ?? '0') ?? 0,
+      availableSlots:
+          int.tryParse(data['availableSlots']?.toString() ?? '0') ?? 0,
       isActive: (data['isActive'] ?? true) as bool,
     );
   }
@@ -284,6 +388,9 @@ class ScheduleModel extends ScheduleEntity {
       'departmentId': departmentId,
       'shiftId': shiftId,
       'scheduleDate': Timestamp.fromDate(date),
+      'roomId': roomId,
+      'roomNumber': roomNumber,
+      'maxSlots': maxSlots,
       'availableSlots': availableSlots,
       'isActive': isActive,
     };
@@ -302,6 +409,7 @@ class HospitalAppointmentModel extends HospitalAppointment {
     required super.departmentId,
     required super.departmentName,
     required super.appointmentDate,
+    super.scheduleId,
     required super.shiftId,
     required super.timeSlot,
     required super.queueNumber,
@@ -335,6 +443,7 @@ class HospitalAppointmentModel extends HospitalAppointment {
       departmentName: data['departmentName'] ?? '',
       appointmentDate:
           (data['appointmentDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      scheduleId: data['scheduleId'] as String?,
       shiftId: data['shiftId'] ?? '',
       timeSlot: data['timeSlot'] ?? '',
       queueNumber: int.tryParse(data['queueNumber']?.toString() ?? '0') ?? 0,
@@ -370,6 +479,7 @@ class HospitalAppointmentModel extends HospitalAppointment {
       'departmentId': departmentId,
       'departmentName': departmentName,
       'appointmentDate': Timestamp.fromDate(appointmentDate),
+      'scheduleId': scheduleId,
       'shiftId': shiftId,
       'timeSlot': timeSlot,
       'queueNumber': queueNumber,

@@ -13,7 +13,13 @@ class DoctorQueuePage extends StatefulWidget {
 
 class _DoctorQueuePageState extends State<DoctorQueuePage> {
   String _selectedFilter = 'Đang chờ';
-  final List<String> _filters = ['Tất cả', 'Đang chờ', 'Đang gọi', 'Đang khám', 'Vắng mặt'];
+  final List<String> _filters = [
+    'Tất cả',
+    'Đang chờ',
+    'Đang gọi',
+    'Đang khám',
+    'Vắng mặt',
+  ];
   bool _isLoading = false;
   final String? _currentDoctorId = FirebaseAuth.instance.currentUser?.uid;
 
@@ -51,41 +57,83 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
 
   Widget _buildPatientDetailSheet(HospitalAppointmentModel data) {
     final waitDuration = DateTime.now().difference(data.createdAt);
-    
+
     return Container(
       padding: const EdgeInsets.all(28),
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.only(topLeft: Radius.circular(32), topRight: Radius.circular(32)),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(32),
+          topRight: Radius.circular(32),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)))),
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
           const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Thông tin ca khám', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF15233D))),
+              const Text(
+                'Thông tin ca khám',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF15233D),
+                ),
+              ),
               _triageBadge(3),
             ],
           ),
           const SizedBox(height: 24),
           _detailInfoRow(Icons.person_rounded, 'Bệnh nhân', data.patientName),
-          _detailInfoRow(Icons.calendar_month_rounded, 'Thời gian đặt', data.timeSlot),
-          _detailInfoRow(Icons.timer_outlined, 'Đã chờ', '${waitDuration.inMinutes} phút'),
+          _detailInfoRow(
+            Icons.calendar_month_rounded,
+            'Thời gian đặt',
+            data.timeSlot,
+          ),
+          _detailInfoRow(
+            Icons.timer_outlined,
+            'Đã chờ',
+            '${waitDuration.inMinutes} phút',
+          ),
           const Divider(height: 32),
-          const Text('TRIỆU CHỨNG LÂM SÀNG', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF8A95AC), letterSpacing: 1.0)),
+          const Text(
+            'TRIỆU CHỨNG LÂM SÀNG',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF8A95AC),
+              letterSpacing: 1.0,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text(data.symptoms, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF15233D))),
+          Text(
+            data.symptoms,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF15233D),
+            ),
+          ),
           const SizedBox(height: 32),
-          
-          if (data.status == 'pending') 
+
+          if (data.status == 'pending' || data.status == 'confirmed')
             _buildCallAction(data)
           else if (data.status == 'calling')
             _buildOngoingActions(data)
-          else 
+          else
             _buildDefaultActions(data),
 
           const SizedBox(height: 20),
@@ -106,14 +154,19 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
           backgroundColor: const Color(0xFF0E47B5),
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 18),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.record_voice_over_rounded),
             SizedBox(width: 12),
-            Text('GỌI BỆNH NHÂN NÀY', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.1)),
+            Text(
+              'GỌI BỆNH NHÂN NÀY',
+              style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.1),
+            ),
           ],
         ),
       ),
@@ -133,23 +186,33 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
               backgroundColor: const Color(0xFF0E9F6E),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 18),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
-            child: const Text('BẮT ĐẦU KHÁM', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.1)),
+            child: const Text(
+              'BẮT ĐẦU KHÁM',
+              style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.1),
+            ),
           ),
         ),
         const SizedBox(width: 12),
-        IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-            _markAsAbsent(data);
-          },
-          icon: const Icon(Icons.person_off_rounded, color: Color(0xFFE02424)),
-          style: IconButton.styleFrom(
-            backgroundColor: const Color(0xFFFFF5F5),
-            padding: const EdgeInsets.all(16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            side: const BorderSide(color: Color(0xFFFFD1D1)),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              _confirmMarkAsAbsent(data);
+            },
+            icon: const Icon(Icons.person_off_rounded),
+            label: const Text('VẮNG MẶT'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFFE02424),
+              side: const BorderSide(color: Color(0xFFFFD1D1)),
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
           ),
         ),
       ],
@@ -158,7 +221,10 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
 
   Widget _buildDefaultActions(HospitalAppointmentModel data) {
     return Center(
-      child: Text('Trạng thái: ${_formatStatus(data.status).toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+      child: Text(
+        'Trạng thái: ${_formatStatus(data.status).toUpperCase()}',
+        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+      ),
     );
   }
 
@@ -169,9 +235,19 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
         children: [
           Icon(icon, size: 20, color: const Color(0xFF8A95AC)),
           const SizedBox(width: 12),
-          Text('$label:', style: const TextStyle(fontSize: 14, color: Color(0xFF8A95AC))),
+          Text(
+            '$label:',
+            style: const TextStyle(fontSize: 14, color: Color(0xFF8A95AC)),
+          ),
           const SizedBox(width: 8),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF15233D))),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF15233D),
+            ),
+          ),
         ],
       ),
     );
@@ -179,22 +255,35 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
 
   void _callPatient(HospitalAppointmentModel data) async {
     try {
-      await FirebaseFirestore.instance.collection('Appointments').doc(data.id).update({
-        'status': 'calling',
-      });
-      
+      await FirebaseFirestore.instance
+          .collection('Appointments')
+          .doc(data.id)
+          .update({
+            'status': 'calling',
+            'calledAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
       await FirebaseFirestore.instance.collection('Notifications').add({
         'userId': data.patientId,
         'title': 'Đến lượt khám của bạn',
-        'message': 'Đã đến lượt khám của bạn (STT: ${data.queueNumber}). Mời bạn nhanh chóng di chuyển tới phòng khám để bác sĩ chuẩn bị.',
+        'message':
+            'Đã đến lượt khám của bạn (STT: ${data.queueNumber}). Mời bạn nhanh chóng di chuyển tới phòng khám để bác sĩ chuẩn bị.',
+        'content':
+            'Đã đến lượt khám của bạn (STT: ${data.queueNumber}). Mời bạn nhanh chóng di chuyển tới phòng khám để bác sĩ chuẩn bị.',
         'type': 'queue',
+        'category': 'appointment',
+        'recipientRole': 'patient',
         'timestamp': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
         'isRead': false,
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đang gọi bệnh nhân và đã gửi thông báo')),
+          const SnackBar(
+            content: Text('Đang gọi bệnh nhân và đã gửi thông báo'),
+          ),
         );
       }
     } catch (e) {
@@ -204,10 +293,15 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
 
   void _startExamination(HospitalAppointmentModel data) async {
     try {
-      await FirebaseFirestore.instance.collection('Appointments').doc(data.id).update({
-        'status': 'ongoing',
-      });
-      
+      await FirebaseFirestore.instance
+          .collection('Appointments')
+          .doc(data.id)
+          .update({
+            'status': 'ongoing',
+            'startedAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
       if (mounted) {
         Navigator.push(
           context,
@@ -224,24 +318,70 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
     }
   }
 
+  Future<void> _confirmMarkAsAbsent(HospitalAppointmentModel data) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Đánh dấu vắng mặt?'),
+        content: Text(
+          'Bệnh nhân ${data.patientName} sẽ được chuyển sang trạng thái vắng mặt. Lịch này không được trả slot tự động.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('HỦY'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE02424),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('XÁC NHẬN'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      _markAsAbsent(data);
+    }
+  }
+
   void _markAsAbsent(HospitalAppointmentModel data) async {
     try {
-      await FirebaseFirestore.instance.collection('Appointments').doc(data.id).update({
-        'status': 'absent',
-      });
-      
+      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+      await FirebaseFirestore.instance
+          .collection('Appointments')
+          .doc(data.id)
+          .update({
+            'status': 'no_show',
+            'noShowBy': 'doctor',
+            if (currentUserId != null) 'noShowByUserId': currentUserId,
+            'noShowAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
       await FirebaseFirestore.instance.collection('Notifications').add({
         'userId': data.patientId,
         'title': 'Bỏ qua lượt khám',
-        'message': 'Bác sĩ đã bỏ qua lượt của bạn do bạn vắng mặt tại phòng khám. Vui lòng liên hệ quầy tiếp đón.',
+        'message':
+            'Bác sĩ đã bỏ qua lượt của bạn do bạn vắng mặt tại phòng khám. Vui lòng liên hệ quầy tiếp đón.',
+        'content':
+            'Bác sĩ đã bỏ qua lượt của bạn do bạn vắng mặt tại phòng khám. Vui lòng liên hệ quầy tiếp đón.',
         'type': 'queue',
+        'category': 'appointment',
+        'recipientRole': 'patient',
         'timestamp': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
         'isRead': false,
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đã đánh dấu vắng mặt và gửi thông báo')),
+          const SnackBar(
+            content: Text('Đã đánh dấu vắng mặt và gửi thông báo'),
+          ),
         );
       }
     } catch (e) {
@@ -272,14 +412,30 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
       expandedHeight: 120,
       backgroundColor: const Color(0xFF0E47B5),
       elevation: 0,
-      title: const Text('Hàng đợi điều hành', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.0, color: Colors.white)),
+      title: const Text(
+        'Hàng đợi điều hành',
+        style: TextStyle(
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1.0,
+          color: Colors.white,
+        ),
+      ),
       actions: [
         if (_isLoading)
-          const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)))
+          const Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
+            ),
+          )
         else
           IconButton(
-            onPressed: _handleRefresh, 
-            icon: const Icon(Icons.refresh_rounded, color: Colors.white)
+            onPressed: _handleRefresh,
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
           ),
         const SizedBox(width: 12),
       ],
@@ -299,7 +455,11 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
 
   Widget _buildSmartCommandHub() {
     return FutureBuilder<QuerySnapshot>(
-      future: FirebaseFirestore.instance.collection('Doctors').where('userId', isEqualTo: _currentDoctorId).limit(1).get(),
+      future: FirebaseFirestore.instance
+          .collection('Doctors')
+          .where('userId', isEqualTo: _currentDoctorId)
+          .limit(1)
+          .get(),
       builder: (context, doctorSnap) {
         String actualDoctorId = _currentDoctorId ?? '';
         if (doctorSnap.hasData && doctorSnap.data!.docs.isNotEmpty) {
@@ -310,74 +470,113 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
           stream: FirebaseFirestore.instance
               .collection('Appointments')
               .where('doctorId', isEqualTo: actualDoctorId)
-              .where('status', isEqualTo: 'pending')
+              .where('status', whereIn: ['pending', 'confirmed'])
               .snapshots(),
           builder: (context, snapshot) {
-        final waitingCount = snapshot.data?.docs.length ?? 0;
+            final waitingCount = snapshot.data?.docs.length ?? 0;
 
-        return SliverToBoxAdapter(
-          child: Container(
-            margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(30),
-              boxShadow: [BoxShadow(color: const Color(0xFF0E47B5).withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 10))],
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _hubMetric('SẮP TỚI', '$waitingCount', const Color(0xFF0E47B5)),
-                    _vDivider(),
-                    _hubMetric('CÔNG SUẤT', '85%', const Color(0xFF0E9F6E)),
+            return SliverToBoxAdapter(
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF0E47B5).withOpacity(0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: waitingCount > 0 ? () {
-                    final first = HospitalAppointmentModel.fromFirestore(snapshot.data!.docs.first);
-                    _showPatientBottomSheet(first);
-                  } : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0E47B5),
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    elevation: 4,
-                    shadowColor: const Color(0xFF0E47B5).withOpacity(0.4),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.record_voice_over_rounded),
-                      SizedBox(width: 12),
-                      Text('MỜI BỆNH NHÂN TIẾP THEO', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-                    ],
-                  ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _hubMetric(
+                          'SẮP TỚI',
+                          '$waitingCount',
+                          const Color(0xFF0E47B5),
+                        ),
+                        _vDivider(),
+                        _hubMetric('CÔNG SUẤT', '85%', const Color(0xFF0E9F6E)),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: waitingCount > 0
+                          ? () {
+                              final first =
+                                  HospitalAppointmentModel.fromFirestore(
+                                    snapshot.data!.docs.first,
+                                  );
+                              _showPatientBottomSheet(first);
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0E47B5),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 56),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        elevation: 4,
+                        shadowColor: const Color(0xFF0E47B5).withOpacity(0.4),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.record_voice_over_rounded),
+                          SizedBox(width: 12),
+                          Text(
+                            'MỜI BỆNH NHÂN TIẾP THEO',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
-      }
-    );
-      }
+      },
     );
   }
 
   Widget _hubMetric(String label, String val, Color color) {
     return Column(
       children: [
-        Text(val, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: color)),
+        Text(
+          val,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+            color: color,
+          ),
+        ),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF8A95AC), letterSpacing: 0.5)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            color: Color(0xFF8A95AC),
+            letterSpacing: 0.5,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _vDivider() => Container(width: 1, height: 30, color: const Color(0xFFF3F6FC));
+  Widget _vDivider() =>
+      Container(width: 1, height: 30, color: const Color(0xFFF3F6FC));
 
   Widget _buildFilterBar() {
     return SliverToBoxAdapter(
@@ -394,23 +593,36 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.only(right: 12),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected ? const Color(0xFF15233D) : Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
-                      if (isSelected) 
-                        BoxShadow(color: const Color(0xFF15233D).withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4)),
+                      if (isSelected)
+                        BoxShadow(
+                          color: const Color(0xFF15233D).withOpacity(0.2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
                       if (!isSelected)
-                        BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 2)),
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
                     ],
                   ),
                   child: Text(
                     f,
                     style: TextStyle(
-                      fontSize: 13, 
-                      fontWeight: FontWeight.w900, 
-                      color: isSelected ? Colors.white : const Color(0xFF5A6680),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      color: isSelected
+                          ? Colors.white
+                          : const Color(0xFF5A6680),
                     ),
                   ),
                 ),
@@ -429,7 +641,15 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('DANH SÁCH HÀNG ĐỢI', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF8A95AC), letterSpacing: 1.5)),
+            Text(
+              'DANH SÁCH HÀNG ĐỢI',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF8A95AC),
+                letterSpacing: 1.5,
+              ),
+            ),
             Icon(Icons.sort_rounded, size: 18, color: Color(0xFF8A95AC)),
           ],
         ),
@@ -439,16 +659,29 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
 
   Widget _buildQueueListStream() {
     if (_currentDoctorId == null) {
-      return const SliverFillRemaining(child: Center(child: Text('Vui lòng đăng nhập')));
+      return const SliverFillRemaining(
+        child: Center(child: Text('Vui lòng đăng nhập')),
+      );
     }
 
     return FutureBuilder<QuerySnapshot>(
-      future: FirebaseFirestore.instance.collection('Doctors').where('userId', isEqualTo: _currentDoctorId).limit(1).get(),
+      future: FirebaseFirestore.instance
+          .collection('Doctors')
+          .where('userId', isEqualTo: _currentDoctorId)
+          .limit(1)
+          .get(),
       builder: (context, doctorSnap) {
         if (doctorSnap.connectionState == ConnectionState.waiting) {
-          return const SliverToBoxAdapter(child: Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator())));
+          return const SliverToBoxAdapter(
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.all(40),
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          );
         }
-        
+
         String actualDoctorId = _currentDoctorId!;
         if (doctorSnap.hasData && doctorSnap.data!.docs.isNotEmpty) {
           actualDoctorId = doctorSnap.data!.docs.first.id;
@@ -460,59 +693,100 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
               .where('doctorId', isEqualTo: actualDoctorId)
               .snapshots(),
           builder: (context, snapshot) {
-        if (snapshot.hasError) return SliverToBoxAdapter(child: Center(child: Text('Lỗi: ${snapshot.error}')));
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SliverToBoxAdapter(child: Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator())));
-        }
+            if (snapshot.hasError)
+              return SliverToBoxAdapter(
+                child: Center(child: Text('Lỗi: ${snapshot.error}')),
+              );
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const SliverToBoxAdapter(
+                child: Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(40),
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+              );
+            }
 
-        final allDocs = snapshot.data?.docs ?? [];
-        final List<HospitalAppointmentModel> allAppointments = allDocs.map((d) => HospitalAppointmentModel.fromFirestore(d)).toList();
+            final allDocs = snapshot.data?.docs ?? [];
+            final List<HospitalAppointmentModel> allAppointments = allDocs
+                .map((d) => HospitalAppointmentModel.fromFirestore(d))
+                .toList();
 
-        // Filtering
-        List<HospitalAppointmentModel> filtered = allAppointments;
-        if (_selectedFilter != 'Tất cả') {
-          final mapping = {
-            'Đang chờ': 'pending',
-            'Đang gọi': 'calling',
-            'Đang khám': 'ongoing',
-            'Vắng mặt': 'absent'
-          };
-          filtered = allAppointments.where((a) => a.status == mapping[_selectedFilter]).toList();
-        } else {
-          filtered = allAppointments.where((a) => ['pending', 'calling', 'ongoing', 'absent'].contains(a.status)).toList();
-        }
+            // Filtering
+            List<HospitalAppointmentModel> filtered = allAppointments;
+            if (_selectedFilter != 'Tất cả') {
+              final mapping = {
+                'Đang chờ': ['pending', 'confirmed'],
+                'Đang gọi': ['calling'],
+                'Đang khám': ['ongoing'],
+                'Vắng mặt': ['no_show', 'absent'],
+              };
+              final statuses = mapping[_selectedFilter] ?? const <String>[];
+              filtered = allAppointments
+                  .where((a) => statuses.contains(a.status))
+                  .toList();
+            } else {
+              filtered = allAppointments
+                  .where(
+                    (a) => [
+                      'pending',
+                      'confirmed',
+                      'calling',
+                      'ongoing',
+                      'no_show',
+                      'absent',
+                    ].contains(a.status),
+                  )
+                  .toList();
+            }
 
-        filtered.sort((a, b) => a.queueNumber.compareTo(b.queueNumber));
+            filtered.sort((a, b) => a.queueNumber.compareTo(b.queueNumber));
 
-        if (filtered.isEmpty) {
-          return const SliverFillRemaining(child: Center(child: Text('Hàng đợi trống', style: TextStyle(color: Colors.grey))));
-        }
+            if (filtered.isEmpty) {
+              return const SliverFillRemaining(
+                child: Center(
+                  child: Text(
+                    'Hàng đợi trống',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+              );
+            }
 
-        return SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) => _buildPatientCard(filtered[index]),
-              childCount: filtered.length,
-            ),
-          ),
+            return SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => _buildPatientCard(filtered[index]),
+                  childCount: filtered.length,
+                ),
+              ),
+            );
+          },
         );
-      },
-    );
       },
     );
   }
 
   Widget _buildPatientCard(HospitalAppointmentModel data) {
     final waitDuration = DateTime.now().difference(data.createdAt);
-    final triageColor = data.status == 'calling' ? const Color(0xFF0E47B5) : const Color(0xFF0E9F6E);
+    final triageColor = data.status == 'calling'
+        ? const Color(0xFF0E47B5)
+        : const Color(0xFF0E9F6E);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 5))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -530,8 +804,12 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
                       radius: 28,
                       backgroundColor: triageColor.withOpacity(0.1),
                       child: Text(
-                        data.patientName.isNotEmpty ? data.patientName[0] : 'B', 
-                        style: TextStyle(fontWeight: FontWeight.w900, color: triageColor, fontSize: 18),
+                        data.patientName.isNotEmpty ? data.patientName[0] : 'B',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: triageColor,
+                          fontSize: 18,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -543,19 +821,31 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                data.patientName, 
-                                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Color(0xFF15233D)),
+                                data.patientName,
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF15233D),
+                                ),
                               ),
                               Text(
-                                '${waitDuration.inMinutes}p trước', 
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF8A95AC)),
+                                '${waitDuration.inMinutes}p trước',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF8A95AC),
+                                ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Giới tính: ${data.patientGender ?? "-"} • STT: ${data.queueNumber}', 
-                            style: const TextStyle(fontSize: 12, color: Color(0xFF8A95AC), fontWeight: FontWeight.bold),
+                            'Giới tính: ${data.patientGender ?? "-"} • STT: ${data.queueNumber}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF8A95AC),
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           const SizedBox(height: 12),
                           Row(
@@ -563,11 +853,21 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
                               _triageBadge(3, compact: true),
                               const SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(color: const Color(0xFFF3F6FC), borderRadius: BorderRadius.circular(8)),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF3F6FC),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                                 child: Text(
-                                  _formatStatus(data.status), 
-                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF0E47B5)),
+                                  _formatStatus(data.status),
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w900,
+                                    color: Color(0xFF0E47B5),
+                                  ),
                                 ),
                               ),
                             ],
@@ -581,11 +881,19 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: const Color(0xFFF8FAFD), borderRadius: BorderRadius.circular(16)),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFD),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   child: Text(
                     'Lý do: ${data.symptoms}',
-                    maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF5A6680), fontWeight: FontWeight.w600),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF5A6680),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -601,6 +909,7 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
     if (s == 'calling') return 'Đang gọi';
     if (s == 'ongoing') return 'Đang khám';
     if (s == 'absent') return 'Vắng mặt';
+    if (s == 'no_show') return 'Vắng mặt';
     return s.toUpperCase();
   }
 
@@ -613,11 +922,21 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
   Widget _triageBadge(int level, {bool compact = false}) {
     final color = _getTriageColor(level);
     final label = level == 1 ? 'KHẨN' : (level == 2 ? 'ƯU TIÊN' : 'THƯỜNG');
-    
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 12, vertical: 4),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-      child: Text(label, style: TextStyle(fontSize: compact ? 9 : 11, fontWeight: FontWeight.w900, color: color)),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: compact ? 9 : 11,
+          fontWeight: FontWeight.w900,
+          color: color,
+        ),
+      ),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'doctor_prescription_builder_page.dart';
 
 class DoctorAppointmentDetailPage extends StatefulWidget {
@@ -12,10 +13,12 @@ class DoctorAppointmentDetailPage extends StatefulWidget {
   });
 
   @override
-  State<DoctorAppointmentDetailPage> createState() => _DoctorAppointmentDetailPageState();
+  State<DoctorAppointmentDetailPage> createState() =>
+      _DoctorAppointmentDetailPageState();
 }
 
-class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPage> {
+class _DoctorAppointmentDetailPageState
+    extends State<DoctorAppointmentDetailPage> {
   int _currentStep = 0;
   final List<Map<String, dynamic>> _selectedServices = [];
 
@@ -27,12 +30,42 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
   late TextEditingController _notesController;
 
   final List<Map<String, dynamic>> _availableServices = [
-    {'id': 'S001', 'name': 'Chụp CT Sọ não', 'category': 'Chẩn đoán hình ảnh', 'price': '1,200,000đ'},
-    {'id': 'S002', 'name': 'Nội soi dạ dày', 'category': 'Thăm dò chức năng', 'price': '800,000đ'},
-    {'id': 'S003', 'name': 'Siêu âm bụng tổng quát', 'category': 'Chẩn đoán hình ảnh', 'price': '250,000đ'},
-    {'id': 'S005', 'name': 'Sinh hóa máu (Glucose, Urea)', 'category': 'Xét nghiệm', 'price': '150,000đ'},
-    {'id': 'S006', 'name': 'Tổng phân tích tế bào máu', 'category': 'Xét nghiệm', 'price': '100,000đ'},
-    {'id': 'S007', 'name': 'X-Quang ngực thẳng', 'category': 'Chẩn đoán hình ảnh', 'price': '120,000đ'},
+    {
+      'id': 'S001',
+      'name': 'Chụp CT Sọ não',
+      'category': 'Chẩn đoán hình ảnh',
+      'price': '1,200,000đ',
+    },
+    {
+      'id': 'S002',
+      'name': 'Nội soi dạ dày',
+      'category': 'Thăm dò chức năng',
+      'price': '800,000đ',
+    },
+    {
+      'id': 'S003',
+      'name': 'Siêu âm bụng tổng quát',
+      'category': 'Chẩn đoán hình ảnh',
+      'price': '250,000đ',
+    },
+    {
+      'id': 'S005',
+      'name': 'Sinh hóa máu (Glucose, Urea)',
+      'category': 'Xét nghiệm',
+      'price': '150,000đ',
+    },
+    {
+      'id': 'S006',
+      'name': 'Tổng phân tích tế bào máu',
+      'category': 'Xét nghiệm',
+      'price': '100,000đ',
+    },
+    {
+      'id': 'S007',
+      'name': 'X-Quang ngực thẳng',
+      'category': 'Chẩn đoán hình ảnh',
+      'price': '120,000đ',
+    },
   ];
 
   final List<Map<String, dynamic>> _icd10Results = [
@@ -46,7 +79,9 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
   @override
   void initState() {
     super.initState();
-    _symptomsController = TextEditingController(text: widget.initialData['symptoms'] ?? '');
+    _symptomsController = TextEditingController(
+      text: widget.initialData['symptoms'] ?? '',
+    );
     _physicalExamController = TextEditingController();
     _diagnosisController = TextEditingController();
     _treatmentController = TextEditingController();
@@ -70,7 +105,10 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
     return Scaffold(
       backgroundColor: const Color(0xFFF3F6FC),
       appBar: AppBar(
-        title: const Text('Bàn làm việc Bác sĩ', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
+        title: const Text(
+          'Bàn làm việc Bác sĩ',
+          style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
+        ),
         centerTitle: true,
         backgroundColor: const Color(0xFF0E47B5),
         foregroundColor: Colors.white,
@@ -82,7 +120,9 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
           Expanded(
             child: Theme(
               data: Theme.of(context).copyWith(
-                colorScheme: const ColorScheme.light(primary: Color(0xFF0E47B5)),
+                colorScheme: const ColorScheme.light(
+                  primary: Color(0xFF0E47B5),
+                ),
               ),
               child: Stepper(
                 type: StepperType.horizontal,
@@ -120,7 +160,10 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -138,15 +181,35 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
   Widget _vitalInfo(String label, String val, String unit) {
     return Column(
       children: [
-        Text(label, style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 10, fontWeight: FontWeight.bold)),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.6),
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         const SizedBox(height: 4),
         Row(
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
-            Text(val, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)),
+            Text(
+              val,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
             const SizedBox(width: 2),
-            Text(unit, style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 9)),
+            Text(
+              unit,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: 9,
+              ),
+            ),
           ],
         ),
       ],
@@ -154,7 +217,11 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
   }
 
   Widget _vDivider() {
-    return Container(width: 1, height: 20, color: Colors.white.withOpacity(0.1));
+    return Container(
+      width: 1,
+      height: 20,
+      color: Colors.white.withOpacity(0.1),
+    );
   }
 
   Widget _buildStepperControls(BuildContext context, ControlsDetails details) {
@@ -168,10 +235,18 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
                 onPressed: details.onStepCancel,
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   side: const BorderSide(color: Color(0xFFD1D5DB)),
                 ),
-                child: const Text('VỀ TRƯỚC', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF5A6680))),
+                child: const Text(
+                  'VỀ TRƯỚC',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF5A6680),
+                  ),
+                ),
               ),
             ),
           if (_currentStep > 0) const SizedBox(width: 12),
@@ -182,7 +257,9 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
                 backgroundColor: const Color(0xFF0E47B5),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 elevation: 0,
               ),
               child: Text(
@@ -200,22 +277,46 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
     return Step(
       isActive: _currentStep >= 0,
       state: _currentStep > 0 ? StepState.complete : StepState.indexed,
-      title: const Text('Bệnh sử', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+      title: const Text(
+        'Bệnh sử',
+        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+      ),
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildPatientInfoCompact(data),
           const SizedBox(height: 24),
-          _buildInputField('Triệu chứng / Chief Complaints', _symptomsController, Icons.medical_information_rounded, maxLines: 4),
+          _buildInputField(
+            'Triệu chứng / Chief Complaints',
+            _symptomsController,
+            Icons.medical_information_rounded,
+            maxLines: 4,
+          ),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: const Color(0xFFDEF7ED), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: const Color(0xFFDEF7ED),
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: const Row(
               children: [
-                Icon(Icons.auto_awesome_rounded, size: 16, color: Color(0xFF0E9F6E)),
+                Icon(
+                  Icons.auto_awesome_rounded,
+                  size: 16,
+                  color: Color(0xFF0E9F6E),
+                ),
                 SizedBox(width: 8),
-                Expanded(child: Text('AI: Gợi ý phác đồ Viêm họng cấp (J02.9)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0E9F6E)))),
+                Expanded(
+                  child: Text(
+                    'AI: Gợi ý phác đồ Viêm họng cấp (J02.9)',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0E9F6E),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -228,19 +329,33 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
     return Step(
       isActive: _currentStep >= 1,
       state: _currentStep > 1 ? StepState.complete : StepState.indexed,
-      title: const Text('Khám', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+      title: const Text(
+        'Khám',
+        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+      ),
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildInputField('Khám thực thể / Physical Exam', _physicalExamController, Icons.accessibility_new_rounded, maxLines: 6),
+          _buildInputField(
+            'Khám thực thể / Physical Exam',
+            _physicalExamController,
+            Icons.accessibility_new_rounded,
+            maxLines: 6,
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
-            children: ['Tim đều', 'Phổi sạch', 'Họng đỏ'].map((tag) => ActionChip(
-              label: Text(tag, style: const TextStyle(fontSize: 11)),
-              onPressed: () => setState(() => _physicalExamController.text += "$tag, "),
-              backgroundColor: Colors.white,
-            )).toList(),
+            children: ['Tim đều', 'Phổi sạch', 'Họng đỏ']
+                .map(
+                  (tag) => ActionChip(
+                    label: Text(tag, style: const TextStyle(fontSize: 11)),
+                    onPressed: () => setState(
+                      () => _physicalExamController.text += "$tag, ",
+                    ),
+                    backgroundColor: Colors.white,
+                  ),
+                )
+                .toList(),
           ),
         ],
       ),
@@ -251,11 +366,22 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
     return Step(
       isActive: _currentStep >= 2,
       state: _currentStep > 2 ? StepState.complete : StepState.indexed,
-      title: const Text('Dịch vụ', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+      title: const Text(
+        'Dịch vụ',
+        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+      ),
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('CHỈ ĐỊNH CẬN LÂM SÀNG', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF8A95AC), letterSpacing: 1.0)),
+          const Text(
+            'CHỈ ĐỊNH CẬN LÂM SÀNG',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF8A95AC),
+              letterSpacing: 1.0,
+            ),
+          ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: _showServiceSelectionSheet,
@@ -267,7 +393,9 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
               elevation: 0,
               side: const BorderSide(color: Color(0xFF0E47B5)),
               minimumSize: const Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
           if (_selectedServices.isNotEmpty) ...[
@@ -275,12 +403,24 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _selectedServices.map((s) => Chip(
-                label: Text(s['name'], style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0E47B5))),
-                backgroundColor: const Color(0xFFE1EFFE),
-                onDeleted: () => setState(() => _selectedServices.remove(s)),
-                deleteIconColor: const Color(0xFF0E47B5),
-              )).toList(),
+              children: _selectedServices
+                  .map(
+                    (s) => Chip(
+                      label: Text(
+                        s['name'],
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0E47B5),
+                        ),
+                      ),
+                      backgroundColor: const Color(0xFFE1EFFE),
+                      onDeleted: () =>
+                          setState(() => _selectedServices.remove(s)),
+                      deleteIconColor: const Color(0xFF0E47B5),
+                    ),
+                  )
+                  .toList(),
             ),
           ],
         ],
@@ -292,12 +432,20 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
     return Step(
       isActive: _currentStep >= 3,
       state: _currentStep == 3 ? StepState.indexed : StepState.complete,
-      title: const Text('Kết luận', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+      title: const Text(
+        'Kết luận',
+        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+      ),
       content: Column(
         children: [
           _buildICD10Finder(),
           const SizedBox(height: 16),
-          _buildInputField('Hướng điều trị', _treatmentController, Icons.lightbulb_rounded, maxLines: 3),
+          _buildInputField(
+            'Hướng điều trị',
+            _treatmentController,
+            Icons.lightbulb_rounded,
+            maxLines: 3,
+          ),
           const SizedBox(height: 16),
           _buildInputField('Ghi chú', _notesController, Icons.note_alt_rounded),
         ],
@@ -308,17 +456,46 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
   Widget _buildPatientInfoCompact(Map<String, dynamic> data) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10)]),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10),
+        ],
+      ),
       child: Row(
         children: [
-          CircleAvatar(radius: 25, backgroundColor: const Color(0xFFE1EFFE), child: Text(data['patientName'][0], style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0E47B5)))),
+          CircleAvatar(
+            radius: 25,
+            backgroundColor: const Color(0xFFE1EFFE),
+            child: Text(
+              data['patientName'][0],
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0E47B5),
+              ),
+            ),
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(data['patientName'], style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-                Text('${data['age']} tuổi • ${data['gender']} • Nhóm: ${data['bloodType']}', style: const TextStyle(color: Color(0xFF5A6680), fontSize: 12, fontWeight: FontWeight.bold)),
+                Text(
+                  data['patientName'],
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  '${data['age']} tuổi • ${data['gender']} • Nhóm: ${data['bloodType']}',
+                  style: const TextStyle(
+                    color: Color(0xFF5A6680),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
           ),
@@ -327,11 +504,23 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
     );
   }
 
-  Widget _buildInputField(String label, TextEditingController controller, IconData icon, {int maxLines = 1}) {
+  Widget _buildInputField(
+    String label,
+    TextEditingController controller,
+    IconData icon, {
+    int maxLines = 1,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF5A6680))),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF5A6680),
+          ),
+        ),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
@@ -340,8 +529,14 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
             prefixIcon: Icon(icon, color: const Color(0xFF8A95AC), size: 18),
             filled: true,
             fillColor: Colors.white,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
           ),
         ),
       ],
@@ -352,26 +547,54 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Chẩn đoán (ICD-10) *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF5A6680))),
+        const Text(
+          'Chẩn đoán (ICD-10) *',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF5A6680),
+          ),
+        ),
         const SizedBox(height: 8),
         TextFormField(
           controller: _diagnosisController,
           decoration: InputDecoration(
-            prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF0E47B5), size: 18),
+            prefixIcon: const Icon(
+              Icons.search_rounded,
+              color: Color(0xFF0E47B5),
+              size: 18,
+            ),
             hintText: 'Tìm mã bệnh...',
             filled: true,
             fillColor: Colors.white,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
           ),
         ),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
-          children: _icd10Results.take(3).map((r) => ActionChip(
-            label: Text(r['code']!, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-            onPressed: () => setState(() => _diagnosisController.text = "[${r['code']}] ${r['name']}"),
-            backgroundColor: Colors.white,
-          )).toList(),
+          children: _icd10Results
+              .take(3)
+              .map(
+                (r) => ActionChip(
+                  label: Text(
+                    r['code']!,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onPressed: () => setState(
+                    () => _diagnosisController.text =
+                        "[${r['code']}] ${r['name']}",
+                  ),
+                  backgroundColor: Colors.white,
+                ),
+              )
+              .toList(),
         ),
       ],
     );
@@ -385,11 +608,17 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) => Container(
           height: MediaQuery.of(context).size.height * 0.7,
-          decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          ),
           child: Column(
             children: [
               const SizedBox(height: 20),
-              const Text('CHỈ ĐỊNH DỊCH VỤ', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+              const Text(
+                'CHỈ ĐỊNH DỊCH VỤ',
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+              ),
               const Divider(),
               Expanded(
                 child: ListView.builder(
@@ -401,12 +630,23 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
                       value: isSelected,
                       onChanged: (val) {
                         setSheetState(() {
-                          val! ? _selectedServices.add(item) : _selectedServices.remove(item);
+                          val!
+                              ? _selectedServices.add(item)
+                              : _selectedServices.remove(item);
                         });
                         setState(() {});
                       },
-                      title: Text(item['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      subtitle: Text('${item['category']} • ${item['price']}', style: const TextStyle(fontSize: 12)),
+                      title: Text(
+                        item['name'],
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '${item['category']} • ${item['price']}',
+                        style: const TextStyle(fontSize: 12),
+                      ),
                       activeColor: const Color(0xFF0E47B5),
                     );
                   },
@@ -416,8 +656,18 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
                 padding: const EdgeInsets.all(20),
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0E47B5), foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                  child: const Text('XÁC NHẬN', style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0E47B5),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    'XÁC NHẬN',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],
@@ -427,19 +677,39 @@ class _DoctorAppointmentDetailPageState extends State<DoctorAppointmentDetailPag
     );
   }
 
-  void _saveAndPrescribe() {
+  Future<void> _saveAndPrescribe() async {
     if (_diagnosisController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng chọn chẩn đoán ICD-10'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng chọn chẩn đoán ICD-10'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
+    await FirebaseFirestore.instance
+        .collection('Appointments')
+        .doc(widget.appointmentId)
+        .update({
+          'status': 'completed',
+          'completedAt': FieldValue.serverTimestamp(),
+          'physicalExam': _physicalExamController.text.trim(),
+          'diagnosis': _diagnosisController.text.trim(),
+          'treatment': _treatmentController.text.trim(),
+          'notes': _notesController.text.trim(),
+          'services': _selectedServices,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+
+    if (!mounted) return;
     Navigator.push(
-      context, 
+      context,
       MaterialPageRoute(
         builder: (_) => DoctorPrescriptionBuilderPage(
           patientData: widget.initialData,
           appointmentId: widget.appointmentId,
-        )
-      )
+        ),
+      ),
     );
   }
 }

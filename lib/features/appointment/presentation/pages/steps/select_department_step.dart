@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:baitaplon/features/appointment/presentation/bloc/booking_bloc.dart';
 import 'package:baitaplon/app/theme/app_colors.dart';
+import 'package:baitaplon/features/home/presentation/utils/department_visuals.dart';
 
 class SelectDepartmentStep extends StatelessWidget {
   const SelectDepartmentStep({super.key});
@@ -10,7 +11,8 @@ class SelectDepartmentStep extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<BookingBloc, BookingState>(
       builder: (context, state) {
-        if (state.status == BookingStatus.loading && state.departments.isEmpty) {
+        if (state.status == BookingStatus.loading &&
+            state.departments.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
 
@@ -30,7 +32,10 @@ class SelectDepartmentStep extends StatelessWidget {
             ),
             Expanded(
               child: GridView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   crossAxisSpacing: 16,
@@ -40,11 +45,13 @@ class SelectDepartmentStep extends StatelessWidget {
                 itemCount: state.departments.length,
                 itemBuilder: (context, index) {
                   final dept = state.departments[index];
+                  final visual = departmentVisualFor(dept);
                   return _DepartmentCard(
                     name: dept.name,
-                    icon: _getIconForDept(dept.id),
-                    color: _getColorForDept(index),
-                    onTap: () => context.read<BookingBloc>().add(SelectDepartment(dept)),
+                    icon: visual.icon,
+                    color: visual.softColor,
+                    onTap: () =>
+                        context.read<BookingBloc>().add(SelectDepartment(dept)),
                   );
                 },
               ),
@@ -53,30 +60,6 @@ class SelectDepartmentStep extends StatelessWidget {
         );
       },
     );
-  }
-
-  IconData _getIconForDept(String id) {
-    switch (id) {
-      case 'dept_cardio': return Icons.favorite_rounded;
-      case 'dept_pedia': return Icons.child_care_rounded;
-      case 'dept_internal': return Icons.biotech_rounded;
-      case 'dept_obgyn': return Icons.pregnant_woman_rounded;
-      case 'dept_dermatology': return Icons.healing_rounded;
-      case 'dept_ent': return Icons.face_rounded;
-      default: return Icons.local_hospital_rounded;
-    }
-  }
-
-  Color _getColorForDept(int index) {
-    final colors = [
-      const Color(0xFFE3F2FD),
-      const Color(0xFFE8F5E9),
-      const Color(0xFFFFF3E0),
-      const Color(0xFFF3E5F5),
-      const Color(0xFFEFEBE9),
-      const Color(0xFFFCE4EC),
-    ];
-    return colors[index % colors.length];
   }
 }
 

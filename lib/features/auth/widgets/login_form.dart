@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -6,7 +5,6 @@ import '../../../../app/routes/app_routes.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../config/service_locator.dart';
 import '../../../../shared/utils/validators.dart';
-import '../../../../shared/utils/firebase_data_seeder.dart';
 import '../../../../shared/widgets/app_logo_header.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
@@ -65,7 +63,8 @@ class _LoginFormState extends State<LoginForm> {
 
       if (!mounted) return;
 
-      final isVerified = appUser.emailVerified || (user != null && user.emailVerified);
+      final isVerified =
+          appUser.emailVerified || (user != null && user.emailVerified);
       if (!isVerified) {
         _showMessage(
           'Tài khoản chưa được xác thực. Vui lòng kiểm tra hộp thư hoặc mã OTP.',
@@ -79,11 +78,7 @@ class _LoginFormState extends State<LoginForm> {
       // đã verify
       _showMessage('Đăng nhập thành công.', isError: false);
 
-      // Seed/update data mẫu (bác sĩ, khoa...) mỗi lần đăng nhập
-      if (user != null) {
-        unawaited(FirebaseDataSeeder.seedAll(user.uid));
-      }
-
+      // NOTE: Không còn auto-seed dữ liệu mẫu khi đăng nhập.
       final targetRoute = _resolveHomeRouteByRole(appUser.role);
       Navigator.pushReplacementNamed(context, targetRoute);
     } on FirebaseAuthException catch (error) {
@@ -97,8 +92,6 @@ class _LoginFormState extends State<LoginForm> {
       setState(() => _isLoading = false);
     }
   }
-
-
 
   String _resolveHomeRouteByRole(String role) {
     switch (role.toLowerCase()) {

@@ -17,6 +17,15 @@ class AppointmentCard extends StatelessWidget {
         return AppColors.success;
       case 'cancelled':
         return AppColors.error;
+      case 'no_show':
+      case 'absent':
+      case 'cancel_requested':
+        return AppColors.warning;
+      case 'confirmed':
+      case 'pending':
+      case 'calling':
+      case 'ongoing':
+        return AppColors.primary;
       default:
         return AppColors.primary;
     }
@@ -30,6 +39,19 @@ class AppointmentCard extends StatelessWidget {
         return 'Hoàn thành';
       case 'cancelled':
         return 'Hủy';
+      case 'no_show':
+      case 'absent':
+        return 'Vắng mặt';
+      case 'confirmed':
+        return 'Đã đặt';
+      case 'pending':
+        return 'Chờ xử lý';
+      case 'cancel_requested':
+        return 'Chờ duyệt hủy';
+      case 'calling':
+        return 'Đang gọi';
+      case 'ongoing':
+        return 'Đang khám';
       default:
         return status;
     }

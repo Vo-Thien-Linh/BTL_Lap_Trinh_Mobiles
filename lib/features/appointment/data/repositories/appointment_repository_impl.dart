@@ -19,7 +19,10 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }
 
   @override
-  Future<List<ScheduleEntity>> getDoctorSchedules(String doctorId, DateTime date) async {
+  Future<List<ScheduleEntity>> getDoctorSchedules(
+    String doctorId,
+    DateTime date,
+  ) async {
     return await remoteDatasource.getDoctorSchedules(doctorId, date);
   }
 
@@ -29,7 +32,9 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }
 
   @override
-  Future<HospitalAppointment> createAppointment(HospitalAppointment appointment) async {
+  Future<HospitalAppointment> createAppointment(
+    HospitalAppointment appointment,
+  ) async {
     final model = HospitalAppointmentModel(
       id: appointment.id,
       patientId: appointment.patientId,
@@ -39,6 +44,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       departmentId: appointment.departmentId,
       departmentName: appointment.departmentName,
       appointmentDate: appointment.appointmentDate,
+      scheduleId: appointment.scheduleId,
       shiftId: appointment.shiftId,
       timeSlot: appointment.timeSlot,
       queueNumber: appointment.queueNumber,
@@ -54,22 +60,34 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }
 
   @override
-  Future<List<HospitalAppointment>> getPatientAppointments(String patientId) async {
+  Future<List<HospitalAppointment>> getPatientAppointments(
+    String patientId,
+  ) async {
     return await remoteDatasource.getPatientAppointments(patientId);
   }
 
   @override
-  Future<List<HospitalAppointment>> getPatientActiveAppointments(String patientId) async {
+  Future<List<HospitalAppointment>> getPatientActiveAppointments(
+    String patientId,
+  ) async {
     return await remoteDatasource.getPatientActiveAppointments(patientId);
   }
 
   @override
-  Future<int> getNextQueueNumber(String doctorId, DateTime date, String shiftId) async {
+  Future<int> getNextQueueNumber(
+    String doctorId,
+    DateTime date,
+    String shiftId,
+  ) async {
     return await remoteDatasource.getNextQueueNumber(doctorId, date, shiftId);
   }
 
   @override
-  Future<List<int>> getTakenQueueNumbers(String doctorId, DateTime date, String shiftId) async {
+  Future<List<int>> getTakenQueueNumbers(
+    String doctorId,
+    DateTime date,
+    String shiftId,
+  ) async {
     return await remoteDatasource.getTakenQueueNumbers(doctorId, date, shiftId);
   }
 }

@@ -4,13 +4,30 @@ import '../models/appointment_models.dart';
 abstract class AppointmentRemoteDatasource {
   Future<List<DepartmentModel>> getDepartments();
   Future<List<DoctorModel>> getDoctorsByDepartment(String departmentId);
-  Future<List<ScheduleModel>> getDoctorSchedules(String doctorId, DateTime date);
+  Future<List<ScheduleModel>> getDoctorSchedules(
+    String doctorId,
+    DateTime date,
+  );
   Future<List<ShiftModel>> getShifts();
-  Future<HospitalAppointmentModel> createAppointment(HospitalAppointmentModel appointment);
-  Future<List<HospitalAppointmentModel>> getPatientAppointments(String patientId);
-  Future<int> getNextQueueNumber(String doctorId, DateTime date, String shiftId);
-  Future<List<int>> getTakenQueueNumbers(String doctorId, DateTime date, String shiftId);
-  Future<List<HospitalAppointmentModel>> getPatientActiveAppointments(String patientId);
+  Future<HospitalAppointmentModel> createAppointment(
+    HospitalAppointmentModel appointment,
+  );
+  Future<List<HospitalAppointmentModel>> getPatientAppointments(
+    String patientId,
+  );
+  Future<int> getNextQueueNumber(
+    String doctorId,
+    DateTime date,
+    String shiftId,
+  );
+  Future<List<int>> getTakenQueueNumbers(
+    String doctorId,
+    DateTime date,
+    String shiftId,
+  );
+  Future<List<HospitalAppointmentModel>> getPatientActiveAppointments(
+    String patientId,
+  );
 }
 
 class AppointmentRemoteDatasourceImpl implements AppointmentRemoteDatasource {
@@ -21,7 +38,9 @@ class AppointmentRemoteDatasourceImpl implements AppointmentRemoteDatasource {
   @override
   Future<List<DepartmentModel>> getDepartments() async {
     final snapshot = await firestore.collection('Departments').get();
-    return snapshot.docs.map((doc) => DepartmentModel.fromFirestore(doc)).toList();
+    return snapshot.docs
+        .map((doc) => DepartmentModel.fromFirestore(doc))
+        .toList();
   }
 
   @override
@@ -31,11 +50,37 @@ class AppointmentRemoteDatasourceImpl implements AppointmentRemoteDatasource {
         .where('departmentId', isEqualTo: departmentId)
         .where('isActive', isEqualTo: true)
         .get();
-    return snapshot.docs.map((doc) => DoctorModel.fromFirestore(doc)).toList();
+
+    return Future.wait(
+      snapshot.docs.map((doc) async {
+        final doctor = DoctorModel.fromFirestore(doc);
+        final userData = await _getUserData(doctor.userId);
+        return DoctorModel.withUserProfile(doctor, userData);
+      }),
+    );
+  }
+
+  Future<Map<String, dynamic>?> _getUserData(String userId) async {
+    if (userId.trim().isEmpty) return null;
+
+    final lowerDoc = await firestore.collection('users').doc(userId).get();
+    if (lowerDoc.exists) return lowerDoc.data();
+
+    final uidSnapshot = await firestore
+        .collection('users')
+        .where('uid', isEqualTo: userId)
+        .limit(1)
+        .get();
+    if (uidSnapshot.docs.isNotEmpty) return uidSnapshot.docs.first.data();
+
+    return null;
   }
 
   @override
-  Future<List<ScheduleModel>> getDoctorSchedules(String doctorId, DateTime date) async {
+  Future<List<ScheduleModel>> getDoctorSchedules(
+    String doctorId,
+    DateTime date,
+  ) async {
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
@@ -43,13 +88,16 @@ class AppointmentRemoteDatasourceImpl implements AppointmentRemoteDatasource {
     final snapshot = await firestore
         .collection('DoctorSchedules')
         .where('doctorId', isEqualTo: doctorId)
+        .where('isActive', isEqualTo: true)
         .get();
-        
+
     return snapshot.docs
         .map((doc) => ScheduleModel.fromFirestore(doc))
-        .where((s) => 
-            s.date.isAfter(startOfDay.subtract(const Duration(seconds: 1))) && 
-            s.date.isBefore(endOfDay))
+        .where(
+          (s) =>
+              s.date.isAfter(startOfDay.subtract(const Duration(seconds: 1))) &&
+              s.date.isBefore(endOfDay),
+        )
         .toList();
   }
 
@@ -65,24 +113,92 @@ class AppointmentRemoteDatasourceImpl implements AppointmentRemoteDatasource {
   }
 
   @override
-  Future<HospitalAppointmentModel> createAppointment(HospitalAppointmentModel appointment) async {
-    final docRef = await firestore.collection('Appointments').add(appointment.toFirestore());
+  Future<HospitalAppointmentModel> createAppointment(
+    HospitalAppointmentModel appointment,
+  ) async {
+    final scheduleId = appointment.scheduleId?.trim() ?? '';
+    if (scheduleId.isEmpty) {
+      throw Exception('Ca làm việc của bác sĩ không hợp lệ.');
+    }
+
+    final appointmentId = '${scheduleId}_${appointment.queueNumber}';
+    final appointmentRef = firestore
+        .collection('Appointments')
+        .doc(appointmentId);
+    final scheduleRef = firestore.collection('DoctorSchedules').doc(scheduleId);
+
+    await firestore.runTransaction((transaction) async {
+      final scheduleSnapshot = await transaction.get(scheduleRef);
+      if (!scheduleSnapshot.exists) {
+        throw Exception('Ca làm việc của bác sĩ không tồn tại.');
+      }
+
+      final scheduleData = scheduleSnapshot.data() ?? {};
+      final isActive = (scheduleData['isActive'] ?? false) as bool;
+      final availableSlots =
+          int.tryParse(scheduleData['availableSlots']?.toString() ?? '0') ?? 0;
+      final maxSlots =
+          int.tryParse(scheduleData['maxSlots']?.toString() ?? '0') ?? 0;
+
+      if (!isActive) {
+        throw Exception('Ca làm việc này đã ngừng nhận lịch.');
+      }
+      if (availableSlots <= 0) {
+        throw Exception('Ca làm việc này đã hết chỗ.');
+      }
+      if (maxSlots > 0 && appointment.queueNumber > maxSlots) {
+        throw Exception('Số thứ tự vượt quá số lượt khám của ca.');
+      }
+      if ((scheduleData['doctorId'] ?? '').toString() != appointment.doctorId ||
+          (scheduleData['departmentId'] ?? '').toString() !=
+              appointment.departmentId ||
+          (scheduleData['shiftId'] ?? '').toString() != appointment.shiftId) {
+        throw Exception('Thông tin lịch hẹn không khớp với ca làm việc.');
+      }
+
+      final appointmentSnapshot = await transaction.get(appointmentRef);
+      if (appointmentSnapshot.exists) {
+        throw Exception(
+          'Số thứ tự này vừa được người khác đặt. Vui lòng chọn số khác.',
+        );
+      }
+
+      transaction.update(scheduleRef, {
+        'availableSlots': availableSlots - 1,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      transaction.set(appointmentRef, {
+        ...appointment.toFirestore(),
+        'id': appointmentId,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    });
+
+    final docRef = appointmentRef;
     final snapshot = await docRef.get();
     return HospitalAppointmentModel.fromFirestore(snapshot);
   }
 
   @override
-  Future<List<HospitalAppointmentModel>> getPatientAppointments(String patientId) async {
+  Future<List<HospitalAppointmentModel>> getPatientAppointments(
+    String patientId,
+  ) async {
     final snapshot = await firestore
         .collection('Appointments')
         .where('patientId', isEqualTo: patientId)
         .orderBy('appointmentDate', descending: true)
         .get();
-    return snapshot.docs.map((doc) => HospitalAppointmentModel.fromFirestore(doc)).toList();
+    return snapshot.docs
+        .map((doc) => HospitalAppointmentModel.fromFirestore(doc))
+        .toList();
   }
 
   @override
-  Future<int> getNextQueueNumber(String doctorId, DateTime date, String shiftId) async {
+  Future<int> getNextQueueNumber(
+    String doctorId,
+    DateTime date,
+    String shiftId,
+  ) async {
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
@@ -92,18 +208,22 @@ class AppointmentRemoteDatasourceImpl implements AppointmentRemoteDatasource {
         .where('doctorId', isEqualTo: doctorId)
         .where('shiftId', isEqualTo: shiftId)
         .get();
-    
+
     final count = snapshot.docs.where((doc) {
       final appDate = (doc.data()['appointmentDate'] as Timestamp).toDate();
-      return appDate.isAfter(startOfDay.subtract(const Duration(seconds: 1))) && 
-             appDate.isBefore(endOfDay);
+      return appDate.isAfter(startOfDay.subtract(const Duration(seconds: 1))) &&
+          appDate.isBefore(endOfDay);
     }).length;
 
     return count + 1;
   }
 
   @override
-  Future<List<int>> getTakenQueueNumbers(String doctorId, DateTime date, String shiftId) async {
+  Future<List<int>> getTakenQueueNumbers(
+    String doctorId,
+    DateTime date,
+    String shiftId,
+  ) async {
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
@@ -113,22 +233,29 @@ class AppointmentRemoteDatasourceImpl implements AppointmentRemoteDatasource {
         .where('doctorId', isEqualTo: doctorId)
         .where('shiftId', isEqualTo: shiftId)
         .get();
-    
-    return snapshot.docs.where((doc) {
-      final appDate = (doc.data()['appointmentDate'] as Timestamp).toDate();
-      return appDate.isAfter(startOfDay.subtract(const Duration(seconds: 1))) && 
-             appDate.isBefore(endOfDay);
-    }).map((doc) => doc.data()['queueNumber'] as int).toList();
+
+    return snapshot.docs
+        .where((doc) {
+          final appDate = (doc.data()['appointmentDate'] as Timestamp).toDate();
+          return appDate.isAfter(
+                startOfDay.subtract(const Duration(seconds: 1)),
+              ) &&
+              appDate.isBefore(endOfDay);
+        })
+        .map((doc) => doc.data()['queueNumber'] as int)
+        .toList();
   }
 
   @override
-  Future<List<HospitalAppointmentModel>> getPatientActiveAppointments(String patientId) async {
+  Future<List<HospitalAppointmentModel>> getPatientActiveAppointments(
+    String patientId,
+  ) async {
     final snapshot = await firestore
         .collection('Appointments')
         .where('patientId', isEqualTo: patientId)
-        .where('status', whereIn: ['pending', 'confirmed'])
+        .where('status', whereIn: ['pending', 'confirmed', 'cancel_requested'])
         .get();
-    
+
     return snapshot.docs
         .map((doc) => HospitalAppointmentModel.fromFirestore(doc))
         .toList();

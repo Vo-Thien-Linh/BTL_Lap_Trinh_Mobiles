@@ -33,6 +33,14 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Local secrets - không commit API keys/tokens
+.env
+.env.*
+*.env
+lib/secrets.dart
+lib/**/secrets.dart
+local.properties
+
 # Symbolication related
 app.*.symbols
 

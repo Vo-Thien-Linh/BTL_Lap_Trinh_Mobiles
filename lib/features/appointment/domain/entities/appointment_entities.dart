@@ -6,8 +6,10 @@ class DepartmentEntity extends Equatable {
   final String description;
   final String location;
   final String phone;
+  final List<String> rooms;
   final int doctorCount;
   final bool isActive;
+  final String? imageUrl;
 
   const DepartmentEntity({
     required this.id,
@@ -15,12 +17,24 @@ class DepartmentEntity extends Equatable {
     required this.description,
     required this.location,
     required this.phone,
+    this.rooms = const [],
     this.doctorCount = 0,
     this.isActive = true,
+    this.imageUrl,
   });
 
   @override
-  List<Object?> get props => [id, name, description, location, phone, doctorCount, isActive];
+  List<Object?> get props => [
+    id,
+    name,
+    description,
+    location,
+    phone,
+    rooms,
+    doctorCount,
+    isActive,
+    imageUrl,
+  ];
 }
 
 class DoctorEntity extends Equatable {
@@ -79,6 +93,9 @@ class ScheduleEntity extends Equatable {
   final String departmentId;
   final String shiftId;
   final DateTime date;
+  final String? roomId;
+  final String? roomNumber;
+  final int maxSlots;
   final int availableSlots;
   final bool isActive;
 
@@ -88,12 +105,23 @@ class ScheduleEntity extends Equatable {
     required this.departmentId,
     required this.shiftId,
     required this.date,
+    this.roomId,
+    this.roomNumber,
+    required this.maxSlots,
     required this.availableSlots,
     required this.isActive,
   });
 
   @override
-  List<Object?> get props => [id, doctorId, date, shiftId];
+  List<Object?> get props => [
+    id,
+    doctorId,
+    date,
+    shiftId,
+    roomId,
+    roomNumber,
+    maxSlots,
+  ];
 }
 
 class HospitalAppointment extends Equatable {
@@ -107,6 +135,7 @@ class HospitalAppointment extends Equatable {
   final String departmentId;
   final String departmentName;
   final DateTime appointmentDate;
+  final String? scheduleId;
   final String shiftId;
   final String timeSlot;
   final int queueNumber;
@@ -136,6 +165,7 @@ class HospitalAppointment extends Equatable {
     required this.departmentId,
     required this.departmentName,
     required this.appointmentDate,
+    this.scheduleId,
     required this.shiftId,
     required this.timeSlot,
     required this.queueNumber,
@@ -156,5 +186,12 @@ class HospitalAppointment extends Equatable {
   });
 
   @override
-  List<Object?> get props => [id, patientId, doctorId, appointmentDate, queueNumber];
+  List<Object?> get props => [
+    id,
+    patientId,
+    doctorId,
+    appointmentDate,
+    scheduleId,
+    queueNumber,
+  ];
 }

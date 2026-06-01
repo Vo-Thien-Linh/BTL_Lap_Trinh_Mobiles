@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../appointment/data/models/appointment_models.dart';
 import '../../../appointment/domain/entities/appointment_entities.dart';
+import '../utils/department_visuals.dart';
 import '../widgets/doctor_profile_sheet.dart';
 import 'department_detail_page.dart';
 
@@ -45,10 +46,12 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
   Future<void> _loadFirebaseData() async {
     try {
       final firestore = FirebaseFirestore.instance;
-      
+
       // Load departments
       final deptsSnapshot = await firestore.collection('Departments').get();
-      final depts = deptsSnapshot.docs.map(DepartmentModel.fromFirestore).toList();
+      final depts = deptsSnapshot.docs
+          .map(DepartmentModel.fromFirestore)
+          .toList();
 
       // Load doctors
       final docsSnapshot = await firestore.collection('Doctors').get();
@@ -71,42 +74,6 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
     }
   }
 
-
-  _DepartmentVisual _getDepartmentVisual(String name) {
-    final cleanName = name.toLowerCase();
-    if (cleanName.contains('tim mạch')) {
-      return const _DepartmentVisual(
-        icon: Icons.favorite_rounded,
-        colors: [Color(0xFFEC5D5D), Color(0xFFB91C1C)],
-      );
-    } else if (cleanName.contains('xét nghiệm') || cleanName.contains('lab')) {
-      return const _DepartmentVisual(
-        icon: Icons.biotech_rounded,
-        colors: [Color(0xFF2DD4BF), Color(0xFF0F766E)],
-      );
-    } else if (cleanName.contains('nhi')) {
-      return const _DepartmentVisual(
-        icon: Icons.child_care_rounded,
-        colors: [Color(0xFF60A5FA), Color(0xFF2563EB)],
-      );
-    } else if (cleanName.contains('sản') || cleanName.contains('obgyn')) {
-      return const _DepartmentVisual(
-        icon: Icons.medical_services_rounded,
-        colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-      );
-    } else if (cleanName.contains('nhãn') || cleanName.contains('mắt')) {
-      return const _DepartmentVisual(
-        icon: Icons.visibility_rounded,
-        colors: [Color(0xFF818CF8), Color(0xFF4F46E5)],
-      );
-    } else {
-      return const _DepartmentVisual(
-        icon: Icons.healing_rounded,
-        colors: [Color(0xFF34D399), Color(0xFF059669)],
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -116,15 +83,26 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF202637), size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Color(0xFF202637),
+            size: 20,
+          ),
         ),
         title: TextField(
           controller: _searchController,
           focusNode: _focusNode,
-          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: Color(0xFF131826)),
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF131826),
+          ),
           decoration: const InputDecoration(
             hintText: 'Tìm bác sĩ, chuyên khoa...',
-            hintStyle: TextStyle(color: Color(0xFF8B92A6), fontWeight: FontWeight.w400),
+            hintStyle: TextStyle(
+              color: Color(0xFF8B92A6),
+              fontWeight: FontWeight.w400,
+            ),
             border: InputBorder.none,
           ),
         ),
@@ -140,7 +118,9 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
         children: [
           const Divider(height: 1, thickness: 1, color: Color(0xFFF1F4F9)),
           Expanded(
-            child: _searchQuery.isEmpty ? _buildSuggestions() : _buildSearchResults(),
+            child: _searchQuery.isEmpty
+                ? _buildSuggestions()
+                : _buildSearchResults(),
           ),
         ],
       ),
@@ -149,9 +129,7 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
 
   Widget _buildSuggestions() {
     if (_isLoadingData) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     final suggestedDoctors = _allDoctors.take(3).toList();
@@ -163,7 +141,12 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
         children: [
           const Text(
             'TÌM KIẾM PHỔ BIẾN',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8B92A6), letterSpacing: 1.0),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF8B92A6),
+              letterSpacing: 1.0,
+            ),
           ),
           const SizedBox(height: 16),
           Wrap(
@@ -181,7 +164,12 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
           if (suggestedDoctors.isNotEmpty) ...[
             const Text(
               'BÁC SĨ GỢI Ý',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8B92A6), letterSpacing: 1.0),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF8B92A6),
+                letterSpacing: 1.0,
+              ),
             ),
             const SizedBox(height: 16),
             ...suggestedDoctors.map((doctor) => _suggestionDoctor(doctor)),
@@ -201,12 +189,19 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
         borderRadius: BorderRadius.circular(12),
         side: const BorderSide(color: Color(0xFFE8EBF4)),
       ),
-      labelStyle: const TextStyle(color: Color(0xFF131826), fontWeight: FontWeight.w600, fontSize: 13),
+      labelStyle: const TextStyle(
+        color: Color(0xFF131826),
+        fontWeight: FontWeight.w600,
+        fontSize: 13,
+      ),
     );
   }
 
   Widget _suggestionDoctor(DoctorEntity doctor) {
-    final deptVisual = _getDepartmentVisual(doctor.departmentName);
+    final deptVisual = departmentVisualFromParts(
+      id: doctor.departmentId,
+      name: doctor.departmentName,
+    );
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
@@ -233,9 +228,15 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
                 CircleAvatar(
                   radius: 20,
                   backgroundColor: const Color(0xFFF0F4FF),
-                  backgroundImage: doctor.imageUrl != null ? NetworkImage(doctor.imageUrl!) : null,
+                  backgroundImage: doctor.imageUrl != null
+                      ? NetworkImage(doctor.imageUrl!)
+                      : null,
                   child: doctor.imageUrl == null
-                      ? const Icon(Icons.person_outline_rounded, color: Color(0xFF0E47B5), size: 20)
+                      ? const Icon(
+                          Icons.person_outline_rounded,
+                          color: Color(0xFF0E47B5),
+                          size: 20,
+                        )
                       : null,
                 ),
                 const SizedBox(width: 14),
@@ -243,8 +244,22 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(doctor.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: Color(0xFF131826))),
-                      Text(doctor.specialization.toUpperCase(), style: const TextStyle(color: Color(0xFF8B92A6), fontSize: 11, fontWeight: FontWeight.w800)),
+                      Text(
+                        doctor.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14.5,
+                          color: Color(0xFF131826),
+                        ),
+                      ),
+                      Text(
+                        doctor.specialization.toUpperCase(),
+                        style: const TextStyle(
+                          color: Color(0xFF8B92A6),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -265,14 +280,14 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
 
     final matchedDoctors = _allDoctors.where((doctor) {
       return doctor.name.toLowerCase().contains(query) ||
-             doctor.specialization.toLowerCase().contains(query) ||
-             doctor.departmentName.toLowerCase().contains(query);
+          doctor.specialization.toLowerCase().contains(query) ||
+          doctor.departmentName.toLowerCase().contains(query);
     }).toList();
 
     final matchedDepts = _allDepartments.where((dept) {
       return dept.name.toLowerCase().contains(query) ||
-             dept.location.toLowerCase().contains(query) ||
-             dept.description.toLowerCase().contains(query);
+          dept.location.toLowerCase().contains(query) ||
+          dept.description.toLowerCase().contains(query);
     }).toList();
 
     if (matchedDoctors.isEmpty && matchedDepts.isEmpty) {
@@ -284,7 +299,11 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
             const SizedBox(height: 16),
             const Text(
               'Không tìm thấy bác sĩ hoặc chuyên khoa nào',
-              style: TextStyle(color: Color(0xFF5C6477), fontSize: 16, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: Color(0xFF5C6477),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -297,11 +316,19 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
         if (matchedDoctors.isNotEmpty) ...[
           const Text(
             'BÁC SĨ TÌM THẤY',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8B92A6), letterSpacing: 1.0),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF8B92A6),
+              letterSpacing: 1.0,
+            ),
           ),
           const SizedBox(height: 12),
           ...matchedDoctors.map((doctor) {
-            final deptVisual = _getDepartmentVisual(doctor.departmentName);
+            final deptVisual = departmentVisualFromParts(
+              id: doctor.departmentId,
+              name: doctor.departmentName,
+            );
             return _resultItem(
               doctor.name,
               '${doctor.specialization} - ${doctor.departmentName}',
@@ -318,7 +345,12 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
                     phone: '',
                   ),
                 );
-                DoctorProfileSheet.show(context, doctor, dept, deptVisual.colors);
+                DoctorProfileSheet.show(
+                  context,
+                  doctor,
+                  dept,
+                  deptVisual.colors,
+                );
               },
             );
           }),
@@ -327,11 +359,16 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
         if (matchedDepts.isNotEmpty) ...[
           const Text(
             'CHUYÊN KHOA TÌM THẤY',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8B92A6), letterSpacing: 1.0),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF8B92A6),
+              letterSpacing: 1.0,
+            ),
           ),
           const SizedBox(height: 12),
           ...matchedDepts.map((dept) {
-            final deptVisual = _getDepartmentVisual(dept.name);
+            final deptVisual = departmentVisualFor(dept);
             return _resultItem(
               dept.name,
               dept.location.isNotEmpty ? dept.location : dept.description,
@@ -355,7 +392,13 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
     );
   }
 
-  Widget _resultItem(String title, String subtitle, IconData icon, {String? imageUrl, VoidCallback? onTap}) {
+  Widget _resultItem(
+    String title,
+    String subtitle,
+    IconData icon, {
+    String? imageUrl,
+    VoidCallback? onTap,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
@@ -391,13 +434,29 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF131826))),
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                          color: Color(0xFF131826),
+                        ),
+                      ),
                       const SizedBox(height: 2),
-                      Text(subtitle, style: const TextStyle(color: Color(0xFF5C6477), fontSize: 13)),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          color: Color(0xFF5C6477),
+                          fontSize: 13,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right_rounded, color: Color(0xFFD7DCE6)),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Color(0xFFD7DCE6),
+                ),
               ],
             ),
           ),
@@ -405,10 +464,4 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
       ),
     );
   }
-}
-
-class _DepartmentVisual {
-  final IconData icon;
-  final List<Color> colors;
-  const _DepartmentVisual({required this.icon, required this.colors});
 }

@@ -21,12 +21,13 @@ class HealthInsuranceReminder {
 
     final role = data['role']?.toString().toLowerCase().trim();
     final healthInsuranceNumber =
-    (data['healthInsuranceNumber'] ?? data['insuranceNumber'])
-        ?.toString()
-        .trim();
+        (data['healthInsuranceNumber'] ?? data['insuranceNumber'])
+            ?.toString()
+            .trim();
 
     if (role != 'patient') return;
-    if (healthInsuranceNumber != null && healthInsuranceNumber.isNotEmpty) return;
+    if (healthInsuranceNumber != null && healthInsuranceNumber.isNotEmpty)
+      return;
 
     _shownThisSession = true;
 
@@ -59,13 +60,13 @@ class HealthInsuranceReminder {
   }
 
   static Future<Map<String, dynamic>?> _getUserData(
-      FirebaseFirestore firestore,
-      String uid,
-      ) async {
+    FirebaseFirestore firestore,
+    String uid,
+  ) async {
     final lower = await firestore.collection('users').doc(uid).get();
     if (lower.exists) return lower.data();
 
-    final upper = await firestore.collection('Users').doc(uid).get();
+    final upper = await firestore.collection('users').doc(uid).get();
     if (upper.exists) return upper.data();
 
     return null;

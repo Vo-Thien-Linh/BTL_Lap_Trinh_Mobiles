@@ -28,10 +28,11 @@ class SelectDoctorAndDate extends BookingEvent {
 
 class SelectShift extends BookingEvent {
   final ShiftEntity shift;
-  const SelectShift(this.shift);
+  final ScheduleEntity? schedule;
+  const SelectShift(this.shift, {this.schedule});
 
   @override
-  List<Object?> get props => [shift];
+  List<Object?> get props => [shift, schedule];
 }
 
 class SelectQueueNumber extends BookingEvent {
@@ -78,10 +79,10 @@ class FinalizePaymentAndConfirm extends BookingEvent {
   final String appointmentId;
   final String patientId;
   final double amount;
-  
+
   const FinalizePaymentAndConfirm({
-    required this.appointmentId, 
-    required this.patientId, 
+    required this.appointmentId,
+    required this.patientId,
     required this.amount,
   });
 
