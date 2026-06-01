@@ -15,6 +15,16 @@ import 'features/notification/data/datasources/notification_template_seeder.dart
 import 'features/notification/domain/repositories/notification_repository.dart';
 import 'features/onboarding/domain/usecases/has_seen_onboarding_usecase.dart';
 
+/// Controls whether the app auto-seeds Firestore notification templates.
+///
+/// Default: false (do not write any sample/default templates).
+/// Enable explicitly for development via:
+/// `flutter run --dart-define=ENABLE_NOTIFICATION_TEMPLATE_SEEDER=true`
+const bool kEnableNotificationTemplateSeeder = bool.fromEnvironment(
+  'ENABLE_NOTIFICATION_TEMPLATE_SEEDER',
+  defaultValue: false,
+);
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -36,9 +46,13 @@ Future<void> main() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
-        final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
         if (userDoc.exists) {
-          final role = userDoc.data()?['role']?.toString().toLowerCase() ?? 'patient';
+          final role =
+              userDoc.data()?['role']?.toString().toLowerCase() ?? 'patient';
           if (role == 'doctor') {
             initialRoute = AppRoutes.doctorHome;
           } else {
@@ -100,22 +114,24 @@ Future<void> _initializeNotificationSystem() async {
     await sl
         .getIt<NotificationService>()
         .initialize(
-      onTap: (deepLink) {
-        debugPrint('Notification tapped: $deepLink');
-      },
-      onReceived: (deepLink) {
-        debugPrint('Notification received: $deepLink');
-      },
-    )
+          onTap: (deepLink) {
+            debugPrint('Notification tapped: $deepLink');
+          },
+          onReceived: (deepLink) {
+            debugPrint('Notification received: $deepLink');
+          },
+        )
         .timeout(const Duration(seconds: 10));
 
-    await sl
-        .getIt<NotificationRepository>()
-        .registerCurrentDevice()
-        .timeout(const Duration(seconds: 10));
+    await sl.getIt<NotificationRepository>().registerCurrentDevice().timeout(
+      const Duration(seconds: 10),
+    );
 
-    await NotificationTemplateSeeder.seedNotificationTemplates()
-        .timeout(const Duration(seconds: 10));
+    if (kEnableNotificationTemplateSeeder) {
+      await NotificationTemplateSeeder.seedNotificationTemplates().timeout(
+        const Duration(seconds: 10),
+      );
+    }
 
     debugPrint('✅ Notification system initialized');
   } catch (e, stackTrace) {

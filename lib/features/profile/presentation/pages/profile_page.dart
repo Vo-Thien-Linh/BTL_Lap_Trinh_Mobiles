@@ -51,7 +51,7 @@ class _ProfilePageState extends State<ProfilePage>
             .get();
         if (!doc.exists) {
           doc = await FirebaseFirestore.instance
-              .collection('Users')
+              .collection('users')
               .doc(user.uid)
               .get();
         }
@@ -67,7 +67,7 @@ class _ProfilePageState extends State<ProfilePage>
             .get();
         if (familySnapshot.docs.isEmpty) {
           familySnapshot = await FirebaseFirestore.instance
-              .collection('Users')
+              .collection('users')
               .doc(user.uid)
               .collection('FamilyMembers')
               .get();
@@ -85,6 +85,7 @@ class _ProfilePageState extends State<ProfilePage>
       });
     }
   }
+
   String _formatHealthInsuranceText(String? healthInsuranceNumber) {
     final value = healthInsuranceNumber?.trim();
 
@@ -362,7 +363,8 @@ class _ProfilePageState extends State<ProfilePage>
   Widget _buildHealthVitalsGrid(UserModel user) {
     final hasWeight = user.weight != null && user.weight! > 0;
     final hasHeight = user.height != null && user.height! > 0;
-    final hasBloodType = user.bloodType != null && user.bloodType!.trim().isNotEmpty;
+    final hasBloodType =
+        user.bloodType != null && user.bloodType!.trim().isNotEmpty;
 
     double bmi = 0.0;
     String bmiValueStr = '--';
@@ -448,12 +450,12 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildInteractiveVitalCard(
-      String label,
-      String value,
-      String status,
-      IconData icon,
-      Color color,
-      ) {
+    String label,
+    String value,
+    String status,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -750,12 +752,12 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildMenuItem(
-      IconData icon,
-      String title,
-      String value,
-      Color iconColor, {
-        VoidCallback? onTap,
-      }) {
+    IconData icon,
+    String title,
+    String value,
+    Color iconColor, {
+    VoidCallback? onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -846,7 +848,6 @@ class _ProfilePageState extends State<ProfilePage>
       ),
     );
   }
-
 
   Widget _buildSettingsButton() {
     return OutlinedButton.icon(
@@ -990,10 +991,10 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-      BuildContext context,
-      double shrinkOffset,
-      bool overlapsContent,
-      ) {
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return _child;
   }
 

@@ -43,7 +43,8 @@ class _SelectDoctorDateStepState extends State<SelectDoctorDateStep> {
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: () => context.read<BookingBloc>().add(StepBack()),
+                    onPressed: () =>
+                        context.read<BookingBloc>().add(StepBack()),
                     icon: const Icon(Icons.arrow_back_ios_rounded, size: 18),
                   ),
                   const Text(
@@ -71,7 +72,9 @@ class _SelectDoctorDateStepState extends State<SelectDoctorDateStep> {
             ),
             Expanded(
               child: state.doctors.isEmpty
-                  ? const Center(child: Text('Không có bác sĩ khả dụng cho khoa này.'))
+                  ? const Center(
+                      child: Text('Không có bác sĩ khả dụng cho khoa này.'),
+                    )
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       itemCount: state.doctors.length,
@@ -84,8 +87,8 @@ class _SelectDoctorDateStepState extends State<SelectDoctorDateStep> {
                           onTap: () {
                             setState(() => _selectedDoctor = doctor);
                             context.read<BookingBloc>().add(
-                                  SelectDoctorAndDate(doctor, _selectedDate),
-                                );
+                              SelectDoctorAndDate(doctor, _selectedDate),
+                            );
                           },
                         );
                       },
@@ -114,7 +117,7 @@ class _SelectDoctorDateStepState extends State<SelectDoctorDateStep> {
                     Colors.purple,
                     Colors.transparent,
                     Colors.transparent,
-                    Colors.purple
+                    Colors.purple,
                   ],
                   stops: [0.0, 0.05, 0.95, 1.0],
                 ).createShader(rect);
@@ -136,15 +139,21 @@ class _SelectDoctorDateStepState extends State<SelectDoctorDateStep> {
                       setState(() => _selectedDate = date);
                       if (_selectedDoctor != null) {
                         context.read<BookingBloc>().add(
-                              SelectDoctorAndDate(_selectedDoctor!, date),
-                            );
+                          SelectDoctorAndDate(_selectedDoctor!, date),
+                        );
                       }
                     },
                     child: Container(
                       width: 64,
-                      margin: const EdgeInsets.only(right: 12, top: 4, bottom: 4),
+                      margin: const EdgeInsets.only(
+                        right: 12,
+                        top: 4,
+                        bottom: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primaryDark : Colors.white,
+                        color: isSelected
+                            ? AppColors.primaryDark
+                            : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
@@ -162,7 +171,9 @@ class _SelectDoctorDateStepState extends State<SelectDoctorDateStep> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: isSelected ? Colors.white70 : AppColors.hint,
+                              color: isSelected
+                                  ? Colors.white70
+                                  : AppColors.hint,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -201,6 +212,10 @@ class _DoctorListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final doctorName = doctor.name.trim().isNotEmpty
+        ? doctor.name.trim()
+        : 'Bác sĩ chưa cập nhật tên';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -224,13 +239,18 @@ class _DoctorListItem extends StatelessWidget {
         leading: CircleAvatar(
           radius: 28,
           backgroundColor: AppColors.primary.withOpacity(0.2),
-          backgroundImage: doctor.imageUrl != null ? NetworkImage(doctor.imageUrl!) : null,
+          backgroundImage: doctor.imageUrl != null
+              ? NetworkImage(doctor.imageUrl!)
+              : null,
           child: doctor.imageUrl == null
-              ? const Icon(Icons.person_outline_rounded, color: AppColors.primaryDark)
+              ? const Icon(
+                  Icons.person_outline_rounded,
+                  color: AppColors.primaryDark,
+                )
               : null,
         ),
         title: Text(
-          doctor.name,
+          doctorName,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 15,
@@ -257,8 +277,15 @@ class _DoctorListItem extends StatelessWidget {
           ],
         ),
         trailing: isSelected
-            ? const Icon(Icons.check_circle_rounded, color: AppColors.primaryDark)
-            : const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.hint),
+            ? const Icon(
+                Icons.check_circle_rounded,
+                color: AppColors.primaryDark,
+              )
+            : const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: AppColors.hint,
+              ),
       ),
     );
   }

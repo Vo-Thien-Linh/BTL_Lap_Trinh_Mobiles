@@ -36,11 +36,9 @@ class HealthInsuranceInfo {
 }
 
 class HealthInsuranceService {
-  HealthInsuranceService({
-    FirebaseAuth? auth,
-    FirebaseFirestore? firestore,
-  })  : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+  HealthInsuranceService({FirebaseAuth? auth, FirebaseFirestore? firestore})
+    : _auth = auth ?? FirebaseAuth.instance,
+      _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
@@ -85,9 +83,15 @@ class HealthInsuranceService {
     return HealthInsuranceInfo(
       number: number,
       status: status,
-      updatedAt: _toDateTime(insuranceData?['updatedAt'] ?? userData?['healthInsuranceUpdatedAt']),
-      verifiedAt: _toDateTime(insuranceData?['verifiedAt'] ?? userData?['healthInsuranceVerifiedAt']),
-      rejectReason: _firstNonEmpty([insuranceData?['rejectReason']], fallback: ''),
+      updatedAt: _toDateTime(
+        insuranceData?['updatedAt'] ?? userData?['healthInsuranceUpdatedAt'],
+      ),
+      verifiedAt: _toDateTime(
+        insuranceData?['verifiedAt'] ?? userData?['healthInsuranceVerifiedAt'],
+      ),
+      rejectReason: _firstNonEmpty([
+        insuranceData?['rejectReason'],
+      ], fallback: ''),
     );
   }
 
@@ -130,23 +134,22 @@ class HealthInsuranceService {
 
     final batch = _firestore.batch();
 
-    // Project đang có cả users và Users, nên ghi cả hai để tránh lệch dữ liệu.
-    batch.set(_firestore.collection('users').doc(uid), userUpdate, SetOptions(merge: true));
-    batch.set(_firestore.collection('Users').doc(uid), userUpdate, SetOptions(merge: true));
+    batch.set(
+      _firestore.collection('users').doc(uid),
+      userUpdate,
+      SetOptions(merge: true),
+    );
     batch.set(insuranceRef, insuranceUpdate, SetOptions(merge: true));
 
     await batch.commit();
   }
 
-  Future<DocumentSnapshot<Map<String, dynamic>>?> _getUserSnapshot(String uid) async {
+  Future<DocumentSnapshot<Map<String, dynamic>>?> _getUserSnapshot(
+    String uid,
+  ) async {
     final lower = await _firestore.collection('users').doc(uid).get();
     if (lower.exists) {
       return lower;
-    }
-
-    final upper = await _firestore.collection('Users').doc(uid).get();
-    if (upper.exists) {
-      return upper;
     }
 
     return null;

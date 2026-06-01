@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../../app/routes/app_routes.dart';
 import '../../../../app/theme/app_colors.dart';
@@ -43,6 +43,11 @@ class _RegisterFormState extends State<RegisterForm> {
   bool _acceptedTerms = false;
   String _verificationMethod = 'email';
 
+  static const bool kEnablePhoneOtpVerification = bool.fromEnvironment(
+    'ENABLE_PHONE_OTP_VERIFICATION',
+    defaultValue: false,
+  );
+
   @override
   void initState() {
     super.initState();
@@ -68,168 +73,6 @@ class _RegisterFormState extends State<RegisterForm> {
     super.dispose();
   }
 
-  Future<void> _showOtpDialog() async {
-    final phone = _phoneController.text.trim();
-    if (phone.isEmpty) {
-      _showMessage('Vui lòng nhập số điện thoại trước.');
-      return;
-    }
-
-    final otpController = TextEditingController();
-    final otpFormKey = GlobalKey<FormState>();
-    bool isVerifying = false;
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              title: const Row(
-                children: [
-                  Icon(Icons.phone_android_rounded, color: Color(0xFF1565C0)),
-                  SizedBox(width: 8),
-                  Text(
-                    'Xác thực mã OTP',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                  ),
-                ],
-              ),
-              content: Form(
-                key: otpFormKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Hệ thống đã gửi một mã OTP gồm 6 chữ số đến số điện thoại $phone.',
-                      style: const TextStyle(fontSize: 14, color: Color(0xFF5B6780)),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Mã OTP thử nghiệm là: 123456',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF2E7D32),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: otpController,
-                      keyboardType: TextInputType.number,
-                      maxLength: 6,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 8,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: '000000',
-                        hintStyle: TextStyle(
-                          color: Colors.grey,
-                          letterSpacing: 8,
-                        ),
-                        counterText: '',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().length != 6) {
-                          return 'Vui lòng nhập đủ 6 chữ số.';
-                        }
-                        if (value.trim() != '123456') {
-                          return 'Mã OTP không chính xác.';
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isVerifying ? null : () => Navigator.pop(context),
-                  child: const Text('Hủy'),
-                ),
-                ElevatedButton(
-                  onPressed: isVerifying
-                      ? null
-                      : () async {
-                          if (!otpFormKey.currentState!.validate()) return;
-                          
-                          setDialogState(() {
-                            isVerifying = true;
-                          });
-
-                          try {
-                            await _registerUsecase.call(
-                              RegisterRequestEntity(
-                                fullName: _fullNameController.text.trim(),
-                                phone: _phoneController.text.trim(),
-                                cccd: _cccdController.text.trim(),
-                                email: _emailController.text.trim(),
-                                password: _passwordController.text,
-                              ),
-                            );
-
-                            final currentUser = FirebaseAuth.instance.currentUser;
-                            if (currentUser != null) {
-                              await FirebaseFirestore.instance
-                                  .collection('users')
-                                  .doc(currentUser.uid)
-                                  .update({'emailVerified': true});
-                              
-                              await FirebaseFirestore.instance
-                                  .collection('Users')
-                                  .doc(currentUser.uid)
-                                  .set({'emailVerified': true}, SetOptions(merge: true));
-                            }
-
-                            if (context.mounted) {
-                              Navigator.pop(context); // Close OTP Dialog
-                              _showMessage('Đăng ký và xác thực SĐT thành công!', isError: false);
-                              Navigator.pushReplacementNamed(context, AppRoutes.home);
-                            }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Lỗi đăng ký: $e'),
-                                  backgroundColor: const Color(0xFFB3261E),
-                                ),
-                              );
-                            }
-                          } finally {
-                            setDialogState(() {
-                              isVerifying = false;
-                            });
-                          }
-                        },
-                  child: isVerifying
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text('Xác nhận'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
   Future<void> _handleRegister() async {
     FocusScope.of(context).unfocus();
 
@@ -241,12 +84,19 @@ class _RegisterFormState extends State<RegisterForm> {
     }
 
     if (!_acceptedTerms) {
-      _showMessage('Bạn cần đồng ý với Điều khoản sử dụng và Chính sách bảo mật.');
+      _showMessage(
+        'Bạn cần đồng ý với Điều khoản sử dụng và Chính sách bảo mật.',
+      );
       return;
     }
 
-    if (_verificationMethod == 'phone') {
-      await _showOtpDialog();
+    if (_verificationMethod == 'phone' && !kEnablePhoneOtpVerification) {
+      _showMessage('OTP SĐT chưa được bật trong bản build hiện tại.');
+      return;
+    }
+
+    if (_verificationMethod == 'phone' && kIsWeb) {
+      _showMessage('OTP SĐT chưa hỗ trợ trên Web.');
       return;
     }
 
@@ -265,11 +115,20 @@ class _RegisterFormState extends State<RegisterForm> {
 
       if (!mounted) return;
 
-      Navigator.pushReplacementNamed(
-        context,
-        AppRoutes.registerSuccess,
-        arguments: _emailController.text.trim(),
-      );
+      final email = _emailController.text.trim();
+      if (_verificationMethod == 'phone') {
+        Navigator.pushReplacementNamed(
+          context,
+          AppRoutes.verifyPhone,
+          arguments: {'phone': _phoneController.text.trim(), 'email': email},
+        );
+      } else {
+        Navigator.pushReplacementNamed(
+          context,
+          AppRoutes.registerSuccess,
+          arguments: email,
+        );
+      }
     } on FirebaseAuthException catch (e) {
       _showMessage(_mapAuthError(e));
     } catch (_) {
@@ -455,7 +314,10 @@ class _RegisterFormState extends State<RegisterForm> {
                       });
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: _verificationMethod == 'email'
                             ? const Color(0xFFEAF1FF)
@@ -486,44 +348,51 @@ class _RegisterFormState extends State<RegisterForm> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Expanded(
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        _verificationMethod = 'phone';
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                      decoration: BoxDecoration(
-                        color: _verificationMethod == 'phone'
-                            ? const Color(0xFFEAF1FF)
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: _verificationMethod == 'phone'
-                              ? const Color(0xFF1565C0)
-                              : const Color(0xFFE2E8F0),
-                          width: 1.5,
+                if (kEnablePhoneOtpVerification)
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          _verificationMethod = 'phone';
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 8,
                         ),
-                      ),
-                      child: const Column(
-                        children: [
-                          Icon(Icons.phone_android_outlined, color: Color(0xFF1565C0)),
-                          SizedBox(height: 6),
-                          Text(
-                            'Xác thực OTP SĐT',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF13223E),
-                            ),
+                        decoration: BoxDecoration(
+                          color: _verificationMethod == 'phone'
+                              ? const Color(0xFFEAF1FF)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _verificationMethod == 'phone'
+                                ? const Color(0xFF1565C0)
+                                : const Color(0xFFE2E8F0),
+                            width: 1.5,
                           ),
-                        ],
+                        ),
+                        child: const Column(
+                          children: [
+                            Icon(
+                              Icons.phone_android_outlined,
+                              color: Color(0xFF1565C0),
+                            ),
+                            SizedBox(height: 6),
+                            Text(
+                              'Xác thực OTP SĐT',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF13223E),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -554,7 +423,10 @@ class _RegisterFormState extends State<RegisterForm> {
                           alignment: PlaceholderAlignment.middle,
                           child: InkWell(
                             onTap: () {
-                              Navigator.pushNamed(context, AppRoutes.termsOfUse);
+                              Navigator.pushNamed(
+                                context,
+                                AppRoutes.termsOfUse,
+                              );
                             },
                             child: const Text(
                               'Điều khoản sử dụng',
@@ -571,7 +443,10 @@ class _RegisterFormState extends State<RegisterForm> {
                           alignment: PlaceholderAlignment.middle,
                           child: InkWell(
                             onTap: () {
-                              Navigator.pushNamed(context, AppRoutes.privacyPolicy);
+                              Navigator.pushNamed(
+                                context,
+                                AppRoutes.privacyPolicy,
+                              );
                             },
                             child: const Text(
                               'Chính sách bảo mật',

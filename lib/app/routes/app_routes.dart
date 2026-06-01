@@ -13,6 +13,7 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/register_success_page.dart';
 import '../../features/auth/presentation/pages/verify_email_page.dart';
+import '../../features/auth/presentation/pages/verify_phone_page.dart';
 import '../../features/auth/presentation/pages/terms_of_use_page.dart';
 import '../../features/auth/presentation/pages/privacy_policy_page.dart';
 import '../../features/doctor/presentation/pages/doctor_appointment_detail_page.dart';
@@ -53,6 +54,7 @@ class AppRoutes {
   static const String registerSuccess = '/register-success';
   static const String forgotPassword = '/forgot-password';
   static const String verifyEmail = '/verify-email';
+  static const String verifyPhone = '/verify-phone';
   static const String termsOfUse = '/terms-of-use';
   static const String privacyPolicy = '/privacy-policy';
 
@@ -129,6 +131,19 @@ class AppRoutes {
       case verifyEmail:
         return _buildRoute(const VerifyEmailPage());
 
+      case verifyPhone:
+        final args = routeSettings.arguments;
+        if (args is Map<String, dynamic>) {
+          final phone = (args['phone'] ?? '').toString();
+          final email = (args['email'] ?? '').toString();
+          if (phone.isNotEmpty && email.isNotEmpty) {
+            return _buildRoute(VerifyPhonePage(phone: phone, email: email));
+          }
+        }
+        return _buildErrorRoute(
+          'Thiếu thông tin số điện thoại/email để xác thực.',
+        );
+
       case termsOfUse:
         return _buildRoute(const TermsOfUsePage());
 
@@ -136,8 +151,7 @@ class AppRoutes {
         return _buildRoute(const PrivacyPolicyPage());
 
       case home:
-        final tabIndex = routeSettings.arguments as int? ?? 0;
-        return _buildRoute(HomePage(initialTabIndex: tabIndex));
+        return _buildRoute(const HomePage());
 
       case doctorHome:
         return _buildRoute(const DoctorHomePage());
@@ -162,35 +176,40 @@ class AppRoutes {
         );
 
       case appointmentManagement:
-        return _buildRoute(const HomePage(initialTabIndex: 1));
+        return _buildRoute(const AppointmentManagementPage());
 
       case appointmentDetail:
         final args = routeSettings.arguments;
         String id = '';
-        if (args is String) id = args;
-        else if (args is Map<String, dynamic>) id = (args['appointmentId'] ?? args['id'] ?? '').toString();
-        else if (args != null && args is HospitalAppointment) id = args.id;
-        
+        if (args is String)
+          id = args;
+        else if (args is Map<String, dynamic>)
+          id = (args['appointmentId'] ?? args['id'] ?? '').toString();
+        else if (args != null && args is HospitalAppointment)
+          id = args.id;
+
         if (id.isNotEmpty) {
           return _buildRoute(PatientAppointmentDetailPage(appointmentId: id));
         }
         return _buildErrorRoute('Thiếu mã lịch hẹn.');
 
       case profile:
-        return _buildRoute(const HomePage(initialTabIndex: 3));
+        return _buildRoute(const ProfilePage());
 
       case editProfile:
         final args = routeSettings.arguments;
         if (args is UserModel) {
           return _buildRoute(EditProfilePage(user: args));
         }
-        return _buildErrorRoute('Thiếu thông tin người dùng để chỉnh sửa hồ sơ.');
+        return _buildErrorRoute(
+          'Thiếu thông tin người dùng để chỉnh sửa hồ sơ.',
+        );
 
       case settings:
         return _buildRoute(const SettingsPage());
 
       case notifications:
-        return _buildRoute(const HomePage(initialTabIndex: 2));
+        return _buildRoute(const NotificationsPage());
 
       case doctorNotifications:
         return _buildRoute(const DoctorNotificationsPage());
@@ -216,7 +235,8 @@ class AppRoutes {
       case doctorAppointmentDetail:
         final args = routeSettings.arguments;
         if (args is Map<String, dynamic>) {
-          final appointmentId = (args['appointmentId'] ?? args['id'] ?? '').toString();
+          final appointmentId = (args['appointmentId'] ?? args['id'] ?? '')
+              .toString();
           final initialData = args['initialData'] is Map<String, dynamic>
               ? args['initialData'] as Map<String, dynamic>
               : args;
@@ -315,27 +335,19 @@ class AppRoutes {
       reverseTransitionDuration: const Duration(milliseconds: 280),
       pageBuilder: (_, animation, __) => page,
       transitionsBuilder: (_, animation, __, child) {
-        final fade = CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOut,
-        );
+        final fade = CurvedAnimation(parent: animation, curve: Curves.easeOut);
 
-        final slide = Tween<Offset>(
-          begin: const Offset(0.08, 0),
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutCubic,
-          ),
-        );
+        final slide =
+            Tween<Offset>(
+              begin: const Offset(0.08, 0),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            );
 
         return FadeTransition(
           opacity: fade,
-          child: SlideTransition(
-            position: slide,
-            child: child,
-          ),
+          child: SlideTransition(position: slide, child: child),
         );
       },
     );

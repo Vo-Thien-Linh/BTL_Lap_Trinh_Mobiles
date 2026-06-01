@@ -40,11 +40,10 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
       if (user == null) throw StateError('Người dùng chưa đăng nhập');
 
       final uid = user.uid;
-      // Load user profile from either 'users' or 'Users'
-      var doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      if (!doc.exists) {
-        doc = await FirebaseFirestore.instance.collection('Users').doc(uid).get();
-      }
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
 
       if (doc.exists) {
         final data = doc.data();
@@ -53,7 +52,10 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      _showSnackBar('Không thể tải thông tin liên hệ khẩn cấp: $e', isError: true);
+      _showSnackBar(
+        'Không thể tải thông tin liên hệ khẩn cấp: $e',
+        isError: true,
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -79,21 +81,10 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
-      final batch = FirebaseFirestore.instance.batch();
-      
-      // Update both collections to keep data in sync
-      batch.set(
-        FirebaseFirestore.instance.collection('users').doc(uid),
-        updatedData,
-        SetOptions(merge: true),
-      );
-      batch.set(
-        FirebaseFirestore.instance.collection('Users').doc(uid),
-        updatedData,
-        SetOptions(merge: true),
-      );
-
-      await batch.commit();
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .set(updatedData, SetOptions(merge: true));
 
       if (!mounted) return;
       _showSnackBar('Cập nhật người liên hệ khẩn cấp thành công.');
@@ -146,7 +137,9 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
           : SafeArea(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
@@ -215,7 +208,10 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
                     SizedBox(height: 4),
                     Text(
                       'Thông tin liên lạc khẩn cấp khi gặp sự cố y khoa',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
@@ -238,7 +234,8 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: (hasPhone ? AppColors.success : AppColors.error).withOpacity(0.1),
+              color: (hasPhone ? AppColors.success : AppColors.error)
+                  .withOpacity(0.1),
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
@@ -304,7 +301,10 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                  borderSide: const BorderSide(
+                    color: AppColors.primary,
+                    width: 1.5,
+                  ),
                 ),
               ),
               validator: _validatePhone,
@@ -334,7 +334,10 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
                       )
                     : const Text(
                         'Lưu liên hệ khẩn cấp',
-                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
                       ),
               ),
             ),
@@ -355,12 +358,20 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline_rounded, color: AppColors.error, size: 20),
+          const Icon(
+            Icons.info_outline_rounded,
+            color: AppColors.error,
+            size: 20,
+          ),
           const SizedBox(width: 12),
           const Expanded(
             child: Text(
               'Lưu ý: Số điện thoại khẩn cấp sẽ hiển thị trên ID Y tế (Medical ID) của bạn để nhân viên cứu hộ có thể liên lạc ngay lập tức trong trường hợp khẩn cấp mà không cần mở khóa thiết bị.',
-              style: TextStyle(height: 1.45, fontSize: 13, color: AppColors.textSecondary),
+              style: TextStyle(
+                height: 1.45,
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
             ),
           ),
         ],

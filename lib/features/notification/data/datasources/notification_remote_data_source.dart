@@ -20,7 +20,9 @@ class NotificationRemoteDataSource {
   Future<void> saveNotifications(List<NotificationModel> notifications) async {
     final batch = firestore.batch();
     for (final notification in notifications) {
-      final ref = firestore.collection(notificationsCollection).doc(notification.id);
+      final ref = firestore
+          .collection(notificationsCollection)
+          .doc(notification.id);
       batch.set(ref, notification.toFirestore(), SetOptions(merge: true));
     }
     await batch.commit();
@@ -31,15 +33,14 @@ class NotificationRemoteDataSource {
     NotificationRecipientRole? role,
     int limit = 100,
   }) {
-    Query query = firestore.collection(notificationsCollection).where('userId', isEqualTo: userId);
+    Query query = firestore
+        .collection(notificationsCollection)
+        .where('userId', isEqualTo: userId);
     if (role != null) {
       query = query.where('recipientRole', isEqualTo: role.name);
     }
 
-    return query
-        .limit(limit)
-        .snapshots()
-        .map((snapshot) {
+    return query.limit(limit).snapshots().map((snapshot) {
       final now = DateTime.now();
       final items = snapshot.docs
           .map(NotificationModel.fromFirestore)
@@ -55,14 +56,14 @@ class NotificationRemoteDataSource {
     NotificationRecipientRole? role,
     int limit = 100,
   }) async {
-    Query query = firestore.collection(notificationsCollection).where('userId', isEqualTo: userId);
+    Query query = firestore
+        .collection(notificationsCollection)
+        .where('userId', isEqualTo: userId);
     if (role != null) {
       query = query.where('recipientRole', isEqualTo: role.name);
     }
 
-    final snapshot = await query
-        .limit(limit)
-        .get();
+    final snapshot = await query.limit(limit).get();
 
     final now = DateTime.now();
     final items = snapshot.docs
@@ -74,40 +75,50 @@ class NotificationRemoteDataSource {
   }
 
   Future<void> markAsRead(String notificationId) async {
-    await firestore.collection(notificationsCollection).doc(notificationId).update({
-      'isRead': true,
-      'readAt': FieldValue.serverTimestamp(),
-    });
+    await firestore
+        .collection(notificationsCollection)
+        .doc(notificationId)
+        .update({
+          'isRead': true,
+          'readAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
   }
 
   Future<void> markAllAsRead(
     String userId, {
     NotificationRecipientRole? role,
   }) async {
-    Query query = firestore.collection(notificationsCollection).where('userId', isEqualTo: userId);
+    Query query = firestore
+        .collection(notificationsCollection)
+        .where('userId', isEqualTo: userId);
     if (role != null) {
       query = query.where('recipientRole', isEqualTo: role.name);
     }
-    
-    final snapshot = await query
-        .where('isRead', isEqualTo: false)
-        .get();
+
+    final snapshot = await query.where('isRead', isEqualTo: false).get();
 
     final batch = firestore.batch();
     for (final doc in snapshot.docs) {
       batch.update(doc.reference, {
         'isRead': true,
         'readAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
       });
     }
     await batch.commit();
   }
 
   Future<void> deleteNotification(String notificationId) async {
-    await firestore.collection(notificationsCollection).doc(notificationId).delete();
+    await firestore
+        .collection(notificationsCollection)
+        .doc(notificationId)
+        .delete();
   }
 
-  Future<void> cancelAppointmentScheduledNotifications(String appointmentId) async {
+  Future<void> cancelAppointmentScheduledNotifications(
+    String appointmentId,
+  ) async {
     final snapshot = await firestore
         .collection(notificationsCollection)
         .where('data.appointmentId', isEqualTo: appointmentId)
@@ -139,21 +150,17 @@ class NotificationRemoteDataSource {
       'active': true,
     };
 
-    final batch = firestore.batch();
-    batch.set(
-      firestore.collection('Users').doc(userId).collection('fcmTokens').doc(token),
-      payload,
-      SetOptions(merge: true),
-    );
-    batch.set(
-      firestore.collection('users').doc(userId).collection('fcmTokens').doc(token),
-      payload,
-      SetOptions(merge: true),
-    );
-    await batch.commit();
+    await firestore
+        .collection('users')
+        .doc(userId)
+        .collection('fcmTokens')
+        .doc(token)
+        .set(payload, SetOptions(merge: true));
   }
 
-  Future<NotificationTemplateModel?> getPreparationTemplate(String departmentId) async {
+  Future<NotificationTemplateModel?> getPreparationTemplate(
+    String departmentId,
+  ) async {
     final exact = await firestore
         .collection(templatesCollection)
         .where('departmentId', isEqualTo: departmentId)
@@ -162,7 +169,8 @@ class NotificationRemoteDataSource {
         .limit(1)
         .get();
 
-    if (exact.docs.isNotEmpty) return NotificationTemplateModel.fromFirestore(exact.docs.first);
+    if (exact.docs.isNotEmpty)
+      return NotificationTemplateModel.fromFirestore(exact.docs.first);
 
     final fallback = await firestore
         .collection(templatesCollection)
@@ -171,11 +179,14 @@ class NotificationRemoteDataSource {
         .limit(1)
         .get();
 
-    if (fallback.docs.isNotEmpty) return NotificationTemplateModel.fromFirestore(fallback.docs.first);
+    if (fallback.docs.isNotEmpty)
+      return NotificationTemplateModel.fromFirestore(fallback.docs.first);
     return null;
   }
 
-  Future<List<NotificationTemplateModel>> getNotificationTemplatesByDepartment(String departmentId) async {
+  Future<List<NotificationTemplateModel>> getNotificationTemplatesByDepartment(
+    String departmentId,
+  ) async {
     final snapshot = await firestore
         .collection(templatesCollection)
         .where('departmentId', isEqualTo: departmentId)
@@ -184,14 +195,18 @@ class NotificationRemoteDataSource {
     return snapshot.docs.map(NotificationTemplateModel.fromFirestore).toList();
   }
 
-  Future<void> createNotificationTemplate(NotificationTemplateModel template) async {
+  Future<void> createNotificationTemplate(
+    NotificationTemplateModel template,
+  ) async {
     await firestore
         .collection(templatesCollection)
         .doc(template.id)
         .set(template.toFirestore(), SetOptions(merge: true));
   }
 
-  Future<void> updateNotificationTemplate(NotificationTemplateModel template) async {
+  Future<void> updateNotificationTemplate(
+    NotificationTemplateModel template,
+  ) async {
     await createNotificationTemplate(template);
   }
 }

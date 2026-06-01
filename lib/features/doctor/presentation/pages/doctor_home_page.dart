@@ -30,7 +30,9 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
       await getIt<LogoutUsecase>()();
     } catch (_) {}
     if (!mounted) return;
-    Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
   }
 
   @override
@@ -38,14 +40,16 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
     super.initState();
   }
 
-
   @override
   Widget build(BuildContext context) {
     final authUser = FirebaseAuth.instance.currentUser;
 
     return StreamBuilder<DocumentSnapshot>(
       stream: authUser != null
-          ? FirebaseFirestore.instance.collection('users').doc(authUser.uid).snapshots()
+          ? FirebaseFirestore.instance
+                .collection('users')
+                .doc(authUser.uid)
+                .snapshots()
           : const Stream.empty(),
       builder: (context, snapshot) {
         String name = 'Bác sĩ';
@@ -65,7 +69,11 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFF1A56CE), Color(0xFF3B82F6), Color(0xFF60A5FA)],
+                    colors: [
+                      Color(0xFF1A56CE),
+                      Color(0xFF3B82F6),
+                      Color(0xFF60A5FA),
+                    ],
                   ),
                 ),
               ),
@@ -112,7 +120,15 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
       elevation: 0,
       backgroundColor: Colors.transparent,
       stretch: true,
-      title: const Text('CLINICAL COMMAND CENTER', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 2.5, color: Colors.white70)),
+      title: const Text(
+        'CLINICAL COMMAND CENTER',
+        style: TextStyle(
+          fontWeight: FontWeight.w900,
+          fontSize: 11,
+          letterSpacing: 2.5,
+          color: Colors.white70,
+        ),
+      ),
       centerTitle: true,
       flexibleSpace: FlexibleSpaceBar(
         background: Padding(
@@ -128,11 +144,26 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _isOnline ? 'SẴN SÀNG KHÁM BỆNH,' : 'ĐANG NGOẠI TUYẾN,', 
-                          style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.0)
+                          _isOnline
+                              ? 'SẴN SÀNG KHÁM BỆNH,'
+                              : 'ĐANG NGOẠI TUYẾN,',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.0,
+                          ),
                         ),
                         const SizedBox(height: 4),
-                        Text(name, style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -148,7 +179,8 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
       actions: [
         _buildHeaderIcon(
           icon: Icons.notifications_none_rounded,
-          onTap: () => Navigator.pushNamed(context, AppRoutes.doctorNotifications),
+          onTap: () =>
+              Navigator.pushNamed(context, AppRoutes.doctorNotifications),
           badge: true,
         ),
         _buildHeaderIcon(
@@ -172,28 +204,48 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
         duration: const Duration(milliseconds: 400),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: _isOnline ? Colors.white.withOpacity(0.2) : Colors.white.withOpacity(0.1),
+          color: _isOnline
+              ? Colors.white.withOpacity(0.2)
+              : Colors.white.withOpacity(0.1),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
           boxShadow: [
-            if (_isOnline) BoxShadow(color: Colors.white.withOpacity(0.1), blurRadius: 10, spreadRadius: 1)
+            if (_isOnline)
+              BoxShadow(
+                color: Colors.white.withOpacity(0.1),
+                blurRadius: 10,
+                spreadRadius: 1,
+              ),
           ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 8, height: 8,
+              width: 8,
+              height: 8,
               decoration: BoxDecoration(
                 color: _isOnline ? const Color(0xFF4ADE80) : Colors.white54,
                 shape: BoxShape.circle,
-                boxShadow: [_isOnline ? const BoxShadow(color: Color(0xFF4ADE80), blurRadius: 6, spreadRadius: 2) : const BoxShadow()]
+                boxShadow: [
+                  _isOnline
+                      ? const BoxShadow(
+                          color: Color(0xFF4ADE80),
+                          blurRadius: 6,
+                          spreadRadius: 2,
+                        )
+                      : const BoxShadow(),
+                ],
               ),
             ),
             const SizedBox(width: 10),
             Text(
-              _isOnline ? 'ONLINE' : 'OFFLINE', 
-              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)
+              _isOnline ? 'ONLINE' : 'OFFLINE',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ],
         ),
@@ -201,19 +253,38 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
     );
   }
 
-  Widget _buildHeaderIcon({required IconData icon, VoidCallback? onTap, bool badge = false, Color color = Colors.white}) {
+  Widget _buildHeaderIcon({
+    required IconData icon,
+    VoidCallback? onTap,
+    bool badge = false,
+    Color color = Colors.white,
+  }) {
     return Container(
       margin: const EdgeInsets.only(left: 8),
-      decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        shape: BoxShape.circle,
+      ),
       child: IconButton(
         onPressed: onTap,
-        icon: badge ? Badge(backgroundColor: const Color(0xFFEF4444), smallSize: 8, child: Icon(icon, color: color, size: 20)) : Icon(icon, color: color, size: 20),
+        icon: badge
+            ? Badge(
+                backgroundColor: const Color(0xFFEF4444),
+                smallSize: 8,
+                child: Icon(icon, color: color, size: 20),
+              )
+            : Icon(icon, color: color, size: 20),
       ),
     );
   }
 
   void _handleRefresh(BuildContext context) async {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đang cập nhật dữ liệu...'), duration: Duration(seconds: 1)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Đang cập nhật dữ liệu...'),
+        duration: Duration(seconds: 1),
+      ),
+    );
     if (mounted) setState(() {});
   }
 
@@ -230,15 +301,26 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.25), 
-                borderRadius: BorderRadius.circular(18), 
-                border: Border.all(color: Colors.white.withOpacity(0.35))
+                color: Colors.white.withOpacity(0.25),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: Colors.white.withOpacity(0.35)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.search_rounded, color: Colors.white, size: 20),
+                  const Icon(
+                    Icons.search_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                   const SizedBox(width: 14),
-                  Text('Tìm kiếm nhanh bệnh án...', style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14, fontWeight: FontWeight.w500)),
+                  Text(
+                    'Tìm kiếm nhanh bệnh án...',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.8),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -252,12 +334,16 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
     if (authUid == null) return const SizedBox.shrink();
 
     return FutureBuilder<QuerySnapshot>(
-      future: FirebaseFirestore.instance.collection('Doctors').where('userId', isEqualTo: authUid).limit(1).get(),
+      future: FirebaseFirestore.instance
+          .collection('Doctors')
+          .where('userId', isEqualTo: authUid)
+          .limit(1)
+          .get(),
       builder: (context, doctorSnap) {
         if (doctorSnap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         // If not found by userId, maybe fallback to using authUid directly just in case it was created differently
         String actualDoctorId = authUid;
         if (doctorSnap.hasData && doctorSnap.data!.docs.isNotEmpty) {
@@ -274,59 +360,69 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
               return const Center(child: CircularProgressIndicator());
             }
 
-        final allDocs = snapshot.data!.docs;
-        int pendingCount = 0;
-        int callingCount = 0;
-        int completedCount = 0;
-        
-        Map<String, dynamic>? nextPatientData;
-        int minQueue = 9999;
-        
-        final now = DateTime.now();
-        final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+            final allDocs = snapshot.data!.docs;
+            int pendingCount = 0;
+            int callingCount = 0;
+            int completedCount = 0;
 
-        for (var doc in allDocs) {
-          final data = doc.data() as Map<String, dynamic>;
-          
-          String apptDateStr = '';
-          if (data['appointmentDate'] is Timestamp) {
-            final date = (data['appointmentDate'] as Timestamp).toDate();
-            apptDateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-          } else if (data['appointmentDate'] != null) {
-            apptDateStr = data['appointmentDate'].toString();
-          }
-          
-          if (!apptDateStr.startsWith(todayStr) && apptDateStr != todayStr) {
-            continue; // Bỏ qua nếu không phải lịch hôm nay
-          }
+            Map<String, dynamic>? nextPatientData;
+            int minQueue = 9999;
 
-          final status = data['status'] as String? ?? 'pending';
-          if (status == 'pending' || status == 'scheduled') {
-            pendingCount++;
-            final qNum = int.tryParse(data['queueNumber']?.toString() ?? '0') ?? 0;
-            if (qNum < minQueue || nextPatientData == null) {
-              minQueue = qNum;
-              nextPatientData = data;
-              nextPatientData['id'] = doc.id;
+            final now = DateTime.now();
+            final todayStr =
+                '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+            for (var doc in allDocs) {
+              final data = doc.data() as Map<String, dynamic>;
+
+              String apptDateStr = '';
+              if (data['appointmentDate'] is Timestamp) {
+                final date = (data['appointmentDate'] as Timestamp).toDate();
+                apptDateStr =
+                    '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+              } else if (data['appointmentDate'] != null) {
+                apptDateStr = data['appointmentDate'].toString();
+              }
+
+              if (!apptDateStr.startsWith(todayStr) &&
+                  apptDateStr != todayStr) {
+                continue; // Bỏ qua nếu không phải lịch hôm nay
+              }
+
+              final status = data['status'] as String? ?? 'pending';
+              if (status == 'pending' ||
+                  status == 'scheduled' ||
+                  status == 'confirmed') {
+                pendingCount++;
+                final qNum =
+                    int.tryParse(data['queueNumber']?.toString() ?? '0') ?? 0;
+                if (qNum < minQueue || nextPatientData == null) {
+                  minQueue = qNum;
+                  nextPatientData = data;
+                  nextPatientData['id'] = doc.id;
+                }
+              } else if (status == 'calling' || status == 'ongoing') {
+                callingCount++;
+              } else if (status == 'completed') {
+                completedCount++;
+              }
             }
-          } else if (status == 'calling' || status == 'ongoing') {
-            callingCount++;
-          } else if (status == 'completed') {
-            completedCount++;
-          }
-        }
 
-        return Column(
-          children: [
-            if (nextPatientData != null) ...[
-              _buildNextPatientSpotlightDynamic(nextPatientData),
-              const SizedBox(height: 24),
-            ],
-            _buildSmartMetricsRowDynamic(pendingCount, callingCount, completedCount),
-          ],
+            return Column(
+              children: [
+                if (nextPatientData != null) ...[
+                  _buildNextPatientSpotlightDynamic(nextPatientData),
+                  const SizedBox(height: 24),
+                ],
+                _buildSmartMetricsRowDynamic(
+                  pendingCount,
+                  callingCount,
+                  completedCount,
+                ),
+              ],
+            );
+          },
         );
-      },
-    );
       },
     );
   }
@@ -335,10 +431,12 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
     final patientName = data['patientName']?.toString() ?? 'Bệnh nhân';
     final gender = data['patientGender']?.toString() ?? '-';
     final symptoms = data['symptoms']?.toString() ?? 'Không rõ';
-    
+
     // Giả lập chỉ số sinh tồn hoặc lấy từ vitals nếu có
     final vitals = data['vitals'] as Map<String, dynamic>?;
-    final bp = vitals != null ? '${vitals['bloodPressureSystolic']}/${vitals['bloodPressureDiastolic']}' : '120/80';
+    final bp = vitals != null
+        ? '${vitals['bloodPressureSystolic']}/${vitals['bloodPressureDiastolic']}'
+        : '120/80';
     final hr = vitals != null ? '${vitals['heartRate']} bpm' : '72 bpm';
     final spo2 = vitals != null ? '${vitals['spO2']}%' : '98%';
 
@@ -348,16 +446,34 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(32),
-        boxShadow: [BoxShadow(color: const Color(0xFF0E47B5).withOpacity(0.08), blurRadius: 40, offset: const Offset(0, 16))],
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0E47B5).withOpacity(0.08),
+            blurRadius: 40,
+            offset: const Offset(0, 16),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Row(
             children: [
-              Icon(Icons.play_circle_filled_rounded, color: Color(0xFF0E47B5), size: 18),
+              Icon(
+                Icons.play_circle_filled_rounded,
+                color: Color(0xFF0E47B5),
+                size: 18,
+              ),
               SizedBox(width: 8),
-              Text('BỆNH NHÂN TIẾP THEO', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: Color(0xFF0E47B5), letterSpacing: 1.5)),
+              Text(
+                'BỆNH NHÂN TIẾP THEO',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 10,
+                  color: Color(0xFF0E47B5),
+                  letterSpacing: 1.5,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -366,22 +482,47 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
               CircleAvatar(
                 radius: 28,
                 backgroundColor: const Color(0xFFF0F5FF),
-                child: const Icon(Icons.person_rounded, color: Color(0xFF0E47B5)),
+                child: const Icon(
+                  Icons.person_rounded,
+                  color: Color(0xFF0E47B5),
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(patientName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF15233D))),
-                    Text('Giới tính: $gender • Khám: $symptoms', style: const TextStyle(fontSize: 12, color: Color(0xFF5A6680)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(
+                      patientName,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF15233D),
+                      ),
+                    ),
+                    Text(
+                      'Giới tính: $gender • Khám: $symptoms',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF5A6680),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ),
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: const Color(0xFFEF4444).withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
-                child: const Icon(Icons.flash_on_rounded, color: Color(0xFFEF4444), size: 20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEF4444).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.flash_on_rounded,
+                  color: Color(0xFFEF4444),
+                  size: 20,
+                ),
               ),
             ],
           ),
@@ -396,15 +537,23 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DoctorQueuePage())),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const DoctorQueuePage()),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0E47B5),
               foregroundColor: Colors.white,
               minimumSize: const Size(double.infinity, 56),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
               elevation: 0,
             ),
-            child: const Text('MỞ HÀNG ĐỢI & GỌI KHÁM', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+            child: const Text(
+              'MỞ HÀNG ĐỢI & GỌI KHÁM',
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+            ),
           ),
         ],
       ),
@@ -414,8 +563,22 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
   Widget _spotlightVital(String label, String val, Color color) {
     return Column(
       children: [
-        Text(val, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: color)),
-        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF8A95AC))),
+        Text(
+          val,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w900,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF8A95AC),
+          ),
+        ),
       ],
     );
   }
@@ -423,26 +586,66 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
   Widget _buildSmartMetricsRowDynamic(int pending, int calling, int completed) {
     return Row(
       children: [
-        _metricCard('CHỜ KHÁM', pending.toString(), const Color(0xFF0E47B5), Icons.hourglass_empty_rounded),
+        _metricCard(
+          'CHỜ KHÁM',
+          pending.toString(),
+          const Color(0xFF0E47B5),
+          Icons.hourglass_empty_rounded,
+        ),
         const SizedBox(width: 14),
-        _metricCard('ĐANG GỌI', calling.toString(), const Color(0xFFD97706), Icons.campaign_rounded, hasPulse: true),
+        _metricCard(
+          'ĐANG GỌI',
+          calling.toString(),
+          const Color(0xFFD97706),
+          Icons.campaign_rounded,
+          hasPulse: true,
+        ),
         const SizedBox(width: 14),
-        _metricCard('ĐÃ KHÁM', completed.toString(), const Color(0xFF10B981), Icons.task_alt_rounded),
+        _metricCard(
+          'ĐÃ KHÁM',
+          completed.toString(),
+          const Color(0xFF10B981),
+          Icons.task_alt_rounded,
+        ),
       ],
     );
   }
 
-  Widget _metricCard(String label, String val, Color color, IconData icon, {bool hasPulse = false}) {
+  Widget _metricCard(
+    String label,
+    String val,
+    Color color,
+    IconData icon, {
+    bool hasPulse = false,
+  }) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: color.withOpacity(0.08))),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: color.withOpacity(0.08)),
+        ),
         child: Column(
           children: [
             Icon(icon, size: 20, color: color),
             const SizedBox(height: 12),
-            Text(val, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: color)),
-            Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Color(0xFF8A95AC))),
+            Text(
+              val,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+                color: color,
+              ),
+            ),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF8A95AC),
+              ),
+            ),
           ],
         ),
       ),
@@ -450,37 +653,104 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
   }
 
   Widget _buildSectionHeader(String title) {
-    return Text(title, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF8A95AC), letterSpacing: 1.5));
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 10,
+        fontWeight: FontWeight.w900,
+        color: Color(0xFF8A95AC),
+        letterSpacing: 1.5,
+      ),
+    );
   }
 
   Widget _buildModernGrid() {
     final tools = [
-      {'icon': Icons.groups_rounded, 'label': 'Hàng đợi', 'color': const Color(0xFF0E47B5), 'target': const DoctorQueuePage()},
-      {'icon': Icons.medical_services_rounded, 'label': 'Khám bệnh', 'color': const Color(0xFF1A56CE), 'target': const DoctorExaminationListPage()},
-      {'icon': Icons.biotech_rounded, 'label': 'Xét nghiệm', 'color': const Color(0xFF10B981), 'target': const DoctorServiceQueuePage()},
-      {'icon': Icons.event_note_rounded, 'label': 'Lịch hẹn', 'color': const Color(0xFFD97706), 'target': const DoctorSchedulePage()},
-      {'icon': Icons.folder_shared_rounded, 'label': 'Hồ sơ BN', 'color': const Color(0xFF0EA5E9), 'target': const DoctorPatientRecordsPage()},
-      {'icon': Icons.medication_rounded, 'label': 'Kê đơn', 'color': const Color(0xFF8B5CF6), 'target': const DoctorPrescriptionBuilderPage()},
+      {
+        'icon': Icons.groups_rounded,
+        'label': 'Hàng đợi',
+        'color': const Color(0xFF0E47B5),
+        'target': const DoctorQueuePage(),
+      },
+      {
+        'icon': Icons.medical_services_rounded,
+        'label': 'Khám bệnh',
+        'color': const Color(0xFF1A56CE),
+        'target': const DoctorExaminationListPage(),
+      },
+      {
+        'icon': Icons.biotech_rounded,
+        'label': 'Xét nghiệm',
+        'color': const Color(0xFF10B981),
+        'target': const DoctorServiceQueuePage(),
+      },
+      {
+        'icon': Icons.event_note_rounded,
+        'label': 'Lịch hẹn',
+        'color': const Color(0xFFD97706),
+        'target': const DoctorSchedulePage(),
+      },
+      {
+        'icon': Icons.folder_shared_rounded,
+        'label': 'Hồ sơ BN',
+        'color': const Color(0xFF0EA5E9),
+        'target': const DoctorPatientRecordsPage(),
+      },
+      {
+        'icon': Icons.medication_rounded,
+        'label': 'Kê đơn',
+        'color': const Color(0xFF8B5CF6),
+        'target': const DoctorPrescriptionBuilderPage(),
+      },
     ];
 
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1,
+      ),
       itemCount: tools.length,
       itemBuilder: (context, i) {
         final t = tools[i];
         return InkWell(
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => t['target'] as Widget)),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => t['target'] as Widget),
+          ),
           borderRadius: BorderRadius.circular(20),
           child: Container(
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: (t['color'] as Color).withOpacity(0.12), shape: BoxShape.circle), child: Icon(t['icon'] as IconData, color: t['color'] as Color, size: 20)),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: (t['color'] as Color).withOpacity(0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    t['icon'] as IconData,
+                    color: t['color'] as Color,
+                    size: 20,
+                  ),
+                ),
                 const SizedBox(height: 8),
-                Text(t['label'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF15233D))),
+                Text(
+                  t['label'] as String,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                    color: Color(0xFF15233D),
+                  ),
+                ),
               ],
             ),
           ),
@@ -492,13 +762,23 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
   Widget _buildMiniTimeline() {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+      ),
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.calendar_today_rounded, size: 16, color: Color(0xFF8A95AC)),
+          Icon(
+            Icons.calendar_today_rounded,
+            size: 16,
+            color: Color(0xFF8A95AC),
+          ),
           SizedBox(width: 12),
-          Text('Hiện chưa có lịch khám bổ sung trong ngày', style: TextStyle(color: Color(0xFF8A95AC), fontSize: 12)),
+          Text(
+            'Hiện chưa có lịch khám bổ sung trong ngày',
+            style: TextStyle(color: Color(0xFF8A95AC), fontSize: 12),
+          ),
         ],
       ),
     );
@@ -507,7 +787,10 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
   Widget _buildPerformanceSnapshot() {
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(28)),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(28),
+      ),
       child: Column(
         children: [
           Row(
@@ -516,15 +799,34 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
               const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('ĐÁNH GIÁ CHUNG', style: TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.w900)),
-                  Text('9.8/10 Hài lòng', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)),
+                  Text(
+                    'ĐÁNH GIÁ CHUNG',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  Text(
+                    '9.8/10 Hài lòng',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                 ],
               ),
               Icon(Icons.auto_awesome_rounded, color: Colors.yellow[700]),
             ],
           ),
           const SizedBox(height: 20),
-          LinearProgressIndicator(value: 0.98, backgroundColor: Colors.white12, valueColor: AlwaysStoppedAnimation<Color>(Colors.green[400]!), minHeight: 4),
+          LinearProgressIndicator(
+            value: 0.98,
+            backgroundColor: Colors.white12,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.green[400]!),
+            minHeight: 4,
+          ),
         ],
       ),
     );

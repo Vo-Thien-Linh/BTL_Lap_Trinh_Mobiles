@@ -16,26 +16,42 @@ class PatientAppointmentDetailPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F6FC),
       appBar: AppBar(
-        title: const Text('Chi tiết lịch hẹn', style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF15233D))),
+        title: const Text(
+          'Chi tiết lịch hẹn',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: Color(0xFF15233D),
+          ),
+        ),
         centerTitle: true,
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF15233D),
         elevation: 0,
       ),
       body: FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance.collection('Appointments').doc(appointmentId).get(),
+        future: FirebaseFirestore.instance
+            .collection('Appointments')
+            .doc(appointmentId)
+            .get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+          if (snapshot.hasError ||
+              !snapshot.hasData ||
+              !snapshot.data!.exists) {
             return const Center(
-              child: Text('Không tìm thấy thông tin lịch hẹn', style: TextStyle(color: AppColors.textSecondary)),
+              child: Text(
+                'Không tìm thấy thông tin lịch hẹn',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
             );
           }
 
-          final appointment = HospitalAppointmentModel.fromFirestore(snapshot.data!);
+          final appointment = HospitalAppointmentModel.fromFirestore(
+            snapshot.data!,
+          );
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
@@ -50,7 +66,10 @@ class PatientAppointmentDetailPage extends StatelessWidget {
                 const SizedBox(height: 16),
                 _buildPatientInfoCard(appointment),
                 const SizedBox(height: 24),
-                if (appointment.status == 'scheduled' || appointment.status == 'pending')
+                if (appointment.status == 'scheduled' ||
+                    appointment.status == 'pending' ||
+                    appointment.status == 'confirmed' ||
+                    appointment.status == 'cancel_requested')
                   ElevatedButton(
                     onPressed: () {
                       Navigator.pop(context);
@@ -62,23 +81,43 @@ class PatientAppointmentDetailPage extends StatelessWidget {
                       elevation: 0,
                       side: BorderSide(color: AppColors.primary),
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: const Text('QUẢN LÝ LỊCH HẸN', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                    child: const Text(
+                      'QUẢN LÝ LỊCH HẸN',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
                 if (appointment.status == 'completed')
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.pushNamed(context, AppRoutes.examinationDetail, arguments: appointment);
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.examinationDetail,
+                        arguments: appointment,
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: const Text('XEM KẾT QUẢ KHÁM', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                    child: const Text(
+                      'XEM KẾT QUẢ KHÁM',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -107,12 +146,33 @@ class PatientAppointmentDetailPage extends StatelessWidget {
         text = 'Đã hủy';
         icon = Icons.cancel_rounded;
         break;
+      case 'no_show':
+      case 'absent':
+        bgColor = const Color(0xFFFFF7ED);
+        textColor = const Color(0xFFC2410C);
+        text = 'Vắng mặt';
+        icon = Icons.person_off_rounded;
+        break;
       case 'in_progress':
       case 'arrived':
+      case 'calling':
+      case 'ongoing':
         bgColor = const Color(0xFFE1EFFE);
         textColor = const Color(0xFF1A56DB);
         text = 'Đang khám';
         icon = Icons.sync_rounded;
+        break;
+      case 'confirmed':
+        bgColor = const Color(0xFFE0F2FE);
+        textColor = const Color(0xFF0369A1);
+        text = 'Đã đặt lịch';
+        icon = Icons.event_available_rounded;
+        break;
+      case 'cancel_requested':
+        bgColor = const Color(0xFFFFF7ED);
+        textColor = const Color(0xFFC2410C);
+        text = 'Chờ duyệt hủy';
+        icon = Icons.hourglass_top_rounded;
         break;
       case 'pending':
       case 'scheduled':
@@ -136,7 +196,14 @@ class PatientAppointmentDetailPage extends StatelessWidget {
         children: [
           Icon(icon, color: textColor, size: 20),
           const SizedBox(width: 8),
-          Text(text, style: TextStyle(color: textColor, fontWeight: FontWeight.w800, fontSize: 16)),
+          Text(
+            text,
+            style: TextStyle(
+              color: textColor,
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
         ],
       ),
     );
@@ -149,7 +216,11 @@ class PatientAppointmentDetailPage extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Row(
@@ -161,7 +232,11 @@ class PatientAppointmentDetailPage extends StatelessWidget {
               color: AppColors.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(Icons.person_rounded, color: AppColors.primary, size: 32),
+            child: const Icon(
+              Icons.person_rounded,
+              color: AppColors.primary,
+              size: 32,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -170,12 +245,20 @@ class PatientAppointmentDetailPage extends StatelessWidget {
               children: [
                 Text(
                   appointment.doctorName,
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF15233D)),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                    color: Color(0xFF15233D),
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   appointment.departmentName,
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.primary),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: AppColors.primary,
+                  ),
                 ),
               ],
             ),
@@ -192,27 +275,53 @@ class PatientAppointmentDetailPage extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
         children: [
-          _buildInfoRow(Icons.calendar_month_rounded, 'Ngày khám', DateFormat('dd/MM/yyyy').format(appointment.appointmentDate)),
+          _buildInfoRow(
+            Icons.calendar_month_rounded,
+            'Ngày khám',
+            DateFormat('dd/MM/yyyy').format(appointment.appointmentDate),
+          ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Divider(height: 1, color: Color(0xFFF3F4F6)),
           ),
-          _buildInfoRow(Icons.access_time_rounded, 'Giờ khám', appointment.timeSlot.isNotEmpty ? appointment.timeSlot : 'Chưa cập nhật'),
+          _buildInfoRow(
+            Icons.access_time_rounded,
+            'Giờ khám',
+            appointment.timeSlot.isNotEmpty
+                ? appointment.timeSlot
+                : 'Chưa cập nhật',
+          ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Divider(height: 1, color: Color(0xFFF3F4F6)),
           ),
-          _buildInfoRow(Icons.pin_drop_rounded, 'Phòng khám', appointment.roomNumber.isNotEmpty ? appointment.roomNumber : 'Chờ phân phòng'),
+          _buildInfoRow(
+            Icons.pin_drop_rounded,
+            'Phòng khám',
+            appointment.roomNumber.isNotEmpty
+                ? appointment.roomNumber
+                : 'Chờ phân phòng',
+          ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Divider(height: 1, color: Color(0xFFF3F4F6)),
           ),
-          _buildInfoRow(Icons.format_list_numbered_rounded, 'Số thứ tự', appointment.queueNumber > 0 ? appointment.queueNumber.toString() : '---'),
+          _buildInfoRow(
+            Icons.format_list_numbered_rounded,
+            'Số thứ tự',
+            appointment.queueNumber > 0
+                ? appointment.queueNumber.toString()
+                : '---',
+          ),
         ],
       ),
     );
@@ -225,25 +334,49 @@ class PatientAppointmentDetailPage extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('THÔNG TIN BỆNH NHÂN', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF8A95AC), letterSpacing: 0.5)),
+          const Text(
+            'THÔNG TIN BỆNH NHÂN',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 13,
+              color: Color(0xFF8A95AC),
+              letterSpacing: 0.5,
+            ),
+          ),
           const SizedBox(height: 16),
-          _buildInfoRow(Icons.person_outline_rounded, 'Bệnh nhân', appointment.patientName),
+          _buildInfoRow(
+            Icons.person_outline_rounded,
+            'Bệnh nhân',
+            appointment.patientName,
+          ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Divider(height: 1, color: Color(0xFFF3F4F6)),
           ),
-          _buildInfoRow(Icons.notes_rounded, 'Triệu chứng', appointment.symptoms.isNotEmpty ? appointment.symptoms : 'Không có'),
+          _buildInfoRow(
+            Icons.notes_rounded,
+            'Triệu chứng',
+            appointment.symptoms.isNotEmpty ? appointment.symptoms : 'Không có',
+          ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Divider(height: 1, color: Color(0xFFF3F4F6)),
           ),
-          _buildInfoRow(Icons.payments_outlined, 'Chi phí', '${NumberFormat('#,###').format(appointment.consultationFee)} VNĐ'),
+          _buildInfoRow(
+            Icons.payments_outlined,
+            'Chi phí',
+            '${NumberFormat('#,###').format(appointment.consultationFee)} VNĐ',
+          ),
         ],
       ),
     );
@@ -261,13 +394,24 @@ class PatientAppointmentDetailPage extends StatelessWidget {
           child: Icon(icon, size: 18, color: const Color(0xFF5A6680)),
         ),
         const SizedBox(width: 12),
-        Text(label, style: const TextStyle(color: Color(0xFF5A6680), fontSize: 14, fontWeight: FontWeight.w600)),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF5A6680),
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         const SizedBox(width: 12),
         Expanded(
           child: Text(
             value,
             textAlign: TextAlign.right,
-            style: const TextStyle(color: Color(0xFF15233D), fontSize: 15, fontWeight: FontWeight.w800),
+            style: const TextStyle(
+              color: Color(0xFF15233D),
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
       ],

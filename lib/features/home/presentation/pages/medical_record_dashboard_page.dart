@@ -10,13 +10,15 @@ class MedicalRecordDashboardPage extends StatefulWidget {
   const MedicalRecordDashboardPage({super.key});
 
   @override
-  State<MedicalRecordDashboardPage> createState() => _MedicalRecordDashboardPageState();
+  State<MedicalRecordDashboardPage> createState() =>
+      _MedicalRecordDashboardPageState();
 }
 
-class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage> {
+class _MedicalRecordDashboardPageState
+    extends State<MedicalRecordDashboardPage> {
   Stream<DocumentSnapshot> _getUserStream(String uid) async* {
     final lowerRef = FirebaseFirestore.instance.collection('users').doc(uid);
-    final upperRef = FirebaseFirestore.instance.collection('Users').doc(uid);
+    final upperRef = FirebaseFirestore.instance.collection('users').doc(uid);
     final lowerSnap = await lowerRef.get();
     if (lowerSnap.exists) {
       yield* lowerRef.snapshots();
@@ -57,12 +59,18 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
               if (apptSnapshot.hasData && apptSnapshot.data!.docs.isNotEmpty) {
                 final docs = apptSnapshot.data!.docs.toList();
                 docs.sort((a, b) {
-                  final da = (a.data() as Map<String, dynamic>)['appointmentDate'] as Timestamp;
-                  final db = (b.data() as Map<String, dynamic>)['appointmentDate'] as Timestamp;
+                  final da =
+                      (a.data() as Map<String, dynamic>)['appointmentDate']
+                          as Timestamp;
+                  final db =
+                      (b.data() as Map<String, dynamic>)['appointmentDate']
+                          as Timestamp;
                   return db.compareTo(da);
                 });
-                final latestApptData = docs.first.data() as Map<String, dynamic>;
-                vitals = latestApptData['vitals'] as Map<String, dynamic>? ?? {};
+                final latestApptData =
+                    docs.first.data() as Map<String, dynamic>;
+                vitals =
+                    latestApptData['vitals'] as Map<String, dynamic>? ?? {};
               }
 
               return CustomScrollView(
@@ -128,7 +136,8 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
           tooltip: 'Làm mới',
         ),
         IconButton(
-          onPressed: () => Navigator.pushNamed(context, AppRoutes.medicalEmergencyId),
+          onPressed: () =>
+              Navigator.pushNamed(context, AppRoutes.medicalEmergencyId),
           icon: const Icon(Icons.qr_code_scanner_rounded),
           tooltip: 'Mã QR Y tế',
         ),
@@ -141,7 +150,8 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [AppColors.primary, Color(0xFF3B82F6)],
-                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
               ),
             ),
@@ -149,12 +159,14 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
             Opacity(
               opacity: 0.1,
               child: Container(
-                 decoration: const BoxDecoration(
-                   image: DecorationImage(
-                     image: NetworkImage('https://www.transparenttextures.com/patterns/white-diamond.png'),
-                     repeat: ImageRepeat.repeat,
-                   ),
-                 ),
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    image: NetworkImage(
+                      'https://www.transparenttextures.com/patterns/white-diamond.png',
+                    ),
+                    repeat: ImageRepeat.repeat,
+                  ),
+                ),
               ),
             ),
             SafeArea(
@@ -167,9 +179,15 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
                       height: 80,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withOpacity(0.4), width: 4),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.4),
+                          width: 4,
+                        ),
                         image: DecorationImage(
-                          image: NetworkImage(user.avatarUrl ?? 'https://ui-avatars.com/api/?name=${user.fullName}&background=random'),
+                          image: NetworkImage(
+                            user.avatarUrl ??
+                                'https://ui-avatars.com/api/?name=${user.fullName}&background=random',
+                          ),
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -181,23 +199,45 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            user.fullName == '' ? 'Người Dùng' : user.fullName.toUpperCase(),
-                            style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                            user.fullName == ''
+                                ? 'Người Dùng'
+                                : user.fullName.toUpperCase(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              const Icon(Icons.verified_user_rounded, color: Colors.white70, size: 14),
+                              const Icon(
+                                Icons.verified_user_rounded,
+                                color: Colors.white70,
+                                size: 14,
+                              ),
                               const SizedBox(width: 6),
-                              const Text('BỆNH NHÂN ĐÃ XÁC THỰC', style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w800)),
+                              const Text(
+                                'BỆNH NHÂN ĐÃ XÁC THỰC',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 12),
                           Row(
                             children: [
-                              _buildBioTag('NHÓM MÁU: ${user.bloodType ?? "--"}'),
+                              _buildBioTag(
+                                'NHÓM MÁU: ${user.bloodType ?? "--"}',
+                              ),
                               const SizedBox(width: 8),
-                              _buildBioTag('TUỔI: ${_calculateAge(user.dateOfBirth)}'),
+                              _buildBioTag(
+                                'TUỔI: ${_calculateAge(user.dateOfBirth)}',
+                              ),
                             ],
                           ),
                         ],
@@ -216,8 +256,18 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
   Widget _buildBioTag(String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
-      child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
     );
   }
 
@@ -230,30 +280,59 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFFEE2E2)),
         boxShadow: [
-          BoxShadow(color: AppColors.error.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: AppColors.error.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(color: AppColors.error, shape: BoxShape.circle),
-            child: const Icon(Icons.emergency_rounded, color: Colors.white, size: 24),
+            decoration: const BoxDecoration(
+              color: AppColors.error,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.emergency_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('THÔNG TIN KHẨN CẤP', style: TextStyle(color: Color(0xFF991B1B), fontWeight: FontWeight.w900, fontSize: 14)),
+                const Text(
+                  'THÔNG TIN KHẨN CẤP',
+                  style: TextStyle(
+                    color: Color(0xFF991B1B),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text('Dị ứng: ${user.allergies?.join(", ") ?? "Không có"}', style: const TextStyle(color: Color(0xFFB91C1C), fontSize: 12, fontWeight: FontWeight.w600)),
+                Text(
+                  'Dị ứng: ${user.allergies?.join(", ") ?? "Không có"}',
+                  style: const TextStyle(
+                    color: Color(0xFFB91C1C),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ),
           ),
           IconButton(
-            onPressed: () => Navigator.pushNamed(context, AppRoutes.medicalEmergencyId),
-            icon: const Icon(Icons.chevron_right_rounded, color: Color(0xFF991B1B)),
+            onPressed: () =>
+                Navigator.pushNamed(context, AppRoutes.medicalEmergencyId),
+            icon: const Icon(
+              Icons.chevron_right_rounded,
+              color: Color(0xFF991B1B),
+            ),
           ),
         ],
       ),
@@ -264,10 +343,19 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
     final heartRate = vitals['heartRate'] ?? vitals['pulse'];
     final bloodPressure = vitals['bloodPressure'] ?? vitals['pressure'];
     final spO2 = vitals['spO2'];
-    
-    final hasHeartRate = heartRate != null && heartRate.toString().trim().isNotEmpty && heartRate.toString() != '--';
-    final hasBloodPressure = bloodPressure != null && bloodPressure.toString().trim().isNotEmpty && bloodPressure.toString() != '--/--';
-    final hasSpO2 = spO2 != null && spO2.toString().trim().isNotEmpty && spO2.toString() != '--';
+
+    final hasHeartRate =
+        heartRate != null &&
+        heartRate.toString().trim().isNotEmpty &&
+        heartRate.toString() != '--';
+    final hasBloodPressure =
+        bloodPressure != null &&
+        bloodPressure.toString().trim().isNotEmpty &&
+        bloodPressure.toString() != '--/--';
+    final hasSpO2 =
+        spO2 != null &&
+        spO2.toString().trim().isNotEmpty &&
+        spO2.toString() != '--';
     final hasWeight = user.weight != null && user.weight! > 0;
 
     return GridView.count(
@@ -304,7 +392,9 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
         ),
         _buildVitalCard(
           'Cân nặng',
-          hasWeight ? '${user.weight!.toInt() == user.weight ? user.weight!.toInt() : user.weight}' : '--',
+          hasWeight
+              ? '${user.weight!.toInt() == user.weight ? user.weight!.toInt() : user.weight}'
+              : '--',
           'kg',
           Icons.monitor_weight_rounded,
           Colors.orange,
@@ -314,13 +404,26 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
     );
   }
 
-  Widget _buildVitalCard(String label, String value, String unit, IconData icon, Color color, String trend) {
+  Widget _buildVitalCard(
+    String label,
+    String value,
+    String unit,
+    IconData icon,
+    Color color,
+    String trend,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.06), blurRadius: 15, offset: const Offset(0, 8))],
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.06),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,14 +436,35 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
             ],
           ),
           const Spacer(),
-          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w700)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(value, style: const TextStyle(color: AppColors.textBody, fontSize: 18, fontWeight: FontWeight.w900)),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: AppColors.textBody,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
               const SizedBox(width: 4),
-              Text(unit, style: const TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w700)),
+              Text(
+                unit,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ],
           ),
         ],
@@ -349,9 +473,23 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
   }
 
   Widget _buildTrendIndicator(String trend) {
-    if (trend == 'up') return const Icon(Icons.trending_up_rounded, color: Colors.redAccent, size: 16);
-    if (trend == 'down') return const Icon(Icons.trending_down_rounded, color: AppColors.success, size: 16);
-    return const Icon(Icons.trending_flat_rounded, color: AppColors.textHint, size: 16);
+    if (trend == 'up')
+      return const Icon(
+        Icons.trending_up_rounded,
+        color: Colors.redAccent,
+        size: 16,
+      );
+    if (trend == 'down')
+      return const Icon(
+        Icons.trending_down_rounded,
+        color: AppColors.success,
+        size: 16,
+      );
+    return const Icon(
+      Icons.trending_flat_rounded,
+      color: AppColors.textHint,
+      size: 16,
+    );
   }
 
   Widget _buildClinicalSection(UserModel user) {
@@ -362,17 +500,36 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
-          BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildClinicalRow('Bệnh mãn tính', user.chronicConditions?.join(", ") ?? "Không có dữ liệu"),
-          const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(color: AppColors.border)),
-          _buildClinicalRow('Bảo hiểm y tế', user.healthInsuranceNumber ?? "--- --- --- ---"),
-          const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(color: AppColors.border)),
-          _buildClinicalRow('Địa chỉ thường trú', user.address ?? "Chưa cập nhật"),
+          _buildClinicalRow(
+            'Bệnh mãn tính',
+            user.chronicConditions?.join(", ") ?? "Không có dữ liệu",
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Divider(color: AppColors.border),
+          ),
+          _buildClinicalRow(
+            'Bảo hiểm y tế',
+            user.healthInsuranceNumber ?? "--- --- --- ---",
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Divider(color: AppColors.border),
+          ),
+          _buildClinicalRow(
+            'Địa chỉ thường trú',
+            user.address ?? "Chưa cập nhật",
+          ),
         ],
       ),
     );
@@ -382,9 +539,24 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label.toUpperCase(), style: const TextStyle(color: AppColors.textHint, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
+        Text(
+          label.toUpperCase(),
+          style: const TextStyle(
+            color: AppColors.textHint,
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1,
+          ),
+        ),
         const SizedBox(height: 6),
-        Text(value, style: const TextStyle(color: AppColors.textBody, fontSize: 13, fontWeight: FontWeight.w700)),
+        Text(
+          value,
+          style: const TextStyle(
+            color: AppColors.textBody,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ],
     );
   }
@@ -392,24 +564,62 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
   Widget _buildVaultNavigation(BuildContext context) {
     return Column(
       children: [
-        _buildVaultTile(context, 'Sổ Xét Nghiệm', 'Tổng hợp kết quả xét nghiệm máu, sinh hóa...', Icons.biotech_rounded, const Color(0xFF3B82F6)),
+        _buildVaultTile(
+          context,
+          'Sổ Xét Nghiệm',
+          'Tổng hợp kết quả xét nghiệm máu, sinh hóa...',
+          Icons.biotech_rounded,
+          const Color(0xFF3B82F6),
+        ),
         const SizedBox(height: 12),
-        _buildVaultTile(context, 'Đơn Thuốc', 'Lịch sử kê đơn và hướng dẫn sử dụng thuốc', Icons.medication_rounded, const Color(0xFF10B981)),
+        _buildVaultTile(
+          context,
+          'Đơn Thuốc',
+          'Lịch sử kê đơn và hướng dẫn sử dụng thuốc',
+          Icons.medication_rounded,
+          const Color(0xFF10B981),
+        ),
         const SizedBox(height: 12),
-        _buildVaultTile(context, 'Chẩn Đoán HA', 'Kho ảnh X-Quang, Siêu âm, MRI, CT Scan', Icons.camera_rounded, const Color(0xFF8B5CF6)),
+        _buildVaultTile(
+          context,
+          'Chẩn Đoán HA',
+          'Kho ảnh X-Quang, Siêu âm, MRI, CT Scan',
+          Icons.camera_rounded,
+          const Color(0xFF8B5CF6),
+        ),
         const SizedBox(height: 12),
-        _buildVaultTile(context, 'Lịch Sử Điều Trị', 'Toàn bộ quá trình thăm khám tại bệnh viện', Icons.history_rounded, const Color(0xFFF59E0B)),
+        _buildVaultTile(
+          context,
+          'Lịch Sử Điều Trị',
+          'Toàn bộ quá trình thăm khám tại bệnh viện',
+          Icons.history_rounded,
+          const Color(0xFFF59E0B),
+        ),
       ],
     );
   }
 
-  Widget _buildVaultTile(BuildContext context, String title, String subtitle, IconData icon, Color color) {
+  Widget _buildVaultTile(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+  ) {
     return InkWell(
       onTap: () {
         if (title == 'Lịch Sử Điều Trị') {
-          Navigator.pushNamed(context, AppRoutes.examinationHistory, arguments: 'completed');
+          Navigator.pushNamed(
+            context,
+            AppRoutes.examinationHistory,
+            arguments: 'completed',
+          );
         } else {
-          Navigator.pushNamed(context, AppRoutes.medicalVaultCategory, arguments: title);
+          Navigator.pushNamed(
+            context,
+            AppRoutes.medicalVaultCategory,
+            arguments: title,
+          );
         }
       },
       borderRadius: BorderRadius.circular(24),
@@ -418,13 +628,22 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(24),
-          boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Icon(icon, color: color, size: 24),
             ),
             const SizedBox(width: 16),
@@ -432,12 +651,30 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(color: AppColors.textBody, fontWeight: FontWeight.w900, fontSize: 15)),
-                  Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w500)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: AppColors.textBody,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.textHint, size: 14),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: AppColors.textHint,
+              size: 14,
+            ),
           ],
         ),
       ),
@@ -447,9 +684,24 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
   Widget _buildSectionTitle(String title) {
     return Row(
       children: [
-        Container(width: 4, height: 16, decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(2))),
+        Container(
+          width: 4,
+          height: 16,
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
         const SizedBox(width: 8),
-        Text(title, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+        Text(
+          title,
+          style: const TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.5,
+          ),
+        ),
       ],
     );
   }
@@ -460,7 +712,8 @@ class _MedicalRecordDashboardPageState extends State<MedicalRecordDashboardPage>
       final birthDate = DateFormat('dd/MM/yyyy').parse(dob);
       final today = DateTime.now();
       int age = today.year - birthDate.year;
-      if (today.month < birthDate.month || (today.month == birthDate.month && today.day < birthDate.day)) {
+      if (today.month < birthDate.month ||
+          (today.month == birthDate.month && today.day < birthDate.day)) {
         age--;
       }
       return age.toString();

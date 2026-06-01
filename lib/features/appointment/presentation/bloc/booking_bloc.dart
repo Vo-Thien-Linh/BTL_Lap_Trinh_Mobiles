@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/appointment_entities.dart';
 import '../../domain/usecases/appointment_usecases.dart';
-import '../../../../shared/utils/id_formatter.dart';
 import '../../../notification/presentation/utils/notification_facade.dart';
 
 part 'booking_event.dart';
@@ -42,14 +41,12 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   Future<void> _onLoadInitialData(
-      LoadInitialData event,
-      Emitter<BookingState> emit,
-      ) async {
+    LoadInitialData event,
+    Emitter<BookingState> emit,
+  ) async {
     emit(state.copyWith(status: BookingStatus.loading));
     try {
       var departments = await getDepartments();
-
-      // We rely on FirebaseDataSeeder to seed data upon login.
 
       // For demo, if shifts collection is empty, we use default ones
       final shifts = [
@@ -93,12 +90,10 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     }
   }
 
-
-
   Future<void> _onSelectDepartment(
-      SelectDepartment event,
-      Emitter<BookingState> emit,
-      ) async {
+    SelectDepartment event,
+    Emitter<BookingState> emit,
+  ) async {
     emit(state.copyWith(status: BookingStatus.loading));
     try {
       final doctors = await getDoctorsByDept(event.department.id);
@@ -108,6 +103,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           selectedDepartment: event.department,
           doctors: doctors,
           currentStep: 1,
+          resetSelectedTime: true,
         ),
       );
     } catch (e) {
@@ -121,22 +117,37 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   Future<void> _onSelectDoctorAndDate(
-      SelectDoctorAndDate event,
-      Emitter<BookingState> emit,
-      ) async {
+    SelectDoctorAndDate event,
+    Emitter<BookingState> emit,
+  ) async {
     emit(state.copyWith(status: BookingStatus.loading));
     try {
-      // Logic 1: Check if patient already has active appointment with THIS doctor
-      final hasDuplicateDoctor = state.patientAppointments.any(
-            (app) => app.doctorId == event.doctor.id,
-      );
-
-      if (hasDuplicateDoctor) {
+      if (_isPastDate(event.date)) {
         emit(
           state.copyWith(
             status: BookingStatus.failure,
             errorMessage:
-            'Bạn đang có lịch hẹn chưa hoàn thành với bác sĩ ${event.doctor.name}. Vui lòng hoàn thành trước khi đặt thêm.',
+                'Ngày khám đã qua nên không thể đặt lịch. Vui lòng chọn hôm nay hoặc một ngày sau hôm nay.',
+          ),
+        );
+        return;
+      }
+
+      // Logic 1: Check if patient already has active appointment with THIS doctor
+      final hasDuplicateDoctor = state.patientAppointments.any(
+        (app) => app.doctorId == event.doctor.id && !_isAppointmentInPast(app),
+      );
+
+      if (hasDuplicateDoctor) {
+        final appointment = state.patientAppointments.firstWhere(
+          (app) =>
+              app.doctorId == event.doctor.id && !_isAppointmentInPast(app),
+        );
+        emit(
+          state.copyWith(
+            status: BookingStatus.failure,
+            errorMessage:
+                'Bạn đã có lịch hẹn chưa hoàn thành với bác sĩ ${event.doctor.name} vào ngày ${_formatDate(appointment.appointmentDate)}, ${appointment.timeSlot.isNotEmpty ? appointment.timeSlot : 'ca ${appointment.shiftId}'}. Vui lòng hoàn thành hoặc hủy lịch hẹn đó trước khi đặt thêm với bác sĩ này.',
           ),
         );
         return;
@@ -152,6 +163,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
             schedules,
           ), // Explicit cast to Entity
           currentStep: 2,
+          resetSelectedTime: true,
         ),
       );
     } catch (e) {
@@ -165,29 +177,60 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   Future<void> _onSelectShift(
-      SelectShift event,
-      Emitter<BookingState> emit,
-      ) async {
+    SelectShift event,
+    Emitter<BookingState> emit,
+  ) async {
     emit(
-      state.copyWith(status: BookingStatus.loading, selectedShift: event.shift),
+      state.copyWith(
+        status: BookingStatus.loading,
+        selectedShift: event.shift,
+        selectedSchedule: event.schedule,
+      ),
     );
     try {
-      // Logic 2: Check for time slot conflict (Same DATE + Same SHIFT)
-      final conflict = state.patientAppointments.where((app) {
-        final isSameDate =
-            app.appointmentDate.year == state.selectedDate!.year &&
-                app.appointmentDate.month == state.selectedDate!.month &&
-                app.appointmentDate.day == state.selectedDate!.day;
-        return isSameDate && app.shiftId == event.shift.id;
-      }).toList();
-
-      if (conflict.isNotEmpty) {
-        final conflictingDept = conflict.first.departmentName;
+      final selectedDate = state.selectedDate;
+      if (selectedDate == null) {
         emit(
           state.copyWith(
             status: BookingStatus.failure,
             errorMessage:
-            'Bạn đã có lịch khám tại khoa $conflictingDept vào thời gian này. Vui lóng chọn ca khác.',
+                'Bạn chưa chọn ngày khám. Vui lòng quay lại chọn ngày khám trước.',
+          ),
+        );
+        return;
+      }
+
+      if (_isPastDate(selectedDate) ||
+          _isShiftFinished(selectedDate, event.shift)) {
+        emit(
+          state.copyWith(
+            status: BookingStatus.failure,
+            errorMessage:
+                'Ca ${event.shift.name} ngày ${_formatDate(selectedDate)} đã qua giờ nhận lịch. Vui lòng chọn ca khác, ngày khác hoặc bác sĩ khác.',
+            resetSelectedTime: true,
+          ),
+        );
+        return;
+      }
+
+      // Logic 2: Check for time slot conflict (Same DATE + Same SHIFT)
+      final conflict = state.patientAppointments.where((app) {
+        final isSameDate =
+            app.appointmentDate.year == selectedDate.year &&
+            app.appointmentDate.month == selectedDate.month &&
+            app.appointmentDate.day == selectedDate.day;
+        return isSameDate &&
+            app.shiftId == event.shift.id &&
+            !_isAppointmentInPast(app);
+      }).toList();
+
+      if (conflict.isNotEmpty) {
+        final conflicting = conflict.first;
+        emit(
+          state.copyWith(
+            status: BookingStatus.failure,
+            errorMessage:
+                'Bạn đã có lịch hẹn trong ca ${event.shift.name} ngày ${_formatDate(selectedDate)} tại khoa ${conflicting.departmentName} với bác sĩ ${conflicting.doctorName}. Một bệnh nhân không thể đặt 2 lịch trong cùng một ca. Vui lòng chọn ca khác hoặc đổi ngày khám.',
           ),
         );
         return;
@@ -218,9 +261,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   void _onSelectQueueNumber(
-      SelectQueueNumber event,
-      Emitter<BookingState> emit,
-      ) {
+    SelectQueueNumber event,
+    Emitter<BookingState> emit,
+  ) {
     emit(
       state.copyWith(
         selectedQueueNumber: event.queueNumber,
@@ -230,9 +273,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   void _onSelectPaymentMethod(
-      SelectPaymentMethod event,
-      Emitter<BookingState> emit,
-      ) {
+    SelectPaymentMethod event,
+    Emitter<BookingState> emit,
+  ) {
     emit(state.copyWith(selectedPaymentMethod: event.method));
   }
 
@@ -241,31 +284,53 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   Future<void> _onConfirmBooking(
-      ConfirmBooking event,
-      Emitter<BookingState> emit,
-      ) async {
+    ConfirmBooking event,
+    Emitter<BookingState> emit,
+  ) async {
     if (state.selectedDoctor == null ||
         state.selectedDate == null ||
-        state.selectedShift == null) {
+        state.selectedShift == null ||
+        state.selectedSchedule == null) {
       return;
     }
 
     emit(state.copyWith(status: BookingStatus.loading));
     try {
-      // FETCH Patient info (DOB, Gender) for the clinical ticket
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(event.patientId)
-          .get();
-
-      String? dob;
-      String? gender;
-
-      if (userDoc.exists) {
-        final data = userDoc.data()!;
-        dob = data['dateOfBirth'] as String?;
-        gender = data['gender'] as String?;
+      if (_isPastDate(state.selectedDate!) ||
+          _isShiftFinished(state.selectedDate!, state.selectedShift!)) {
+        emit(
+          state.copyWith(
+            status: BookingStatus.failure,
+            errorMessage:
+                'Ca ${state.selectedShift!.name} ngày ${_formatDate(state.selectedDate!)} đã qua giờ nhận lịch. Vui lòng quay lại chọn ca khác, ngày khác hoặc bác sĩ khác.',
+          ),
+        );
+        return;
       }
+
+      final patientData = await _getUserData(event.patientId);
+      final doctorData =
+          (await _getUserData(state.selectedDoctor!.userId)) ??
+          (await _getUserData(state.selectedDoctor!.id));
+
+      final dob = _firstText(patientData, const ['dateOfBirth']);
+      final gender = _firstText(patientData, const ['gender']);
+      final patientName =
+          _firstText(patientData, const [
+            'fullName',
+            'name',
+            'displayName',
+            'patientName',
+          ]) ??
+          event.patientName;
+      final doctorName =
+          _firstText(doctorData, const [
+            'fullName',
+            'name',
+            'displayName',
+            'doctorName',
+          ]) ??
+          state.selectedDoctor!.name;
 
       // Use selectedQueueNumber if user picked one, otherwise fetch next
       int queueNumber;
@@ -284,16 +349,19 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         patientId: event.patientId,
         patientDOB: dob,
         patientGender: gender,
-        patientName: event.patientName,
+        patientName: patientName,
         doctorId: state.selectedDoctor!.id,
-        doctorName: state.selectedDoctor!.name,
+        doctorName: doctorName,
         departmentId: state.selectedDepartment!.id,
         departmentName: state.selectedDepartment!.name,
         appointmentDate: state.selectedDate!,
+        scheduleId: _nonEmptyText(state.selectedSchedule?.id),
         shiftId: state.selectedShift!.id,
         timeSlot: state.selectedShift!.startTime,
         queueNumber: queueNumber,
-        roomNumber: 'Phòng ${state.selectedDepartment!.location}', // Mock logic
+        roomNumber:
+            _nonEmptyText(state.selectedSchedule?.roomNumber) ??
+            'Phòng ${state.selectedDepartment!.location}',
         consultationFee: state.selectedDoctor!.consultationFee,
         insuranceNumber: event.insuranceNumber,
         symptoms: state.symptoms,
@@ -321,9 +389,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   Future<void> _onFinalizePaymentAndConfirm(
-      FinalizePaymentAndConfirm event,
-      Emitter<BookingState> emit,
-      ) async {
+    FinalizePaymentAndConfirm event,
+    Emitter<BookingState> emit,
+  ) async {
     emit(state.copyWith(status: BookingStatus.loading));
     try {
       final db = FirebaseFirestore.instance;
@@ -357,7 +425,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       });
 
       // 3. Update Appointment Status to Confirmed
-      final appointmentRef = db.collection('Appointments').doc(event.appointmentId);
+      final appointmentRef = db
+          .collection('Appointments')
+          .doc(event.appointmentId);
       batch.update(appointmentRef, {'status': 'confirmed'});
 
       await batch.commit();
@@ -403,6 +473,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           departmentId: state.createdAppointment!.departmentId,
           departmentName: state.createdAppointment!.departmentName,
           appointmentDate: state.createdAppointment!.appointmentDate,
+          scheduleId: state.createdAppointment!.scheduleId,
           shiftId: state.createdAppointment!.shiftId,
           timeSlot: state.createdAppointment!.timeSlot,
           queueNumber: state.createdAppointment!.queueNumber,
@@ -414,12 +485,22 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           paymentMethod: state.createdAppointment!.paymentMethod,
           createdAt: state.createdAppointment!.createdAt,
         );
-        emit(state.copyWith(status: BookingStatus.success, createdAppointment: updated));
+        emit(
+          state.copyWith(
+            status: BookingStatus.success,
+            createdAppointment: updated,
+          ),
+        );
       } else {
         emit(state.copyWith(status: BookingStatus.success));
       }
     } catch (e) {
-      emit(state.copyWith(status: BookingStatus.failure, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: BookingStatus.failure,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -432,5 +513,93 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   void _onResetBooking(ResetBooking event, Emitter<BookingState> emit) {
     emit(const BookingState());
     add(LoadInitialData());
+  }
+
+  Future<Map<String, dynamic>?> _getUserData(String userId) async {
+    if (userId.trim().isEmpty) return null;
+
+    final db = FirebaseFirestore.instance;
+    final lowerDoc = await db.collection('users').doc(userId).get();
+    if (lowerDoc.exists) return lowerDoc.data();
+
+    return null;
+  }
+
+  String? _firstText(
+    Map<String, dynamic>? data,
+    List<String> keys, {
+    String? fallback,
+  }) {
+    if (data == null) return fallback;
+    for (final key in keys) {
+      final value = data[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+    return fallback;
+  }
+
+  String? _nonEmptyText(String? value) {
+    final text = value?.trim();
+    if (text == null || text.isEmpty) return null;
+    return text;
+  }
+
+  bool _isPastDate(DateTime date) {
+    final today = DateTime.now();
+    final selectedDay = DateTime(date.year, date.month, date.day);
+    final currentDay = DateTime(today.year, today.month, today.day);
+    return selectedDay.isBefore(currentDay);
+  }
+
+  bool _isShiftFinished(DateTime date, ShiftEntity shift) {
+    if (!_isSameDay(date, DateTime.now())) return false;
+
+    final end = _timeOnDate(date, shift.endTime);
+    if (end == null) return false;
+
+    return !DateTime.now().isBefore(end);
+  }
+
+  bool _isAppointmentInPast(HospitalAppointment appointment) {
+    final matchingShift = state.shifts.where(
+      (shift) => shift.id == appointment.shiftId,
+    );
+    final endTime = matchingShift.isNotEmpty
+        ? matchingShift.first.endTime
+        : appointment.timeSlot;
+    final end = _timeOnDate(appointment.appointmentDate, endTime);
+    if (end != null) return end.isBefore(DateTime.now());
+
+    final day = DateTime(
+      appointment.appointmentDate.year,
+      appointment.appointmentDate.month,
+      appointment.appointmentDate.day,
+    );
+    final today = DateTime.now();
+    final currentDay = DateTime(today.year, today.month, today.day);
+    return day.isBefore(currentDay);
+  }
+
+  bool _isSameDay(DateTime left, DateTime right) {
+    return left.year == right.year &&
+        left.month == right.month &&
+        left.day == right.day;
+  }
+
+  DateTime? _timeOnDate(DateTime date, String time) {
+    final parts = time.trim().split(':');
+    if (parts.length < 2) return null;
+
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return null;
+
+    return DateTime(date.year, date.month, date.day, hour, minute);
+  }
+
+  String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$day/$month/${date.year}';
   }
 }

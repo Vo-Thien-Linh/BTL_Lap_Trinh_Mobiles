@@ -8,16 +8,17 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/routes/app_routes.dart';
 import '../../data/models/appointment_models.dart';
 import '../../../home/presentation/widgets/premium_login_required.dart';
-import '../../../notification/presentation/utils/notification_facade.dart';
 
 class AppointmentManagementPage extends StatefulWidget {
   const AppointmentManagementPage({super.key});
 
   @override
-  State<AppointmentManagementPage> createState() => _AppointmentManagementPageState();
+  State<AppointmentManagementPage> createState() =>
+      _AppointmentManagementPageState();
 }
 
-class _AppointmentManagementPageState extends State<AppointmentManagementPage> with SingleTickerProviderStateMixin {
+class _AppointmentManagementPageState extends State<AppointmentManagementPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final ScrollController _scrollController = ScrollController();
   bool _isCalendarView = false;
@@ -55,7 +56,10 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
               surfaceTintColor: Colors.transparent,
               elevation: 0,
               flexibleSpace: FlexibleSpaceBar(
-                titlePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                titlePadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 title: const Text(
                   'LỊCH HẸN CỦA TÔI',
                   style: TextStyle(
@@ -70,15 +74,22 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
               actions: [
                 _buildViewToggle(),
                 IconButton(
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.booking),
-                  icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.primary),
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.booking),
+                  icon: const Icon(
+                    Icons.add_circle_outline_rounded,
+                    color: AppColors.primary,
+                  ),
                 ),
                 const SizedBox(width: 8),
               ],
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Container(
                   height: 50,
                   decoration: BoxDecoration(
@@ -94,7 +105,10 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
                     indicatorSize: TabBarIndicatorSize.tab,
                     labelColor: Colors.white,
                     unselectedLabelColor: AppColors.textSecondary,
-                    labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                    labelStyle: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
                     dividerColor: Colors.transparent,
                     tabs: const [
                       Tab(text: 'SẮP TỚI'),
@@ -108,10 +122,7 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
         },
         body: TabBarView(
           controller: _tabController,
-          children: [
-            _buildUpcomingSection(uid),
-            _buildHistoryList(uid),
-          ],
+          children: [_buildUpcomingSection(uid), _buildHistoryList(uid)],
         ),
       ),
     );
@@ -130,12 +141,19 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
 
         final appointments = snapshot.data!.docs
             .map((d) => HospitalAppointmentModel.fromFirestore(d))
-            .where((a) => a.status != 'cancelled' && a.status != 'completed' && a.appointmentDate.isAfter(DateTime.now()))
+            .where(
+              (a) =>
+                  a.status != 'cancelled' &&
+                  a.status != 'completed' &&
+                  a.appointmentDate.isAfter(DateTime.now()),
+            )
             .toList();
 
         if (appointments.isEmpty) return const SizedBox.shrink();
 
-        appointments.sort((a, b) => a.appointmentDate.compareTo(b.appointmentDate));
+        appointments.sort(
+          (a, b) => a.appointmentDate.compareTo(b.appointmentDate),
+        );
         final next = appointments.first;
         final difference = next.appointmentDate.difference(DateTime.now());
         final days = difference.inDays;
@@ -144,7 +162,10 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
         return Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.primary.withOpacity(0.05), AppColors.background],
+              colors: [
+                AppColors.primary.withOpacity(0.05),
+                AppColors.background,
+              ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -157,16 +178,31 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
             children: [
               Text(
                 'LỊCH HẸN TIẾP THEO CỦA BẠN',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1),
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.primary,
+                  letterSpacing: 1,
+                ),
               ),
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.alarm_rounded, color: AppColors.primary, size: 24),
+                  const Icon(
+                    Icons.alarm_rounded,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
                   const SizedBox(width: 12),
                   Text(
-                    days > 0 ? 'Còn $days ngày $hours giờ' : 'Còn $hours giờ nữa',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.textBody),
+                    days > 0
+                        ? 'Còn $days ngày $hours giờ'
+                        : 'Còn $hours giờ nữa',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.textBody,
+                    ),
                   ),
                 ],
               ),
@@ -186,7 +222,13 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
       ),
       child: IconButton(
         onPressed: () => setState(() => _isCalendarView = !_isCalendarView),
-        icon: Icon(_isCalendarView ? Icons.list_alt_rounded : Icons.calendar_month_rounded, size: 20, color: AppColors.primary),
+        icon: Icon(
+          _isCalendarView
+              ? Icons.list_alt_rounded
+              : Icons.calendar_month_rounded,
+          size: 20,
+          color: AppColors.primary,
+        ),
         tooltip: _isCalendarView ? 'Xem danh sách' : 'Xem lịch tháng',
       ),
     );
@@ -206,7 +248,11 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
           .where('patientId', isEqualTo: uid)
           .snapshots(),
       builder: (context, snapshot) {
-        final appointments = snapshot.data?.docs.map((d) => HospitalAppointmentModel.fromFirestore(d)).toList() ?? [];
+        final appointments =
+            snapshot.data?.docs
+                .map((d) => HospitalAppointmentModel.fromFirestore(d))
+                .toList() ??
+            [];
 
         return Column(
           children: [
@@ -231,24 +277,39 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
                 _focusedDay = focusedDay;
               },
               eventLoader: (day) {
-                return appointments.where((a) => isSameDay(a.appointmentDate, day)).toList();
+                return appointments
+                    .where((a) => isSameDay(a.appointmentDate, day))
+                    .toList();
               },
               calendarStyle: CalendarStyle(
-                todayDecoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
-                todayTextStyle: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
-                selectedDecoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                markerDecoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
+                todayDecoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                todayTextStyle: const TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+                selectedDecoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                markerDecoration: const BoxDecoration(
+                  color: AppColors.success,
+                  shape: BoxShape.circle,
+                ),
               ),
               headerStyle: const HeaderStyle(
                 formatButtonVisible: false,
                 titleCentered: true,
-                titleTextStyle: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                titleTextStyle: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
               ),
             ),
             const Divider(height: 1),
-            Expanded(
-              child: _buildDayDetailList(appointments),
-            ),
+            Expanded(child: _buildDayDetailList(appointments)),
           ],
         );
       },
@@ -257,19 +318,30 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
 
   Widget _buildDayDetailList(List<HospitalAppointmentModel> allAppointments) {
     if (_selectedDay == null) {
-      return const Center(child: Text('Vui lòng chọn một ngày để xem chi tiết'));
+      return const Center(
+        child: Text('Vui lòng chọn một ngày để xem chi tiết'),
+      );
     }
 
-    final dayAppointments = allAppointments.where((a) => isSameDay(a.appointmentDate, _selectedDay)).toList();
+    final dayAppointments = allAppointments
+        .where((a) => isSameDay(a.appointmentDate, _selectedDay))
+        .toList();
 
     if (dayAppointments.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.event_note_rounded, size: 48, color: AppColors.textHint.withOpacity(0.3)),
+            Icon(
+              Icons.event_note_rounded,
+              size: 48,
+              color: AppColors.textHint.withOpacity(0.3),
+            ),
             const SizedBox(height: 12),
-            const Text('Không có lịch hẹn trong ngày này', style: TextStyle(color: AppColors.textHint)),
+            const Text(
+              'Không có lịch hẹn trong ngày này',
+              style: TextStyle(color: AppColors.textHint),
+            ),
           ],
         ),
       );
@@ -278,7 +350,8 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
     return ListView.builder(
       padding: const EdgeInsets.all(20),
       itemCount: dayAppointments.length,
-      itemBuilder: (context, index) => _MedicalTicketCard(appointment: dayAppointments[index]),
+      itemBuilder: (context, index) =>
+          _MedicalTicketCard(appointment: dayAppointments[index]),
     );
   }
 
@@ -286,7 +359,8 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
     if (uid == null) {
       return const PremiumLoginRequired(
         title: 'LỊCH HẸN RIÊNG TƯ',
-        description: 'Vui lòng đăng nhập để xem và quản lý các lịch hẹn sắp tới của bạn.',
+        description:
+            'Vui lòng đăng nhập để xem và quản lý các lịch hẹn sắp tới của bạn.',
       );
     }
 
@@ -300,12 +374,22 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
           return const Center(child: CircularProgressIndicator());
         }
 
-        final allDocs = snapshot.data?.docs.map((d) => HospitalAppointmentModel.fromFirestore(d)).toList() ?? [];
+        final allDocs =
+            snapshot.data?.docs
+                .map((d) => HospitalAppointmentModel.fromFirestore(d))
+                .toList() ??
+            [];
         final upcoming = allDocs.where((a) {
-          final isNotcancelled = a.status != 'cancelled';
-          final isNotCompleted = a.status != 'completed';
-          final isFuture = a.appointmentDate.isAfter(DateTime.now().subtract(const Duration(hours: 1)));
-          return isNotcancelled && isNotCompleted && isFuture;
+          final isActiveStatus = [
+            'pending',
+            'confirmed',
+            'cancel_requested',
+            'calling',
+            'ongoing',
+          ].contains(a.status);
+          final startsAt = _appointmentDateTime(a.appointmentDate, a.timeSlot);
+          final isFuture = startsAt.isAfter(DateTime.now());
+          return isActiveStatus && isFuture;
         }).toList();
 
         upcoming.sort((a, b) => a.appointmentDate.compareTo(b.appointmentDate));
@@ -318,7 +402,8 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
           padding: const EdgeInsets.all(20),
           itemCount: upcoming.length,
           separatorBuilder: (_, __) => const SizedBox(height: 20),
-          itemBuilder: (context, index) => _MedicalTicketCard(appointment: upcoming[index]),
+          itemBuilder: (context, index) =>
+              _MedicalTicketCard(appointment: upcoming[index]),
         );
       },
     );
@@ -328,7 +413,8 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
     if (uid == null) {
       return const PremiumLoginRequired(
         title: 'LỊCH SỬ KHÁM BỆNH',
-        description: 'Đăng nhập để xem lại toàn bộ lịch sử và kết quả các lần khám trước đây.',
+        description:
+            'Đăng nhập để xem lại toàn bộ lịch sử và kết quả các lần khám trước đây.',
       );
     }
 
@@ -342,8 +428,21 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
           return const Center(child: CircularProgressIndicator());
         }
 
-        final allDocs = snapshot.data?.docs.map((d) => HospitalAppointmentModel.fromFirestore(d)).toList() ?? [];
-        final history = allDocs.where((a) => a.status == 'completed' || a.status == 'cancelled' || a.appointmentDate.isBefore(DateTime.now())).toList();
+        final allDocs =
+            snapshot.data?.docs
+                .map((d) => HospitalAppointmentModel.fromFirestore(d))
+                .toList() ??
+            [];
+        final history = allDocs.where((a) {
+          final startsAt = _appointmentDateTime(a.appointmentDate, a.timeSlot);
+          return [
+                'completed',
+                'cancelled',
+                'no_show',
+                'absent',
+              ].contains(a.status) ||
+              startsAt.isBefore(DateTime.now());
+        }).toList();
 
         history.sort((a, b) => b.appointmentDate.compareTo(a.appointmentDate));
 
@@ -355,7 +454,8 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
           padding: const EdgeInsets.all(20),
           itemCount: history.length,
           separatorBuilder: (_, __) => const SizedBox(height: 16),
-          itemBuilder: (context, index) => _CompactHistoryCard(appointment: history[index]),
+          itemBuilder: (context, index) =>
+              _CompactHistoryCard(appointment: history[index]),
         );
       },
     );
@@ -372,12 +472,19 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
               color: AppColors.secondary,
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.event_busy_rounded, size: 64, color: AppColors.textHint.withOpacity(0.5)),
+            child: Icon(
+              Icons.event_busy_rounded,
+              size: 64,
+              color: AppColors.textHint.withOpacity(0.5),
+            ),
           ),
           const SizedBox(height: 24),
           Text(
             message,
-            style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
@@ -385,7 +492,9 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> w
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             child: const Text('ĐẶT LỊCH NGAY'),
           ),
@@ -409,7 +518,9 @@ class _MedicalTicketCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: isToday ? AppColors.primary.withOpacity(0.12) : AppColors.textBody.withOpacity(0.06),
+            color: isToday
+                ? AppColors.primary.withOpacity(0.12)
+                : AppColors.textBody.withOpacity(0.06),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -417,12 +528,7 @@ class _MedicalTicketCard extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          if (isToday)
-            Positioned(
-              top: 16,
-              right: 16,
-              child: _LiveBadge(),
-            ),
+          if (isToday) Positioned(top: 16, right: 16, child: _LiveBadge()),
           Column(
             children: [
               Padding(
@@ -436,14 +542,27 @@ class _MedicalTicketCard extends StatelessWidget {
                           height: 58,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [AppColors.primary, AppColors.primaryDark],
+                              colors: [
+                                AppColors.primary,
+                                AppColors.primaryDark,
+                              ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             borderRadius: BorderRadius.circular(18),
-                            boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))],
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withOpacity(0.3),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          child: const Icon(Icons.medical_services_rounded, color: Colors.white, size: 28),
+                          child: const Icon(
+                            Icons.medical_services_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -452,12 +571,20 @@ class _MedicalTicketCard extends StatelessWidget {
                             children: [
                               Text(
                                 appointment.doctorName.toUpperCase(),
-                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.textBody),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16,
+                                  color: AppColors.textBody,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 appointment.departmentName,
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textSecondary,
+                                ),
                               ),
                             ],
                           ),
@@ -469,9 +596,21 @@ class _MedicalTicketCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _InfoColumn(label: 'NGÀY KHÁM', value: DateFormat('dd/MM/yyyy').format(appointment.appointmentDate)),
-                        _InfoColumn(label: 'GIỜ KHÁM', value: appointment.timeSlot),
-                        _InfoColumn(label: 'SỐ THỨ TỰ', value: '#${appointment.queueNumber}', isHighlight: true),
+                        _InfoColumn(
+                          label: 'NGÀY KHÁM',
+                          value: DateFormat(
+                            'dd/MM/yyyy',
+                          ).format(appointment.appointmentDate),
+                        ),
+                        _InfoColumn(
+                          label: 'GIỜ KHÁM',
+                          value: appointment.timeSlot,
+                        ),
+                        _InfoColumn(
+                          label: 'SỐ THỨ TỰ',
+                          value: '#${appointment.queueNumber}',
+                          isHighlight: true,
+                        ),
                       ],
                     ),
                   ],
@@ -488,26 +627,42 @@ class _MedicalTicketCard extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.location_on_rounded, color: AppColors.primary, size: 14),
+                              const Icon(
+                                Icons.location_on_rounded,
+                                color: AppColors.primary,
+                                size: 14,
+                              ),
                               const SizedBox(width: 6),
                               Text(
                                 'PHÒNG: ${appointment.roomNumber}',
-                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: AppColors.textBody),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.textBody,
+                                ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 16),
                           Row(
                             children: [
-                              _ActionIcon(icon: Icons.map_outlined, onTap: () {}),
+                              _ActionIcon(
+                                icon: Icons.map_outlined,
+                                onTap: () {},
+                              ),
                               const SizedBox(width: 12),
-                              _ActionIcon(icon: Icons.info_outline_rounded, color: AppColors.success, onTap: () => _showPrepGuide(context)),
+                              _ActionIcon(
+                                icon: Icons.info_outline_rounded,
+                                color: AppColors.success,
+                                onTap: () => _showPrepGuide(context),
+                              ),
                               const SizedBox(width: 12),
                               if (_canCancelAppointment())
                                 _ActionIcon(
                                   icon: Icons.cancel_outlined,
                                   color: AppColors.error,
-                                  onTap: () => _confirmCancelAppointment(context),
+                                  onTap: () =>
+                                      _confirmCancelAppointment(context),
                                 ),
                             ],
                           ),
@@ -525,11 +680,19 @@ class _MedicalTicketCard extends StatelessWidget {
                         ),
                         child: Column(
                           children: [
-                            const Icon(Icons.qr_code_2_rounded, size: 34, color: AppColors.textBody),
+                            const Icon(
+                              Icons.qr_code_2_rounded,
+                              size: 34,
+                              color: AppColors.textBody,
+                            ),
                             const SizedBox(height: 4),
                             const Text(
                               'CHECK-IN',
-                              style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 0.8),
+                              style: TextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.8,
+                              ),
                             ),
                           ],
                         ),
@@ -546,21 +709,25 @@ class _MedicalTicketCard extends StatelessWidget {
   }
 
   bool _canCancelAppointment() {
-    final isActiveStatus = appointment.status == 'pending' || appointment.status == 'confirmed';
-    final isNotTooLate = appointment.appointmentDate.isAfter(
-      DateTime.now().subtract(const Duration(hours: 1)),
+    final isActiveStatus =
+        appointment.status == 'pending' || appointment.status == 'confirmed';
+    final appointmentStart = _appointmentDateTime(
+      appointment.appointmentDate,
+      appointment.timeSlot,
     );
-    return isActiveStatus && isNotTooLate;
+    final remaining = appointmentStart.difference(DateTime.now());
+    return isActiveStatus && remaining >= const Duration(hours: 24);
   }
 
   Future<void> _confirmCancelAppointment(BuildContext context) async {
     final shouldCancel = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Hủy lịch khám?'),
+        title: const Text('Gửi yêu cầu hủy lịch?'),
         content: Text(
-          'Bạn có chắc muốn hủy lịch khám với ${appointment.doctorName} vào '
-              '${DateFormat('dd/MM/yyyy').format(appointment.appointmentDate)} lúc ${appointment.timeSlot}?',
+          'Bạn chỉ có thể gửi yêu cầu hủy trước giờ khám ít nhất 24 giờ. '
+          'Yêu cầu hủy lịch với ${appointment.doctorName} vào '
+          '${DateFormat('dd/MM/yyyy').format(appointment.appointmentDate)} lúc ${appointment.timeSlot} sẽ được gửi cho admin duyệt.',
         ),
         actions: [
           TextButton(
@@ -573,7 +740,7 @@ class _MedicalTicketCard extends StatelessWidget {
               backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
             ),
-            child: const Text('HỦY LỊCH'),
+            child: const Text('GỬI YÊU CẦU'),
           ),
         ],
       ),
@@ -582,36 +749,47 @@ class _MedicalTicketCard extends StatelessWidget {
     if (shouldCancel != true) return;
 
     try {
-      await FirebaseFirestore.instance
-          .collection('Appointments')
-          .doc(appointment.id)
-          .update({
-        'status': 'cancelled',
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      final db = FirebaseFirestore.instance;
+      final appointmentRef = db.collection('Appointments').doc(appointment.id);
 
-      try {
-        await NotificationFacade.onAppointmentCancelled(
-          appointmentId: appointment.id,
-          patientId: appointment.patientId,
-          doctorId: appointment.doctorId,
-          doctorName: appointment.doctorName,
-          patientEmail: FirebaseAuth.instance.currentUser?.email,
-        );
-      } catch (e) {
-        debugPrint('Notification error after appointment cancellation: $e');
-      }
+      await db.runTransaction((transaction) async {
+        final appointmentSnapshot = await transaction.get(appointmentRef);
+        final appointmentData = appointmentSnapshot.data() ?? {};
+        final currentStatus = appointmentData['status']?.toString() ?? '';
+
+        if (currentStatus != 'pending' && currentStatus != 'confirmed') {
+          throw Exception('Lịch hẹn này không còn ở trạng thái có thể hủy.');
+        }
+
+        transaction.update(appointmentRef, {
+          'status': 'cancel_requested',
+          'cancelRequestedBy': 'patient',
+          'cancelRequestedAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      });
 
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đã hủy lịch khám thành công.')),
+        const SnackBar(
+          content: Text('Đã gửi yêu cầu hủy lịch. Vui lòng chờ admin duyệt.'),
+        ),
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Không thể hủy lịch khám: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Không thể hủy lịch khám: $e')));
     }
+  }
+
+  DateTime _appointmentDateTime(DateTime date, String time) {
+    final parts = time.trim().split(':');
+    if (parts.length < 2) return date;
+
+    final hour = int.tryParse(parts[0]) ?? 0;
+    final minute = int.tryParse(parts[1]) ?? 0;
+    return DateTime(date.year, date.month, date.day, hour, minute);
   }
 
   void _showPrepGuide(BuildContext context) {
@@ -630,13 +808,29 @@ class _MedicalTicketCard extends StatelessWidget {
           children: [
             const Text(
               'HƯỚNG DẪN CHUẨN BỊ',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 1.0),
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+                letterSpacing: 1.0,
+              ),
             ),
             const SizedBox(height: 24),
-            _buildGuideItem(Icons.fastfood_rounded, 'Nhịn ăn ít nhất 8 tiếng nếu có xét nghiệm máu.'),
-            _buildGuideItem(Icons.description_rounded, 'Mang theo sổ khám bệnh và các đơn thuốc đang sử dụng.'),
-            _buildGuideItem(Icons.timer_rounded, 'Vui lòng đến trước 15 phút để làm thủ tục check-in.'),
-            _buildGuideItem(Icons.attribution_rounded, 'Mặc trang phục thoải mái để dễ dàng thăm khám.'),
+            _buildGuideItem(
+              Icons.fastfood_rounded,
+              'Nhịn ăn ít nhất 8 tiếng nếu có xét nghiệm máu.',
+            ),
+            _buildGuideItem(
+              Icons.description_rounded,
+              'Mang theo sổ khám bệnh và các đơn thuốc đang sử dụng.',
+            ),
+            _buildGuideItem(
+              Icons.timer_rounded,
+              'Vui lòng đến trước 15 phút để làm thủ tục check-in.',
+            ),
+            _buildGuideItem(
+              Icons.attribution_rounded,
+              'Mặc trang phục thoải mái để dễ dàng thăm khám.',
+            ),
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
@@ -646,10 +840,18 @@ class _MedicalTicketCard extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   elevation: 0,
                 ),
-                child: const Text('TÔI ĐÃ HIỂU', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.0)),
+                child: const Text(
+                  'TÔI ĐÃ HIỂU',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.0,
+                  ),
+                ),
               ),
             ),
           ],
@@ -666,7 +868,16 @@ class _MedicalTicketCard extends StatelessWidget {
         children: [
           Icon(icon, color: AppColors.primary, size: 20),
           const SizedBox(width: 16),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 14, color: AppColors.textBody, height: 1.4))),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textBody,
+                height: 1.4,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -674,13 +885,16 @@ class _MedicalTicketCard extends StatelessWidget {
 
   Widget _buildDottedDivider() {
     return Row(
-      children: List.generate(40, (index) => Expanded(
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 1.5),
-          height: 1.5,
-          color: index % 2 == 0 ? Colors.transparent : AppColors.border,
+      children: List.generate(
+        40,
+        (index) => Expanded(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 1.5),
+            height: 1.5,
+            color: index % 2 == 0 ? Colors.transparent : AppColors.border,
+          ),
         ),
-      )),
+      ),
     );
   }
 
@@ -701,12 +915,20 @@ class _MedicalTicketCard extends StatelessWidget {
             children: [
               const Text(
                 'XÁC NHẬN ĐIỂM DANH',
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: 1.5),
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 20,
+                  letterSpacing: 1.5,
+                ),
               ),
               const SizedBox(height: 12),
               const Text(
                 'Vui lòng đưa mã này vào máy quét tại sảnh chờ',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
@@ -715,21 +937,37 @@ class _MedicalTicketCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(28),
-                  boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.08), blurRadius: 40)],
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.08),
+                      blurRadius: 40,
+                    ),
+                  ],
                   border: Border.all(color: AppColors.primary.withOpacity(0.1)),
                 ),
                 child: QrImageView(
                   data: appointment.id,
                   version: QrVersions.auto,
                   size: 220.0,
-                  eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.circle, color: AppColors.primary),
-                  dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.circle, color: AppColors.primary),
+                  eyeStyle: const QrEyeStyle(
+                    eyeShape: QrEyeShape.circle,
+                    color: AppColors.primary,
+                  ),
+                  dataModuleStyle: const QrDataModuleStyle(
+                    dataModuleShape: QrDataModuleShape.circle,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
               const SizedBox(height: 32),
               Text(
                 'STT: #${appointment.queueNumber}',
-                style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.primary, fontSize: 18, letterSpacing: 2),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.primary,
+                  fontSize: 18,
+                  letterSpacing: 2,
+                ),
               ),
               const SizedBox(height: 32),
             ],
@@ -745,15 +983,23 @@ class _LiveBadge extends StatefulWidget {
   State<_LiveBadge> createState() => _LiveBadgeState();
 }
 
-class _LiveBadgeState extends State<_LiveBadge> with SingleTickerProviderStateMixin {
+class _LiveBadgeState extends State<_LiveBadge>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat(reverse: true);
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat(reverse: true);
   }
+
   @override
-  void dispose() { _controller.dispose(); super.dispose(); }
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -761,8 +1007,19 @@ class _LiveBadgeState extends State<_LiveBadge> with SingleTickerProviderStateMi
       opacity: _controller.drive(CurveTween(curve: Curves.easeInOut)),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(color: AppColors.error, borderRadius: BorderRadius.circular(8)),
-        child: const Text('LIVE', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 1)),
+        decoration: BoxDecoration(
+          color: AppColors.error,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Text(
+          'LIVE',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 8,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1,
+          ),
+        ),
       ),
     );
   }
@@ -778,7 +1035,11 @@ class _CompactHistoryCard extends StatelessWidget {
     return InkWell(
       onTap: () {
         if (appointment.status == 'completed') {
-          Navigator.pushNamed(context, AppRoutes.examinationDetail, arguments: appointment);
+          Navigator.pushNamed(
+            context,
+            AppRoutes.examinationDetail,
+            arguments: appointment,
+          );
         }
       },
       child: Container(
@@ -794,7 +1055,9 @@ class _CompactHistoryCard extends StatelessWidget {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: isCancelled ? AppColors.error.withOpacity(0.1) : AppColors.primaryLight.withOpacity(0.3),
+                color: isCancelled
+                    ? AppColors.error.withOpacity(0.1)
+                    : AppColors.primaryLight.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(
@@ -810,17 +1073,31 @@ class _CompactHistoryCard extends StatelessWidget {
                 children: [
                   Text(
                     appointment.doctorName,
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.textBody),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                      color: AppColors.textBody,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    DateFormat('dd/MM/yyyy • HH:mm').format(appointment.appointmentDate),
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                    DateFormat(
+                      'dd/MM/yyyy • HH:mm',
+                    ).format(appointment.appointmentDate),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.border, size: 14),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: AppColors.border,
+              size: 14,
+            ),
           ],
         ),
       ),
@@ -840,11 +1117,32 @@ class _StatusBadge extends StatelessWidget {
     switch (status) {
       case 'confirmed':
         color = AppColors.success;
-        label = 'ĐÃ XÁC NHẬN';
+        label = 'ĐÃ ĐẶT';
         break;
       case 'pending':
         color = AppColors.warning;
         label = 'CHỜ XỬ LÝ';
+        break;
+      case 'cancel_requested':
+        color = AppColors.warning;
+        label = 'CHỜ DUYỆT HỦY';
+        break;
+      case 'calling':
+        color = AppColors.primary;
+        label = 'ĐANG GỌI';
+        break;
+      case 'ongoing':
+        color = AppColors.primary;
+        label = 'ĐANG KHÁM';
+        break;
+      case 'completed':
+        color = AppColors.success;
+        label = 'ĐÃ KHÁM';
+        break;
+      case 'no_show':
+      case 'absent':
+        color = AppColors.warning;
+        label = 'VẮNG MẶT';
         break;
       case 'cancelled':
         color = AppColors.error;
@@ -863,7 +1161,12 @@ class _StatusBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+        style: TextStyle(
+          color: color,
+          fontSize: 9,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
@@ -873,14 +1176,26 @@ class _InfoColumn extends StatelessWidget {
   final String label;
   final String value;
   final bool isHighlight;
-  const _InfoColumn({required this.label, required this.value, this.isHighlight = false});
+  const _InfoColumn({
+    required this.label,
+    required this.value,
+    this.isHighlight = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.textHint, letterSpacing: 0.8)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.w900,
+            color: AppColors.textHint,
+            letterSpacing: 0.8,
+          ),
+        ),
         const SizedBox(height: 6),
         Text(
           value,
@@ -916,4 +1231,13 @@ class _ActionIcon extends StatelessWidget {
       ),
     );
   }
+}
+
+DateTime _appointmentDateTime(DateTime date, String time) {
+  final parts = time.trim().split(':');
+  if (parts.length < 2) return date;
+
+  final hour = int.tryParse(parts[0]) ?? 0;
+  final minute = int.tryParse(parts[1]) ?? 0;
+  return DateTime(date.year, date.month, date.day, hour, minute);
 }

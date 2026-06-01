@@ -10,15 +10,13 @@ import '../../../appointment/domain/entities/appointment_entities.dart';
 import '../../../appointment/domain/usecases/appointment_usecases.dart';
 import '../../../auth/domain/usecases/logout_usecase.dart';
 import 'department_detail_page.dart';
+import '../utils/department_visuals.dart';
 import '../widgets/doctor_profile_sheet.dart';
 import '../../../health_insurance/presentation/utils/health_insurance_reminder.dart';
-import '../../../appointment/presentation/pages/appointment_management_page.dart';
-import '../../../notification/presentation/pages/notifications_page.dart';
-import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../../screens/chat_screen.dart';
 
 class HomePage extends StatefulWidget {
-  final int initialTabIndex;
-  const HomePage({super.key, this.initialTabIndex = 0});
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -30,14 +28,10 @@ class _HomePageState extends State<HomePage> {
   late Future<List<DoctorEntity>> _featuredDoctorsFuture;
 
   bool _isLoggingOut = false;
-  late int _currentIndex;
-  late PageController _pageController;
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialTabIndex;
-    _pageController = PageController(initialPage: _currentIndex);
     _departmentsFuture = _loadDepartments();
     _featuredDoctorsFuture = _loadFeaturedDoctors();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -45,81 +39,81 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(covariant HomePage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialTabIndex != widget.initialTabIndex) {
-      setState(() {
-        _currentIndex = widget.initialTabIndex;
-      });
-      _pageController.jumpToPage(widget.initialTabIndex);
-    }
-  }
-
   Future<List<DepartmentEntity>> _loadDepartments() async {
     final departments = await getIt<GetDepartmentsUsecase>()();
-    return departments.toList();
+    return departments;
   }
 
   Future<List<DoctorEntity>> _loadFeaturedDoctors() async {
     final snapshot = await FirebaseFirestore.instance
         .collection('Doctors')
         .where('isActive', isEqualTo: true)
-        .limit(5)
+        .limit(80)
         .get();
 
-    final doctors = snapshot.docs.map(DoctorModel.fromFirestore).toList();
+    if (snapshot.docs.isEmpty) return [];
 
-    return doctors;
+    final completedSnapshot = await FirebaseFirestore.instance
+        .collection('Appointments')
+        .where('status', isEqualTo: 'completed')
+        .limit(1000)
+        .get();
+    final completedByDoctor = <String, int>{};
+    for (final doc in completedSnapshot.docs) {
+      final doctorId = doc.data()['doctorId']?.toString() ?? '';
+      if (doctorId.isEmpty) continue;
+      completedByDoctor[doctorId] = (completedByDoctor[doctorId] ?? 0) + 1;
+    }
+
+    final candidates = await Future.wait(
+      snapshot.docs.map((doc) async {
+        final data = doc.data();
+        var doctor = DoctorModel.fromFirestore(doc);
+        final userData = await _getDoctorUserData(doctor.userId);
+        doctor = DoctorModel.withUserProfile(doctor, userData);
+        return _FeaturedDoctorCandidate(
+          doctor: doctor,
+          isFeatured: data['isFeatured'] == true,
+          featuredRank: int.tryParse(data['featuredRank']?.toString() ?? ''),
+          completedCount: completedByDoctor[doctor.id] ?? 0,
+        );
+      }),
+    );
+
+    candidates.sort(_compareFeaturedDoctors);
+    return candidates.take(5).map((candidate) => candidate.doctor).toList();
   }
 
+  Future<Map<String, dynamic>?> _getDoctorUserData(String userId) async {
+    if (userId.trim().isEmpty) return null;
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .get();
+    if (doc.exists) return doc.data();
+    final byUid = await FirebaseFirestore.instance
+        .collection('users')
+        .where('uid', isEqualTo: userId)
+        .limit(1)
+        .get();
+    if (byUid.docs.isNotEmpty) return byUid.docs.first.data();
+    return null;
+  }
 
-  _DepartmentVisual _departmentVisual(String id) {
-    switch (id) {
-      case 'dept_cardio':
-        return const _DepartmentVisual(
-          label: 'Tim mạch',
-          icon: Icons.favorite_rounded,
-          colors: [Color(0xFFEC5D5D), Color(0xFFB91C1C)],
-        );
-      case 'dept_internal':
-        return const _DepartmentVisual(
-          label: 'Nội tổng quát',
-          icon: Icons.biotech_rounded,
-          colors: [Color(0xFF2DD4BF), Color(0xFF0F766E)],
-        );
-      case 'dept_pedia':
-        return const _DepartmentVisual(
-          label: 'Nhi khoa',
-          icon: Icons.child_care_rounded,
-          colors: [Color(0xFF60A5FA), Color(0xFF2563EB)],
-        );
-      case 'dept_obgyn':
-        return const _DepartmentVisual(
-          label: 'Phụ sản',
-          icon: Icons.pregnant_woman_rounded,
-          colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-        );
-      case 'dept_ent':
-        return const _DepartmentVisual(
-          label: 'Tai Mũi Họng',
-          icon: Icons.face_rounded,
-          colors: [Color(0xFF818CF8), Color(0xFF4F46E5)],
-        );
-      case 'dept_dermatology':
-      default:
-        return const _DepartmentVisual(
-          label: 'Da liễu',
-          icon: Icons.healing_rounded,
-          colors: [Color(0xFF34D399), Color(0xFF059669)],
-        );
-    }
+  int _compareFeaturedDoctors(
+    _FeaturedDoctorCandidate a,
+    _FeaturedDoctorCandidate b,
+  ) {
+    if (a.isFeatured != b.isFeatured) return b.isFeatured ? 1 : -1;
+
+    final aRank = a.featuredRank ?? 1 << 30;
+    final bRank = b.featuredRank ?? 1 << 30;
+    if (aRank != bRank) return aRank.compareTo(bRank);
+
+    final scoreCompare = b.score.compareTo(a.score);
+    if (scoreCompare != 0) return scoreCompare;
+
+    return b.doctor.yearsOfExperience.compareTo(a.doctor.yearsOfExperience);
   }
 
   void _showDepartmentsSheet(List<DepartmentEntity> departments) {
@@ -153,7 +147,7 @@ class _HomePageState extends State<HomePage> {
               const Padding(
                 padding: EdgeInsets.fromLTRB(20, 18, 20, 6),
                 child: Text(
-                  'Tất cả chuyên khoa',
+                  'TÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ chuyÃƒÂªn khoa',
                   style: TextStyle(
                     color: Color(0xFF131826),
                     fontSize: 20,
@@ -164,7 +158,7 @@ class _HomePageState extends State<HomePage> {
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
-                  'Chọn chuyên khoa để xem bác sĩ phù hợp.',
+                  'ChÃ¡Â»Ân chuyÃƒÂªn khoa Ã„â€˜Ã¡Â»Æ’ xem bÃƒÂ¡c sÃ„Â© phÃƒÂ¹ hÃ¡Â»Â£p.',
                   style: TextStyle(
                     color: Color(0xFF5C6477),
                     fontSize: 13,
@@ -180,12 +174,12 @@ class _HomePageState extends State<HomePage> {
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final department = departments[index];
-                    final visual = _departmentVisual(department.id);
+                    final visual = departmentVisualFor(department);
 
                     return InkWell(
                       onTap: () {
                         Navigator.pop(context); // Close the sheet first
-                        _navigateToDetail(department, index);
+                        _navigateToDetail(department);
                       },
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
@@ -209,7 +203,9 @@ class _HomePageState extends State<HomePage> {
                                 borderRadius: BorderRadius.circular(18),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: visual.colors.first.withOpacity(0.22),
+                                    color: visual.colors.first.withOpacity(
+                                      0.22,
+                                    ),
                                     blurRadius: 12,
                                     offset: const Offset(0, 6),
                                   ),
@@ -300,7 +296,7 @@ class _HomePageState extends State<HomePage> {
               const Padding(
                 padding: EdgeInsets.fromLTRB(20, 18, 20, 6),
                 child: Text(
-                  'Bác sĩ nổi bật',
+                  'BÃƒÂ¡c sÃ„Â© Nổi bật',
                   style: TextStyle(
                     color: Color(0xFF131826),
                     fontSize: 20,
@@ -311,7 +307,7 @@ class _HomePageState extends State<HomePage> {
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
-                  'Danh sách bác sĩ đang hoạt động trong hệ thống.',
+                  'Danh sÃƒÂ¡ch bÃƒÂ¡c sÃ„Â© Ã„â€˜ang hoÃ¡ÂºÂ¡t Ã„â€˜Ã¡Â»â„¢ng trong hÃ¡Â»â€¡ thÃ¡Â»â€˜ng.',
                   style: TextStyle(
                     color: Color(0xFF5C6477),
                     fontSize: 13,
@@ -329,7 +325,13 @@ class _HomePageState extends State<HomePage> {
                     final doctor = doctors[index];
                     final displayName = doctor.name.isNotEmpty
                         ? doctor.name
-                        : (index == 0 ? 'BS. Nguyễn Minh Đức' : (index == 1 ? 'BS. Trần Thu Hà' : (index == 2 ? 'BS. Lê Quang Vinh' : 'BS. Phạm Hoàng Anh')));
+                        : (index == 0
+                              ? 'BS. NguyÃ¡Â»â€¦n Minh Ã„ÂÃ¡Â»Â©c'
+                              : (index == 1
+                                    ? 'BS. TrÃ¡ÂºÂ§n Thu HÃƒÂ '
+                                    : (index == 2
+                                          ? 'BS. LÃƒÂª Quang Vinh'
+                                          : 'BS. PhÃ¡ÂºÂ¡m HoÃƒÂ ng Anh')));
 
                     return InkWell(
                       onTap: () {
@@ -354,9 +356,9 @@ class _HomePageState extends State<HomePage> {
                               backgroundColor: const Color(0xFFE4ECFF),
                               child: doctor.imageUrl == null
                                   ? const Icon(
-                                Icons.person_rounded,
-                                color: Color(0xFF0A3DA8),
-                              )
+                                      Icons.person_rounded,
+                                      color: Color(0xFF0A3DA8),
+                                    )
                                   : null,
                             ),
                             const SizedBox(width: 14),
@@ -376,7 +378,10 @@ class _HomePageState extends State<HomePage> {
                                   Text(
                                     doctor.departmentName.isNotEmpty
                                         ? doctor.departmentName
-                                        : (doctor.specialization.isNotEmpty ? doctor.specialization.toUpperCase() : 'NỘI TỔNG QUÁT'),
+                                        : (doctor.specialization.isNotEmpty
+                                              ? doctor.specialization
+                                                    .toUpperCase()
+                                              : 'NÃ¡Â»ËœI TÃ¡Â»â€NG QUÃƒÂT'),
                                     style: const TextStyle(
                                       color: Color(0xFF5C6477),
                                       fontSize: 12.5,
@@ -385,7 +390,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    '${doctor.yearsOfExperience} năm kinh nghiệm',
+                                    '${doctor.yearsOfExperience} nÃ„Æ’m kinh nghiÃ¡Â»â€¡m',
                                     style: const TextStyle(
                                       color: Color(0xFF8B92A6),
                                       fontSize: 11,
@@ -433,7 +438,7 @@ class _HomePageState extends State<HomePage> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _isLoggingOut = false);
-      _showMessage('Không thể đăng xuất. Vui lòng thử lại.');
+      _showMessage('Khong the dang xuat. Vui long thu lai.');
       return;
     }
 
@@ -443,7 +448,7 @@ class _HomePageState extends State<HomePage> {
     Navigator.pushNamedAndRemoveUntil(
       context,
       AppRoutes.login,
-          (route) => false,
+      (route) => false,
     );
   }
 
@@ -451,45 +456,43 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        children: [
-          KeepAliveWrapper(child: _buildHomeBody()),
-          const KeepAliveWrapper(child: AppointmentManagementPage()),
-          const KeepAliveWrapper(child: NotificationsPage()),
-          const KeepAliveWrapper(child: ProfilePage(initialTab: 0)),
-        ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 22),
+              _buildSearch(),
+              const SizedBox(height: 22),
+              _buildUpcomingCard(),
+              const SizedBox(height: 22),
+              _buildActionGrid(),
+              const SizedBox(height: 22),
+              _buildCategorySection(),
+              const SizedBox(height: 26),
+              _buildDoctorSection(),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'home_ai_chat',
+        backgroundColor: const Color(0xFF0D6EFD),
+        foregroundColor: Colors.white,
+        tooltip: 'AI Chat',
+        onPressed: _openChatScreen,
+        child: const Icon(Icons.smart_toy_rounded),
       ),
       bottomNavigationBar: _buildBottomNavigation(),
     );
   }
 
-  Widget _buildHomeBody() {
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(),
-            const SizedBox(height: 22),
-            _buildSearch(),
-            const SizedBox(height: 22),
-            _buildUpcomingCard(),
-            const SizedBox(height: 22),
-            _buildActionGrid(),
-            const SizedBox(height: 22),
-            _buildCategorySection(),
-            const SizedBox(height: 26),
-            _buildDoctorSection(),
-          ],
-        ),
-      ),
+  void _openChatScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ChatScreen()),
     );
   }
 
@@ -504,17 +507,19 @@ class _HomePageState extends State<HomePage> {
         isNewUser = true;
       }
     }
-    final welcomeStr = isNewUser ? 'CHÀO MỪNG,' : 'CHÀO MỪNG TRỞ LẠI,';
+    final welcomeStr = isNewUser
+        ? 'CHÃƒâ‚¬O MÃ¡Â»ÂªNG,'
+        : 'CHÃƒâ‚¬O MÃ¡Â»ÂªNG TRÃ¡Â»Å¾ LÃ¡ÂºÂ I,';
 
     return StreamBuilder<DocumentSnapshot>(
       stream: authUser != null
           ? FirebaseFirestore.instance
-          .collection('users')
-          .doc(authUser.uid)
-          .snapshots()
+                .collection('users')
+                .doc(authUser.uid)
+                .snapshots()
           : const Stream.empty(),
       builder: (context, snapshot) {
-        String userName = 'Người dùng';
+        String userName = 'NgÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng';
         String? avatarUrl;
 
         if (snapshot.hasData && snapshot.data!.exists) {
@@ -544,24 +549,24 @@ class _HomePageState extends State<HomePage> {
                 child: ClipOval(
                   child: avatarUrl != null && avatarUrl.isNotEmpty
                       ? Image.network(
-                    avatarUrl,
-                    fit: BoxFit.cover,
-                    width: 44,
-                    height: 44,
-                  )
+                          avatarUrl,
+                          fit: BoxFit.cover,
+                          width: 44,
+                          height: 44,
+                        )
                       : Container(
-                    width: 44,
-                    height: 44,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFBEE6EA),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.person,
-                      color: Color(0xFF1E3148),
-                      size: 24,
-                    ),
-                  ),
+                          width: 44,
+                          height: 44,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFBEE6EA),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.person,
+                            color: Color(0xFF1E3148),
+                            size: 24,
+                          ),
+                        ),
                 ),
               ),
             ),
@@ -596,15 +601,19 @@ class _HomePageState extends State<HomePage> {
             StreamBuilder<QuerySnapshot>(
               stream: authUser != null
                   ? FirebaseFirestore.instance
-                  .collection('Notifications')
-                  .where('patientId', isEqualTo: authUser.uid)
-                  .where('isRead', isEqualTo: false)
-                  .snapshots()
+                        .collection('Notifications')
+                        .where('userId', isEqualTo: authUser.uid)
+                        .where('recipientRole', isEqualTo: 'patient')
+                        .where('isRead', isEqualTo: false)
+                        .snapshots()
                   : const Stream.empty(),
               builder: (context, snapshot) {
-                final unreadCount = snapshot.hasData ? snapshot.data!.docs.length : 0;
+                final unreadCount = snapshot.hasData
+                    ? snapshot.data!.docs.length
+                    : 0;
                 return GestureDetector(
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.notifications),
+                  onTap: () =>
+                      Navigator.pushNamed(context, AppRoutes.notifications),
                   child: Badge(
                     label: Text(unreadCount.toString()),
                     isLabelVisible: unreadCount > 0,
@@ -632,9 +641,16 @@ class _HomePageState extends State<HomePage> {
                   const SnackBar(
                     content: Row(
                       children: [
-                        SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        ),
                         SizedBox(width: 12),
-                        Text('Đang làm mới dữ liệu...'),
+                        Text('Ã„Âang lÃƒÂ m mÃ¡Â»â€ºi dÃ¡Â»Â¯ liÃ¡Â»â€¡u...'),
                       ],
                     ),
                     duration: Duration(seconds: 1),
@@ -642,8 +658,12 @@ class _HomePageState extends State<HomePage> {
                   ),
                 );
               },
-              icon: const Icon(Icons.refresh_rounded, color: Color(0xFF202637), size: 24),
-              tooltip: 'Làm mới',
+              icon: const Icon(
+                Icons.refresh_rounded,
+                color: Color(0xFF202637),
+                size: 24,
+              ),
+              tooltip: 'LÃƒÂ m mÃ¡Â»â€ºi',
             ),
             const SizedBox(width: 14),
             TextButton.icon(
@@ -661,13 +681,13 @@ class _HomePageState extends State<HomePage> {
               ),
               icon: _isLoggingOut
                   ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Icon(Icons.logout_rounded, size: 18),
               label: Text(
-                _isLoggingOut ? '...' : 'Đăng xuất',
+                _isLoggingOut ? '...' : 'Dang xuat',
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -697,7 +717,7 @@ class _HomePageState extends State<HomePage> {
             SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Tìm bác sĩ, chuyên khoa, dịch vụ',
+                'TÃƒÂ¬m bÃƒÂ¡c sÃ„Â©, chuyÃƒÂªn khoa, dÃ¡Â»â€¹ch vÃ¡Â»Â¥',
                 style: TextStyle(
                   color: Color(0xFF656A79),
                   fontSize: 17,
@@ -745,7 +765,7 @@ class _HomePageState extends State<HomePage> {
                 Icon(Icons.circle, size: 9, color: Color(0xFF7EF8F5)),
                 SizedBox(width: 8),
                 Text(
-                  'LỊCH HẸN SẮP TỚI',
+                  'LÃ¡Â»Å CH HÃ¡ÂºÂ¸N SÃ¡ÂºÂ®P TÃ¡Â»Å¡I',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18 / 1.55,
@@ -761,12 +781,12 @@ class _HomePageState extends State<HomePage> {
             stream: FirebaseAuth.instance.currentUser?.uid == null
                 ? null
                 : FirebaseFirestore.instance
-                .collection('Appointments')
-                .where(
-              'patientId',
-              isEqualTo: FirebaseAuth.instance.currentUser!.uid,
-            )
-                .snapshots(),
+                      .collection('Appointments')
+                      .where(
+                        'patientId',
+                        isEqualTo: FirebaseAuth.instance.currentUser!.uid,
+                      )
+                      .snapshots(),
             builder: (context, snapshot) {
               if (FirebaseAuth.instance.currentUser?.uid == null) {
                 return _buildEmptyUpcomingCard();
@@ -781,7 +801,7 @@ class _HomePageState extends State<HomePage> {
 
               if (snapshot.hasError) {
                 return _buildEmptyUpcomingCard(
-                  message: 'Không tải được lịch hẹn.',
+                  message: 'Khong tai duoc lich hen.',
                 );
               }
 
@@ -812,8 +832,8 @@ class _HomePageState extends State<HomePage> {
                 }
 
                 final nearestDate =
-                (nearestDoc.data()['appointmentDate'] as Timestamp)
-                    .toDate();
+                    (nearestDoc.data()['appointmentDate'] as Timestamp)
+                        .toDate();
                 if (date.isBefore(nearestDate)) {
                   nearestDoc = doc;
                 }
@@ -821,22 +841,26 @@ class _HomePageState extends State<HomePage> {
 
               if (nearestDoc == null) {
                 return _buildEmptyUpcomingCard(
-                  message: 'Bạn chưa có lịch hẹn sắp tới.',
+                  message:
+                      'BÃ¡ÂºÂ¡n chÃ†Â°a cÃƒÂ³ lÃ¡Â»â€¹ch hÃ¡ÂºÂ¹n sÃ¡ÂºÂ¯p tÃ¡Â»â€ºi.',
                 );
               }
 
               final data = nearestDoc.data();
-              final doctorName = (data['doctorName'] ?? 'Bác sĩ') as String;
+              final doctorName =
+                  (data['doctorName'] ?? 'BÃƒÂ¡c sÃ„Â©') as String;
               final departmentName =
-              (data['departmentName'] ?? 'Chuyên khoa') as String;
+                  (data['departmentName'] ?? 'ChuyÃƒÂªn khoa') as String;
               final appointmentDate = (data['appointmentDate'] as Timestamp?)
                   ?.toDate();
               final dateText = appointmentDate == null
-                  ? 'Chưa có ngày'
+                  ? 'ChÃ†Â°a cÃƒÂ³ ngÃƒÂ y'
                   : '${appointmentDate.day.toString().padLeft(2, '0')}/${appointmentDate.month.toString().padLeft(2, '0')}/${appointmentDate.year}';
               final timeSlot =
-              (data['timeSlot'] ?? data['shift'] ?? 'Đang cập nhật')
-              as String;
+                  (data['timeSlot'] ??
+                          data['shift'] ??
+                          'Ã„Âang cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t')
+                      as String;
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -851,7 +875,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '$departmentName • $dateText',
+                    '$departmentName Ã¢â‚¬Â¢ $dateText',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.73),
                       fontSize: 14,
@@ -895,7 +919,10 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 20),
                   InkWell(
-                    onTap: () => Navigator.pushNamed(context, AppRoutes.appointmentManagement),
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.appointmentManagement,
+                    ),
                     borderRadius: BorderRadius.circular(30),
                     child: Container(
                       height: 58,
@@ -905,7 +932,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       child: const Center(
                         child: Text(
-                          'Xem chi tiết',
+                          'Xem chi tiÃ¡ÂºÂ¿t',
                           style: TextStyle(
                             color: Color(0xFF09349E),
                             fontSize: 19,
@@ -926,13 +953,13 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildEmptyUpcomingCard({
     String message =
-    'Hãy đặt lịch để hệ thống hiển thị lịch hẹn mới nhất của bạn.',
+        'HÃƒÂ£y Ã„â€˜Ã¡ÂºÂ·t lÃ¡Â»â€¹ch Ã„â€˜Ã¡Â»Æ’ hÃ¡Â»â€¡ thÃ¡Â»â€˜ng hiÃ¡Â»Æ’n thÃ¡Â»â€¹ lÃ¡Â»â€¹ch hÃ¡ÂºÂ¹n mÃ¡Â»â€ºi nhÃ¡ÂºÂ¥t cÃ¡Â»Â§a bÃ¡ÂºÂ¡n.',
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Chưa có lịch hẹn',
+          'ChÃ†Â°a cÃƒÂ³ lÃ¡Â»â€¹ch hÃ¡ÂºÂ¹n',
           style: TextStyle(
             color: Colors.white,
             fontSize: 27,
@@ -961,7 +988,7 @@ class _HomePageState extends State<HomePage> {
             ),
             child: const Center(
               child: Text(
-                'Đặt lịch ngay',
+                'Ã„ÂÃ¡ÂºÂ·t lÃ¡Â»â€¹ch ngay',
                 style: TextStyle(
                   color: Color(0xFF09349E),
                   fontSize: 19,
@@ -978,25 +1005,25 @@ class _HomePageState extends State<HomePage> {
   Widget _buildActionGrid() {
     const items = [
       _ActionItem(
-        'Đặt lịch khám',
+        'Ã„ÂÃ¡ÂºÂ·t lÃ¡Â»â€¹ch khÃƒÂ¡m',
         Icons.add_circle_outline_rounded,
         Color(0xFFC9D0EE),
         Color(0xFF1348B3),
       ),
       _ActionItem(
-        'Kết quả khám',
+        'KÃ¡ÂºÂ¿t quÃ¡ÂºÂ£ khÃƒÂ¡m',
         Icons.science_outlined,
         Color(0xFF8CE8E5),
         Color(0xFF0B6361),
       ),
       _ActionItem(
-        'Đơn thuốc',
+        'Ã„ÂÃ†Â¡n thuÃ¡Â»â€˜c',
         Icons.medication_outlined,
         Color(0xFFC9D0EE),
         Color(0xFF1348B3),
       ),
       _ActionItem(
-        'Thanh toán',
+        'Thanh toÃƒÂ¡n',
         Icons.payments_outlined,
         Color(0xFFEEDFC8),
         Color(0xFFDB6B00),
@@ -1008,13 +1035,13 @@ class _HomePageState extends State<HomePage> {
         Color(0xFF047857),
       ),
       _ActionItem(
-        'Hồ sơ bệnh án',
+        'HÃ¡Â»â€œ sÃ†Â¡ bÃ¡Â»â€¡nh ÃƒÂ¡n',
         Icons.folder_shared_outlined,
         Color(0xFFCBE0FF),
         Color(0xFF315ED2),
       ),
       _ActionItem(
-        'LỊCH SỬ KHÁM',
+        'LÃ¡Â»Å CH SÃ¡Â»Â¬ KHÃƒÂM',
         Icons.history_toggle_off_rounded,
         Color(0xFFD7DCE6),
         Color(0xFF1F2737),
@@ -1035,21 +1062,22 @@ class _HomePageState extends State<HomePage> {
         final item = items[index];
         return InkWell(
           onTap: () {
-            if (item.label == 'Đặt lịch khám') {
+            if (item.label == 'Ã„ÂÃ¡ÂºÂ·t lÃ¡Â»â€¹ch khÃƒÂ¡m') {
               Navigator.pushNamed(context, AppRoutes.booking);
-            } else if (item.label == 'Hồ sơ bệnh án' || item.label == 'Hồ sơ sức khỏe') {
+            } else if (item.label == 'HÃ¡Â»â€œ sÃ†Â¡ bÃ¡Â»â€¡nh ÃƒÂ¡n' ||
+                item.label == 'HÃ¡Â»â€œ sÃ†Â¡ sÃ¡Â»Â©c khÃ¡Â»Âe') {
               Navigator.pushNamed(context, AppRoutes.medicalRecordDashboard);
-            } else if (item.label == 'Kết quả khám') {
+            } else if (item.label == 'KÃ¡ÂºÂ¿t quÃ¡ÂºÂ£ khÃƒÂ¡m') {
               Navigator.pushNamed(context, AppRoutes.resultsDashboard);
-            } else if (item.label == 'Đơn thuốc') {
+            } else if (item.label == 'Ã„ÂÃ†Â¡n thuÃ¡Â»â€˜c') {
               Navigator.pushNamed(
                 context,
                 AppRoutes.medicalVaultCategory,
-                arguments: 'Đơn Thuốc',
+                arguments: 'Ã„ÂÃ†Â¡n ThuÃ¡Â»â€˜c',
               );
-            } else if (item.label == 'LỊCH SỬ KHÁM') {
+            } else if (item.label == 'LÃ¡Â»Å CH SÃ¡Â»Â¬ KHÃƒÂM') {
               Navigator.pushNamed(context, AppRoutes.examinationHistory);
-            } else if (item.label == 'Thanh toán') {
+            } else if (item.label == 'Thanh toÃƒÂ¡n') {
               Navigator.pushNamed(context, AppRoutes.paymentManagement);
             } else if (item.label == 'BHYT') {
               Navigator.pushNamed(context, AppRoutes.healthInsurance);
@@ -1091,8 +1119,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _navigateToDetail(DepartmentEntity department, int index) {
-    final visual = _departmentVisual(department.id);
+  void _navigateToDetail(DepartmentEntity department) {
+    final visual = departmentVisualFor(department);
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -1113,7 +1141,7 @@ class _HomePageState extends State<HomePage> {
           children: [
             const Expanded(
               child: Text(
-                'Chuyên khoa',
+                'ChuyÃƒÂªn khoa',
                 style: TextStyle(
                   color: Color(0xFF131826),
                   fontSize: 19,
@@ -1128,7 +1156,7 @@ class _HomePageState extends State<HomePage> {
                 _showDepartmentsSheet(departments);
               },
               child: const Text(
-                'Xem thêm',
+                'Xem thÃƒÂªm',
                 style: TextStyle(
                   color: AppColors.primary,
                   fontSize: 17,
@@ -1149,38 +1177,47 @@ class _HomePageState extends State<HomePage> {
               }
 
               if (snapshot.hasError) {
-                return const Center(child: Text('Không tải được chuyên khoa.'));
+                return const Center(
+                  child: Text(
+                    'KhÃƒÂ´ng tÃ¡ÂºÂ£i Ã„â€˜Ã†Â°Ã¡Â»Â£c chuyÃƒÂªn khoa.',
+                  ),
+                );
               }
 
               final departments = snapshot.data ?? [];
               if (departments.isEmpty) {
                 return const Center(
-                  child: Text('Chưa có dữ liệu chuyên khoa.'),
+                  child: Text(
+                    'ChÃ†Â°a cÃƒÂ³ dÃ¡Â»Â¯ liÃ¡Â»â€¡u chuyÃƒÂªn khoa.',
+                  ),
                 );
               }
 
-              final displayDepartments = departments.take(4).toList();
-
               return ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: displayDepartments.length,
+                itemCount: departments.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 12),
                 itemBuilder: (context, index) {
-                  final department = displayDepartments[index];
-                  final visual = _departmentVisual(department.id);
+                  final department = departments[index];
+                  final visual = departmentVisualFor(department);
 
                   // Intelligent Label Fallback logic
                   String title = department.name.replaceAll('Khoa ', '');
                   String subtitle = department.location;
 
-                  if (title.isEmpty || title.contains('Tầng') || title.contains('Khu') || title.length < 2) {
+                  if (title.isEmpty ||
+                      title.contains('TÃ¡ÂºÂ§ng') ||
+                      title.contains('Khu') ||
+                      title.length < 2) {
                     title = visual.label;
-                    subtitle = department.location.isNotEmpty ? department.location : department.name;
+                    subtitle = department.location.isNotEmpty
+                        ? department.location
+                        : department.name;
                   }
 
                   return GestureDetector(
                     onTap: () {
-                      _navigateToDetail(department, index);
+                      _navigateToDetail(department);
                     },
                     child: Container(
                       width: 148,
@@ -1270,7 +1307,7 @@ class _HomePageState extends State<HomePage> {
           children: [
             const Expanded(
               child: Text(
-                'Bác sĩ nổi bật',
+                'BÃƒÂ¡c sÃ„Â© Nổi bật',
                 style: TextStyle(
                   color: Color(0xFF131826),
                   fontSize: 22,
@@ -1285,7 +1322,7 @@ class _HomePageState extends State<HomePage> {
                 _showDoctorsSheet(doctors);
               },
               child: const Text(
-                'Xem thêm',
+                'Xem thÃƒÂªm',
                 style: TextStyle(
                   color: Color(0xFF0A3DA8),
                   fontSize: 17,
@@ -1306,12 +1343,18 @@ class _HomePageState extends State<HomePage> {
               }
 
               if (snapshot.hasError) {
-                return const Center(child: Text('Không tải được bác sĩ.'));
+                return const Center(
+                  child: Text(
+                    'KhÃƒÂ´ng tÃ¡ÂºÂ£i Ã„â€˜Ã†Â°Ã¡Â»Â£c bÃƒÂ¡c sÃ„Â©.',
+                  ),
+                );
               }
 
               final doctors = snapshot.data ?? [];
               if (doctors.isEmpty) {
-                return const Center(child: Text('Chưa có dữ liệu bác sĩ.'));
+                return const Center(
+                  child: Text('ChÃ†Â°a cÃƒÂ³ dÃ¡Â»Â¯ liÃ¡Â»â€¡u bÃƒÂ¡c sÃ„Â©.'),
+                );
               }
 
               return ListView.separated(
@@ -1336,7 +1379,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildBottomNavigation() {
-    const labels = ['TRANG CHỦ', 'LỊCH HẸN', 'THÔNG BÁO', 'HỒ SƠ'];
+    const labels = ['TRANG CHU', 'LICH HEN', 'THONG BAO', 'HO SO'];
     const icons = [
       Icons.home_rounded,
       Icons.calendar_today_rounded,
@@ -1362,24 +1405,28 @@ class _HomePageState extends State<HomePage> {
         ),
         child: Row(
           children: List.generate(labels.length, (index) {
-            final selected = index == _currentIndex;
+            final selected = index == 0;
             return Expanded(
               child: GestureDetector(
                 onTap: () {
-                  setState(() {
-                    _currentIndex = index;
-                  });
-                  _pageController.animateToPage(
-                    index,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
+                  if (index == 1) {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.appointmentManagement,
+                    );
+                  } else if (index == 2) {
+                    Navigator.pushNamed(context, AppRoutes.notifications);
+                  } else if (index == 3) {
+                    Navigator.pushNamed(context, AppRoutes.profile);
+                  }
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 220),
                   padding: const EdgeInsets.symmetric(vertical: 11),
                   decoration: BoxDecoration(
-                    color: selected ? const Color(0xFF0E47B5) : Colors.transparent,
+                    color: selected
+                        ? const Color(0xFF0E47B5)
+                        : Colors.transparent,
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: Column(
@@ -1389,14 +1436,25 @@ class _HomePageState extends State<HomePage> {
                         StreamBuilder<QuerySnapshot>(
                           stream: FirebaseAuth.instance.currentUser != null
                               ? FirebaseFirestore.instance
-                              .collection('Notifications')
-                              .where('userId', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
-                              .where('recipientRole', isEqualTo: 'patient')
-                              .where('isRead', isEqualTo: false)
-                              .snapshots()
+                                    .collection('Notifications')
+                                    .where(
+                                      'userId',
+                                      isEqualTo: FirebaseAuth
+                                          .instance
+                                          .currentUser!
+                                          .uid,
+                                    )
+                                    .where(
+                                      'recipientRole',
+                                      isEqualTo: 'patient',
+                                    )
+                                    .where('isRead', isEqualTo: false)
+                                    .snapshots()
                               : const Stream.empty(),
                           builder: (context, snapshot) {
-                            final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
+                            final count = snapshot.hasData
+                                ? snapshot.data!.docs.length
+                                : 0;
                             return Badge(
                               label: Text(count.toString()),
                               isLabelVisible: count > 0,
@@ -1404,7 +1462,9 @@ class _HomePageState extends State<HomePage> {
                               child: Icon(
                                 icons[index],
                                 size: 24,
-                                color: selected ? Colors.white : const Color(0xFF7B7F8D),
+                                color: selected
+                                    ? Colors.white
+                                    : const Color(0xFF7B7F8D),
                               ),
                             );
                           },
@@ -1413,33 +1473,39 @@ class _HomePageState extends State<HomePage> {
                         StreamBuilder<QuerySnapshot>(
                           stream: FirebaseAuth.instance.currentUser != null
                               ? FirebaseFirestore.instance
-                              .collection('Appointments')
-                              .where('patientId', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
-                              .snapshots()
+                                    .collection('Appointments')
+                                    .where(
+                                      'patientId',
+                                      isEqualTo: FirebaseAuth
+                                          .instance
+                                          .currentUser!
+                                          .uid,
+                                    )
+                                    .snapshots()
                               : const Stream.empty(),
                           builder: (context, snapshot) {
-                            int count = 0;
-                            if (snapshot.hasData) {
-                              final docs = snapshot.data!.docs;
-                              final now = DateTime.now().subtract(const Duration(hours: 1));
-                              count = docs.where((doc) {
-                                final data = doc.data() as Map<String, dynamic>?;
-                                if (data == null) return false;
-                                final status = data['status'] as String?;
-                                if (status == 'cancelled' || status == 'completed') return false;
-                                final ts = data['appointmentDate'];
-                                if (ts is! Timestamp) return false;
-                                return ts.toDate().isAfter(now);
-                              }).length;
-                            }
+                            final activeCount = snapshot.hasData
+                                ? snapshot.data!.docs.where((doc) {
+                                    final data =
+                                        doc.data() as Map<String, dynamic>;
+                                    final status = data['status']?.toString();
+                                    return status == 'pending' ||
+                                        status == 'confirmed' ||
+                                        status == 'cancel_requested' ||
+                                        status == 'calling' ||
+                                        status == 'ongoing';
+                                  }).length
+                                : 0;
                             return Badge(
-                              label: Text(count.toString()),
-                              isLabelVisible: count > 0,
+                              label: Text(activeCount.toString()),
+                              isLabelVisible: activeCount > 0,
                               backgroundColor: AppColors.error,
                               child: Icon(
                                 icons[index],
                                 size: 24,
-                                color: selected ? Colors.white : const Color(0xFF7B7F8D),
+                                color: selected
+                                    ? Colors.white
+                                    : const Color(0xFF7B7F8D),
                               ),
                             );
                           },
@@ -1448,13 +1514,17 @@ class _HomePageState extends State<HomePage> {
                         Icon(
                           icons[index],
                           size: 24,
-                          color: selected ? Colors.white : const Color(0xFF7B7F8D),
+                          color: selected
+                              ? Colors.white
+                              : const Color(0xFF7B7F8D),
                         ),
                       const SizedBox(height: 6),
                       Text(
                         labels[index],
                         style: TextStyle(
-                          color: selected ? Colors.white : const Color(0xFF6E7381),
+                          color: selected
+                              ? Colors.white
+                              : const Color(0xFF6E7381),
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.3,
@@ -1517,16 +1587,20 @@ class _ActionItem {
   final Color fg;
 }
 
-class _DepartmentVisual {
-  const _DepartmentVisual({
-    required this.label,
-    required this.icon,
-    required this.colors,
+class _FeaturedDoctorCandidate {
+  const _FeaturedDoctorCandidate({
+    required this.doctor,
+    required this.isFeatured,
+    required this.featuredRank,
+    required this.completedCount,
   });
 
-  final String label;
-  final IconData icon;
-  final List<Color> colors;
+  final DoctorEntity doctor;
+  final bool isFeatured;
+  final int? featuredRank;
+  final int completedCount;
+
+  int get score => doctor.yearsOfExperience * 10 + completedCount * 3;
 }
 
 class _DoctorCard extends StatelessWidget {
@@ -1543,7 +1617,11 @@ class _DoctorCard extends StatelessWidget {
   final VoidCallback onBookingTap;
 
   String _formatPrice(double price) {
-    return '${price.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ';
+    final value = price.toInt().toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
+    return '${value}đ';
   }
 
   @override
@@ -1581,9 +1659,15 @@ class _DoctorCard extends StatelessWidget {
                     height: 95,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: const Color(0xFFF1F5F9), width: 2),
+                      border: Border.all(
+                        color: const Color(0xFFF1F5F9),
+                        width: 2,
+                      ),
                       image: DecorationImage(
-                        image: NetworkImage(doctor.imageUrl ?? 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300'),
+                        image: NetworkImage(
+                          doctor.imageUrl ??
+                              'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300',
+                        ),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -1596,9 +1680,15 @@ class _DoctorCard extends StatelessWidget {
                       decoration: const BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+                        boxShadow: [
+                          BoxShadow(color: Colors.black12, blurRadius: 4),
+                        ],
                       ),
-                      child: const Icon(Icons.verified_rounded, color: Color(0xFF2563EB), size: 18),
+                      child: const Icon(
+                        Icons.verified_rounded,
+                        color: Color(0xFF2563EB),
+                        size: 18,
+                      ),
                     ),
                   ),
                 ],
@@ -1612,58 +1702,77 @@ class _DoctorCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFF7ED),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 16),
+                              const Icon(
+                                Icons.star_rounded,
+                                color: Color(0xFFF59E0B),
+                                size: 16,
+                              ),
                               const SizedBox(width: 4),
                               const Text(
-                                '4.9',
-                                style: TextStyle(color: Color(0xFF9A3412), fontWeight: FontWeight.w800, fontSize: 13),
+                                'Nổi bật',
+                                style: TextStyle(
+                                  color: Color(0xFF9A3412),
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 13,
+                                ),
                               ),
                             ],
                           ),
                         ),
                         Text(
-                          '${doctor.yearsOfExperience} năm exp',
-                          style: const TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold, fontSize: 11),
+                          '${doctor.yearsOfExperience} năm KN',
+                          style: const TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      doctor.name.isNotEmpty
-                          ? doctor.name
-                          : (index == 0 ? 'BS. Nguyễn Minh Đức' : (index == 1 ? 'BS. Trần Thu Hà' : (index == 2 ? 'BS. Lê Quang Vinh' : 'BS. Phạm Hoàng Anh'))),
+                      doctor.name.isNotEmpty ? doctor.name : 'Bác sĩ',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                          color: Color(0xFF0F172A),
-                          fontWeight: FontWeight.w900,
-                          fontSize: 18,
-                          letterSpacing: -0.5
+                        color: Color(0xFF0F172A),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
+                        letterSpacing: -0.5,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       doctor.departmentName.isNotEmpty
                           ? doctor.departmentName
-                          : (doctor.specialization.isNotEmpty ? doctor.specialization.toUpperCase() : 'NỘI TỔNG QUÁT'),
+                          : (doctor.specialization.isNotEmpty
+                                ? doctor.specialization.toUpperCase()
+                                : 'NÃ¡Â»ËœI TÃ¡Â»â€NG QUÃƒÂT'),
                       style: const TextStyle(
-                          color: Color(0xFF6366F1),
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
-                          letterSpacing: 0.5
+                        color: Color(0xFF6366F1),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        letterSpacing: 0.5,
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
                       _formatPrice(doctor.consultationFee),
-                      style: const TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w900, fontSize: 16),
+                      style: const TextStyle(
+                        color: Color(0xFF0F172A),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
+                      ),
                     ),
                   ],
                 ),
@@ -1687,11 +1796,19 @@ class _DoctorCard extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
-                        Icon(Icons.person_search_rounded, size: 18, color: Color(0xFF475569)),
+                        Icon(
+                          Icons.person_search_rounded,
+                          size: 18,
+                          color: Color(0xFF475569),
+                        ),
                         SizedBox(width: 8),
                         Text(
-                          'Hồ sơ',
-                          style: TextStyle(color: Color(0xFF475569), fontWeight: FontWeight.w800, fontSize: 14),
+                          'HÃ¡Â»â€œ sÃ†Â¡',
+                          style: TextStyle(
+                            color: Color(0xFF475569),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                          ),
                         ),
                       ],
                     ),
@@ -1723,11 +1840,19 @@ class _DoctorCard extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
-                        Icon(Icons.calendar_month_rounded, size: 18, color: Colors.white),
+                        Icon(
+                          Icons.calendar_month_rounded,
+                          size: 18,
+                          color: Colors.white,
+                        ),
                         SizedBox(width: 8),
                         Text(
-                          'Đặt lịch',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14),
+                          'Ã„ÂÃ¡ÂºÂ·t lÃ¡Â»â€¹ch',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                          ),
                         ),
                       ],
                     ),
@@ -1740,23 +1865,4 @@ class _DoctorCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class KeepAliveWrapper extends StatefulWidget {
-  final Widget child;
-  const KeepAliveWrapper({super.key, required this.child});
-
-  @override
-  State<KeepAliveWrapper> createState() => _KeepAliveWrapperState();
-}
-
-class _KeepAliveWrapperState extends State<KeepAliveWrapper> with AutomaticKeepAliveClientMixin {
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return widget.child;
-  }
-
-  @override
-  bool get wantKeepAlive => true;
 }

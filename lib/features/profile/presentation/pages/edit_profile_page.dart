@@ -20,7 +20,7 @@ class EditProfilePage extends StatefulWidget {
 
 class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
-  
+
   late TextEditingController _fullNameController;
   late TextEditingController _phoneController;
   late TextEditingController _dobController;
@@ -34,7 +34,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   List<dvhcvn.Level1> _provincesList = [];
   List<dvhcvn.Level2> _districtsList = [];
   List<dvhcvn.Level3> _wardsList = [];
-  
+
   String? _selectedGender;
   String? _avatarUrl;
   File? _selectedImage;
@@ -48,14 +48,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _phoneController = TextEditingController(text: widget.user.phone);
     _dobController = TextEditingController(text: widget.user.dateOfBirth ?? '');
     _cccdController = TextEditingController(text: widget.user.cccd);
-    _healthInsuranceController = TextEditingController(text: widget.user.healthInsuranceNumber ?? '');
+    _healthInsuranceController = TextEditingController(
+      text: widget.user.healthInsuranceNumber ?? '',
+    );
     _emailController = TextEditingController(text: widget.user.email);
     _streetController = TextEditingController();
-    _provincesList = List.from(dvhcvn.level1s)..sort((a, b) => a.name.compareTo(b.name));
+    _provincesList = List.from(dvhcvn.level1s)
+      ..sort((a, b) => a.name.compareTo(b.name));
     _parseAddress(widget.user.address);
-    
+
     _avatarUrl = widget.user.avatarUrl;
-    
+
     final gender = widget.user.gender;
     if (gender == 'Nam' || gender == 'Nữ' || gender == 'Khác') {
       _selectedGender = gender;
@@ -79,7 +82,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
       if (provinceObj != null) {
         _selectedProvince = provinceObj;
-        _districtsList = List.from(provinceObj.children)..sort((a, b) => a.name.compareTo(b.name));
+        _districtsList = List.from(provinceObj.children)
+          ..sort((a, b) => a.name.compareTo(b.name));
 
         // Find District
         final districtObj = _districtsList.cast<dvhcvn.Level2?>().firstWhere(
@@ -89,7 +93,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
         if (districtObj != null) {
           _selectedDistrict = districtObj;
-          _wardsList = List.from(districtObj.children)..sort((a, b) => a.name.compareTo(b.name));
+          _wardsList = List.from(districtObj.children)
+            ..sort((a, b) => a.name.compareTo(b.name));
 
           // Find Ward
           final wardObj = _wardsList.cast<dvhcvn.Level3?>().firstWhere(
@@ -116,7 +121,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
       if (provinceObj != null) {
         _selectedProvince = provinceObj;
-        _districtsList = List.from(provinceObj.children)..sort((a, b) => a.name.compareTo(b.name));
+        _districtsList = List.from(provinceObj.children)
+          ..sort((a, b) => a.name.compareTo(b.name));
 
         // Find District
         final districtObj = _districtsList.cast<dvhcvn.Level2?>().firstWhere(
@@ -126,7 +132,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
         if (districtObj != null) {
           _selectedDistrict = districtObj;
-          _wardsList = List.from(districtObj.children)..sort((a, b) => a.name.compareTo(b.name));
+          _wardsList = List.from(districtObj.children)
+            ..sort((a, b) => a.name.compareTo(b.name));
         }
       }
       _streetController.text = streetName;
@@ -165,7 +172,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Future<void> _pickAndUploadImage() async {
     try {
       final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+      final pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+      );
       if (pickedFile == null) return;
 
       setState(() {
@@ -179,22 +189,33 @@ class _EditProfilePageState extends State<EditProfilePage> {
           .child('${widget.user.uid}.jpg');
       await storageRef.putFile(_selectedImage!);
       final downloadUrl = await storageRef.getDownloadURL();
-      
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.user.uid)
+          .set({
+            'avatarUrl': downloadUrl,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+
       setState(() {
         _avatarUrl = downloadUrl;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Tải ảnh đại diện thành công!'),
-          backgroundColor: Color(0xFF2E7D32),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tải ảnh đại diện thành công!'),
+            backgroundColor: Color(0xFF2E7D32),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Lỗi (Cần cấp quyền Web/Khởi động lại app): $e'),
-          backgroundColor: const Color(0xFFB3261E),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi (Cần cấp quyền Web/Khởi động lại app): $e'),
+            backgroundColor: const Color(0xFFB3261E),
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -222,9 +243,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       builder: (context, child) {
         return Theme(
           data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF0F49B8),
-            ),
+            colorScheme: const ColorScheme.light(primary: Color(0xFF0F49B8)),
           ),
           child: child!,
         );
@@ -260,7 +279,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
       return;
     }
 
-    setState(() { _isSaving = true; });
+    setState(() {
+      _isSaving = true;
+    });
 
     try {
       final updatedData = {
@@ -273,14 +294,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
         'address': _buildFullAddress(),
         'email': _emailController.text.trim(),
         if (_avatarUrl != null) 'avatarUrl': _avatarUrl,
+        'updatedAt': FieldValue.serverTimestamp(),
       };
 
       final batch = FirebaseFirestore.instance.batch();
-      final usersRef = FirebaseFirestore.instance.collection('users').doc(widget.user.uid);
-      final upperUsersRef = FirebaseFirestore.instance.collection('Users').doc(widget.user.uid);
+      final usersRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.user.uid);
 
       batch.set(usersRef, updatedData, SetOptions(merge: true));
-      batch.set(upperUsersRef, updatedData, SetOptions(merge: true));
 
       await batch.commit();
 
@@ -303,7 +325,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
         );
       }
     } finally {
-      if (mounted) setState(() { _isSaving = false; });
+      if (mounted)
+        setState(() {
+          _isSaving = false;
+        });
     }
   }
 
@@ -347,17 +372,25 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             color: Colors.black.withOpacity(0.08),
                             blurRadius: 15,
                             offset: const Offset(0, 8),
-                          )
+                          ),
                         ],
                       ),
                       child: ClipOval(
                         child: _isUploadingAvatar
-                            ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                            ? const Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                ),
+                              )
                             : _selectedImage != null
-                                ? Image.file(_selectedImage!, fit: BoxFit.cover)
-                                : _avatarUrl != null && _avatarUrl!.isNotEmpty
-                                    ? Image.network(_avatarUrl!, fit: BoxFit.cover)
-                                    : const Icon(Icons.person, color: Colors.white, size: 50),
+                            ? Image.file(_selectedImage!, fit: BoxFit.cover)
+                            : _avatarUrl != null && _avatarUrl!.isNotEmpty
+                            ? Image.network(_avatarUrl!, fit: BoxFit.cover)
+                            : const Icon(
+                                Icons.person,
+                                color: Colors.white,
+                                size: 50,
+                              ),
                       ),
                     ),
                     Positioned(
@@ -371,7 +404,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             color: Color(0xFF0A3DA8),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ),
@@ -393,7 +430,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 controller: _fullNameController,
                 label: 'Họ và tên',
                 icon: Icons.person_outline,
-                validator: (val) => val == null || val.isEmpty ? 'Vui lòng nhập họ tên' : null,
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'Vui lòng nhập họ tên' : null,
               ),
 
               // Date of Birth Field (Read Only, DatePicker)
@@ -491,7 +529,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   if (val == null || val.trim().isEmpty) {
                     return 'Vui lòng nhập email liên hệ';
                   }
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(val.trim())) {
+                  if (!RegExp(
+                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                  ).hasMatch(val.trim())) {
                     return 'Email không đúng định dạng';
                   }
                   return null;
@@ -513,8 +553,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       _selectedProvince = newProvince;
                       _selectedDistrict = null;
                       _selectedWard = null;
-                      _districtsList = newProvince != null 
-                          ? (List.from(newProvince.children)..sort((a, b) => a.name.compareTo(b.name)))
+                      _districtsList = newProvince != null
+                          ? (List.from(newProvince.children)
+                              ..sort((a, b) => a.name.compareTo(b.name)))
                           : [];
                       _wardsList = [];
                     });
@@ -529,7 +570,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     icon: Icons.map_outlined,
                   ),
                   validator: (val) {
-                    final hasAnyValue = _selectedProvince != null ||
+                    final hasAnyValue =
+                        _selectedProvince != null ||
                         _selectedDistrict != null ||
                         _selectedWard != null ||
                         _streetController.text.trim().isNotEmpty;
@@ -558,8 +600,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           setState(() {
                             _selectedDistrict = newDistrict;
                             _selectedWard = null;
-                            _wardsList = newDistrict != null 
-                                ? (List.from(newDistrict.children)..sort((a, b) => a.name.compareTo(b.name)))
+                            _wardsList = newDistrict != null
+                                ? (List.from(newDistrict.children)
+                                    ..sort((a, b) => a.name.compareTo(b.name)))
                                 : [];
                           });
                         },
@@ -573,7 +616,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     icon: Icons.location_city_outlined,
                   ),
                   validator: (val) {
-                    final hasAnyValue = _selectedProvince != null ||
+                    final hasAnyValue =
+                        _selectedProvince != null ||
                         _selectedDistrict != null ||
                         _selectedWard != null ||
                         _streetController.text.trim().isNotEmpty;
@@ -613,7 +657,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     icon: Icons.domain_outlined,
                   ),
                   validator: (val) {
-                    final hasAnyValue = _selectedProvince != null ||
+                    final hasAnyValue =
+                        _selectedProvince != null ||
                         _selectedDistrict != null ||
                         _selectedWard != null ||
                         _streetController.text.trim().isNotEmpty;
@@ -631,7 +676,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 label: 'Số nhà, tên đường',
                 icon: Icons.home_outlined,
                 validator: (val) {
-                  final hasAnyValue = _selectedProvince != null ||
+                  final hasAnyValue =
+                      _selectedProvince != null ||
                       _selectedDistrict != null ||
                       _selectedWard != null ||
                       _streetController.text.trim().isNotEmpty;
@@ -641,13 +687,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   return null;
                 },
               ),
-              
+
               const SizedBox(height: 40),
               SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _isSaving || _isUploadingAvatar ? null : _saveProfile,
+                  onPressed: _isSaving || _isUploadingAvatar
+                      ? null
+                      : _saveProfile,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF0F49B8),
                     foregroundColor: Colors.white,

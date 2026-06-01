@@ -9,16 +9,17 @@ class BookingState extends Equatable {
   final List<DoctorEntity> doctors;
   final List<ScheduleEntity> schedules;
   final List<ShiftEntity> shifts;
-  
+
   final DepartmentEntity? selectedDepartment;
   final DoctorEntity? selectedDoctor;
   final DateTime? selectedDate;
+  final ScheduleEntity? selectedSchedule;
   final ShiftEntity? selectedShift;
   final int? selectedQueueNumber;
   final List<int> takenQueueNumbers;
   final String selectedPaymentMethod;
   final String symptoms;
-  
+
   final HospitalAppointment? createdAppointment;
   final String? errorMessage;
   final List<HospitalAppointment> patientAppointments;
@@ -33,6 +34,7 @@ class BookingState extends Equatable {
     this.selectedDepartment,
     this.selectedDoctor,
     this.selectedDate,
+    this.selectedSchedule,
     this.selectedShift,
     this.selectedQueueNumber,
     this.takenQueueNumbers = const [],
@@ -53,6 +55,7 @@ class BookingState extends Equatable {
     DepartmentEntity? selectedDepartment,
     DoctorEntity? selectedDoctor,
     DateTime? selectedDate,
+    ScheduleEntity? selectedSchedule,
     ShiftEntity? selectedShift,
     int? selectedQueueNumber,
     List<int>? takenQueueNumbers,
@@ -61,6 +64,7 @@ class BookingState extends Equatable {
     HospitalAppointment? createdAppointment,
     String? errorMessage,
     List<HospitalAppointment>? patientAppointments,
+    bool resetSelectedTime = false,
   }) {
     return BookingState(
       status: status ?? this.status,
@@ -72,10 +76,18 @@ class BookingState extends Equatable {
       selectedDepartment: selectedDepartment ?? this.selectedDepartment,
       selectedDoctor: selectedDoctor ?? this.selectedDoctor,
       selectedDate: selectedDate ?? this.selectedDate,
-      selectedShift: selectedShift ?? this.selectedShift,
-      selectedQueueNumber: selectedQueueNumber ?? this.selectedQueueNumber,
+      selectedSchedule: resetSelectedTime
+          ? null
+          : selectedSchedule ?? this.selectedSchedule,
+      selectedShift: resetSelectedTime
+          ? null
+          : selectedShift ?? this.selectedShift,
+      selectedQueueNumber: resetSelectedTime
+          ? null
+          : selectedQueueNumber ?? this.selectedQueueNumber,
       takenQueueNumbers: takenQueueNumbers ?? this.takenQueueNumbers,
-      selectedPaymentMethod: selectedPaymentMethod ?? this.selectedPaymentMethod,
+      selectedPaymentMethod:
+          selectedPaymentMethod ?? this.selectedPaymentMethod,
       symptoms: symptoms ?? this.symptoms,
       createdAppointment: createdAppointment ?? this.createdAppointment,
       errorMessage: errorMessage ?? this.errorMessage,
@@ -85,21 +97,22 @@ class BookingState extends Equatable {
 
   @override
   List<Object?> get props => [
-        status,
-        currentStep,
-        departments,
-        doctors,
-        schedules,
-        shifts,
-        selectedDepartment,
-        selectedDoctor,
-        selectedDate,
-        selectedShift,
-        selectedQueueNumber,
-        takenQueueNumbers,
-        selectedPaymentMethod,
-        symptoms,
-        createdAppointment,
-        errorMessage,
-      ];
+    status,
+    currentStep,
+    departments,
+    doctors,
+    schedules,
+    shifts,
+    selectedDepartment,
+    selectedDoctor,
+    selectedDate,
+    selectedSchedule,
+    selectedShift,
+    selectedQueueNumber,
+    takenQueueNumbers,
+    selectedPaymentMethod,
+    symptoms,
+    createdAppointment,
+    errorMessage,
+  ];
 }
