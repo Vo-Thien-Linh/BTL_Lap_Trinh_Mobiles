@@ -139,6 +139,7 @@ class HospitalAppointment extends Equatable {
   final String shiftId;
   final String timeSlot;
   final int queueNumber;
+  final int? queueOrder;
   final String roomNumber;
   final double consultationFee;
   final String? insuranceNumber;
@@ -169,6 +170,7 @@ class HospitalAppointment extends Equatable {
     required this.shiftId,
     required this.timeSlot,
     required this.queueNumber,
+    this.queueOrder,
     required this.roomNumber,
     required this.consultationFee,
     this.insuranceNumber,
@@ -193,5 +195,6 @@ class HospitalAppointment extends Equatable {
     appointmentDate,
     scheduleId,
     queueNumber,
+    queueOrder,
   ];
 }
