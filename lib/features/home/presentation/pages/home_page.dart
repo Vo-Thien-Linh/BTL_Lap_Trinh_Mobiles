@@ -147,7 +147,7 @@ class _HomePageState extends State<HomePage> {
               const Padding(
                 padding: EdgeInsets.fromLTRB(20, 18, 20, 6),
                 child: Text(
-                  'TÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ chuyÃƒÂªn khoa',
+                  'Tất cả chuyên khoa',
                   style: TextStyle(
                     color: Color(0xFF131826),
                     fontSize: 20,
@@ -158,7 +158,7 @@ class _HomePageState extends State<HomePage> {
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
-                  'ChÃ¡Â»Ân chuyÃƒÂªn khoa Ã„â€˜Ã¡Â»Æ’ xem bÃƒÂ¡c sÃ„Â© phÃƒÂ¹ hÃ¡Â»Â£p.',
+                  'Chọn chuyên khoa để xem bác sĩ phù hợp.',
                   style: TextStyle(
                     color: Color(0xFF5C6477),
                     fontSize: 13,
@@ -296,7 +296,7 @@ class _HomePageState extends State<HomePage> {
               const Padding(
                 padding: EdgeInsets.fromLTRB(20, 18, 20, 6),
                 child: Text(
-                  'BÃƒÂ¡c sÃ„Â© Nổi bật',
+                  'Bác sĩ nổi bật',
                   style: TextStyle(
                     color: Color(0xFF131826),
                     fontSize: 20,
@@ -307,7 +307,7 @@ class _HomePageState extends State<HomePage> {
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
-                  'Danh sÃƒÂ¡ch bÃƒÂ¡c sÃ„Â© Ã„â€˜ang hoÃ¡ÂºÂ¡t Ã„â€˜Ã¡Â»â„¢ng trong hÃ¡Â»â€¡ thÃ¡Â»â€˜ng.',
+                  'Danh sách bác sĩ đang hoạt động trong hệ thống.',
                   style: TextStyle(
                     color: Color(0xFF5C6477),
                     fontSize: 13,
@@ -325,13 +325,7 @@ class _HomePageState extends State<HomePage> {
                     final doctor = doctors[index];
                     final displayName = doctor.name.isNotEmpty
                         ? doctor.name
-                        : (index == 0
-                              ? 'BS. NguyÃ¡Â»â€¦n Minh Ã„ÂÃ¡Â»Â©c'
-                              : (index == 1
-                                    ? 'BS. TrÃ¡ÂºÂ§n Thu HÃƒÂ '
-                                    : (index == 2
-                                          ? 'BS. LÃƒÂª Quang Vinh'
-                                          : 'BS. PhÃ¡ÂºÂ¡m HoÃƒÂ ng Anh')));
+                        : 'Bác sĩ';
 
                     return InkWell(
                       onTap: () {
@@ -348,18 +342,31 @@ class _HomePageState extends State<HomePage> {
                         ),
                         child: Row(
                           children: [
-                            CircleAvatar(
-                              radius: 28,
-                              backgroundImage: doctor.imageUrl == null
-                                  ? null
-                                  : NetworkImage(doctor.imageUrl!),
-                              backgroundColor: const Color(0xFFE4ECFF),
-                              child: doctor.imageUrl == null
-                                  ? const Icon(
+                            Container(
+                              width: 56,
+                              height: 56,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFE4ECFF),
+                                shape: BoxShape.circle,
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child:
+                                  doctor.imageUrl != null &&
+                                      doctor.imageUrl!.isNotEmpty
+                                  ? Image.network(
+                                      doctor.imageUrl!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              const Icon(
+                                                Icons.person_rounded,
+                                                color: Color(0xFF0A3DA8),
+                                              ),
+                                    )
+                                  : const Icon(
                                       Icons.person_rounded,
                                       color: Color(0xFF0A3DA8),
-                                    )
-                                  : null,
+                                    ),
                             ),
                             const SizedBox(width: 14),
                             Expanded(
@@ -381,7 +388,7 @@ class _HomePageState extends State<HomePage> {
                                         : (doctor.specialization.isNotEmpty
                                               ? doctor.specialization
                                                     .toUpperCase()
-                                              : 'NÃ¡Â»ËœI TÃ¡Â»â€NG QUÃƒÂT'),
+                                              : 'NỘI TỔNG QUÁT'),
                                     style: const TextStyle(
                                       color: Color(0xFF5C6477),
                                       fontSize: 12.5,
@@ -390,7 +397,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    '${doctor.yearsOfExperience} nÃ„Æ’m kinh nghiÃ¡Â»â€¡m',
+                                    '${doctor.yearsOfExperience} năm kinh nghiệm',
                                     style: const TextStyle(
                                       color: Color(0xFF8B92A6),
                                       fontSize: 11,
@@ -507,9 +514,7 @@ class _HomePageState extends State<HomePage> {
         isNewUser = true;
       }
     }
-    final welcomeStr = isNewUser
-        ? 'CHÃƒâ‚¬O MÃ¡Â»ÂªNG,'
-        : 'CHÃƒâ‚¬O MÃ¡Â»ÂªNG TRÃ¡Â»Å¾ LÃ¡ÂºÂ I,';
+    final welcomeStr = isNewUser ? 'CHÀO MỪNG,' : 'CHÀO MỪNG TRỞ LẠI,';
 
     return StreamBuilder<DocumentSnapshot>(
       stream: authUser != null
@@ -519,7 +524,7 @@ class _HomePageState extends State<HomePage> {
                 .snapshots()
           : const Stream.empty(),
       builder: (context, snapshot) {
-        String userName = 'NgÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng';
+        String userName = 'Người dùng';
         String? avatarUrl;
 
         if (snapshot.hasData && snapshot.data!.exists) {
@@ -539,160 +544,171 @@ class _HomePageState extends State<HomePage> {
           userName = authUser.displayName!;
         }
 
-        return Row(
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            GestureDetector(
-              onTap: () => Navigator.pushNamed(context, AppRoutes.profile),
-              child: CircleAvatar(
-                radius: 25,
-                backgroundColor: const Color(0xFF0E8B8E),
-                child: ClipOval(
-                  child: avatarUrl != null && avatarUrl.isNotEmpty
-                      ? Image.network(
-                          avatarUrl,
-                          fit: BoxFit.cover,
-                          width: 44,
-                          height: 44,
-                        )
-                      : Container(
-                          width: 44,
-                          height: 44,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFBEE6EA),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.person,
-                            color: Color(0xFF1E3148),
-                            size: 24,
-                          ),
-                        ),
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.profile),
+                  child: CircleAvatar(
+                    radius: 25,
+                    backgroundColor: const Color(0xFF0E8B8E),
+                    child: ClipOval(
+                      child: avatarUrl != null && avatarUrl.isNotEmpty
+                          ? Image.network(
+                              avatarUrl,
+                              fit: BoxFit.cover,
+                              width: 44,
+                              height: 44,
+                            )
+                          : Container(
+                              width: 44,
+                              height: 44,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFBEE6EA),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.person,
+                                color: Color(0xFF1E3148),
+                                size: 24,
+                              ),
+                            ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    welcomeStr,
-                    style: const TextStyle(
-                      color: Color(0xFF222638),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                    ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        welcomeStr,
+                        style: const TextStyle(
+                          color: Color(0xFF222638),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        userName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                          height: 1.12,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    userName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            StreamBuilder<QuerySnapshot>(
-              stream: authUser != null
-                  ? FirebaseFirestore.instance
-                        .collection('Notifications')
-                        .where('userId', isEqualTo: authUser.uid)
-                        .where('recipientRole', isEqualTo: 'patient')
-                        .where('isRead', isEqualTo: false)
-                        .snapshots()
-                  : const Stream.empty(),
-              builder: (context, snapshot) {
-                final unreadCount = snapshot.hasData
-                    ? snapshot.data!.docs.length
-                    : 0;
-                return GestureDetector(
-                  onTap: () =>
-                      Navigator.pushNamed(context, AppRoutes.notifications),
-                  child: Badge(
-                    label: Text(unreadCount.toString()),
-                    isLabelVisible: unreadCount > 0,
-                    backgroundColor: AppColors.error,
-                    child: const Icon(
-                      Icons.notifications_none_rounded,
-                      color: Color(0xFF202637),
-                      size: 28,
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              onPressed: () async {
-                setState(() {
-                  _departmentsFuture = _loadDepartments();
-                  _featuredDoctorsFuture = _loadFeaturedDoctors();
-                });
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                StreamBuilder<QuerySnapshot>(
+                  stream: authUser != null
+                      ? FirebaseFirestore.instance
+                            .collection('Notifications')
+                            .where('userId', isEqualTo: authUser.uid)
+                            .where('recipientRole', isEqualTo: 'patient')
+                            .where('isRead', isEqualTo: false)
+                            .snapshots()
+                      : const Stream.empty(),
+                  builder: (context, snapshot) {
+                    final unreadCount = snapshot.hasData
+                        ? snapshot.data!.docs.length
+                        : 0;
+                    return IconButton(
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () =>
+                          Navigator.pushNamed(context, AppRoutes.notifications),
+                      icon: Badge(
+                        label: Text(unreadCount.toString()),
+                        isLabelVisible: unreadCount > 0,
+                        backgroundColor: AppColors.error,
+                        child: const Icon(
+                          Icons.notifications_none_rounded,
+                          color: Color(0xFF202637),
+                          size: 26,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () async {
+                    setState(() {
+                      _departmentsFuture = _loadDepartments();
+                      _featuredDoctorsFuture = _loadFeaturedDoctors();
+                    });
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Row(
-                      children: [
-                        SizedBox(
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Row(
+                          children: [
+                            SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Text('Đang làm mới dữ liệu...'),
+                          ],
+                        ),
+                        duration: Duration(seconds: 1),
+                        backgroundColor: Color(0xFF0E8B8E),
+                      ),
+                    );
+                  },
+                  icon: const Icon(
+                    Icons.refresh_rounded,
+                    color: Color(0xFF202637),
+                    size: 24,
+                  ),
+                  tooltip: 'Làm mới',
+                ),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: _isLoggingOut ? null : _handleLogout,
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFC62828),
+                    backgroundColor: const Color(0xFFFFEBEE),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                  icon: _isLoggingOut
+                      ? const SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Text('Ã„Âang lÃƒÂ m mÃ¡Â»â€ºi dÃ¡Â»Â¯ liÃ¡Â»â€¡u...'),
-                      ],
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.logout_rounded, size: 18),
+                  label: Text(
+                    _isLoggingOut ? '...' : 'Đăng xuất',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
                     ),
-                    duration: Duration(seconds: 1),
-                    backgroundColor: Color(0xFF0E8B8E),
                   ),
-                );
-              },
-              icon: const Icon(
-                Icons.refresh_rounded,
-                color: Color(0xFF202637),
-                size: 24,
-              ),
-              tooltip: 'LÃƒÂ m mÃ¡Â»â€ºi',
-            ),
-            const SizedBox(width: 14),
-            TextButton.icon(
-              onPressed: _isLoggingOut ? null : _handleLogout,
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFFC62828),
-                backgroundColor: const Color(0xFFFFEBEE),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                ),
-              ),
-              icon: _isLoggingOut
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.logout_rounded, size: 18),
-              label: Text(
-                _isLoggingOut ? '...' : 'Dang xuat',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              ],
             ),
           ],
         );
@@ -717,7 +733,7 @@ class _HomePageState extends State<HomePage> {
             SizedBox(width: 12),
             Expanded(
               child: Text(
-                'TÃƒÂ¬m bÃƒÂ¡c sÃ„Â©, chuyÃƒÂªn khoa, dÃ¡Â»â€¹ch vÃ¡Â»Â¥',
+                'Tìm bác sĩ, chuyên khoa, dịch vụ',
                 style: TextStyle(
                   color: Color(0xFF656A79),
                   fontSize: 17,
@@ -765,7 +781,7 @@ class _HomePageState extends State<HomePage> {
                 Icon(Icons.circle, size: 9, color: Color(0xFF7EF8F5)),
                 SizedBox(width: 8),
                 Text(
-                  'LÃ¡Â»Å CH HÃ¡ÂºÂ¸N SÃ¡ÂºÂ®P TÃ¡Â»Å¡I',
+                  'LỊCH HẸN SẮP TỚI',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18 / 1.55,
@@ -841,25 +857,21 @@ class _HomePageState extends State<HomePage> {
 
               if (nearestDoc == null) {
                 return _buildEmptyUpcomingCard(
-                  message:
-                      'BÃ¡ÂºÂ¡n chÃ†Â°a cÃƒÂ³ lÃ¡Â»â€¹ch hÃ¡ÂºÂ¹n sÃ¡ÂºÂ¯p tÃ¡Â»â€ºi.',
+                  message: 'Bạn chưa có lịch hẹn sắp tới.',
                 );
               }
 
               final data = nearestDoc.data();
-              final doctorName =
-                  (data['doctorName'] ?? 'BÃƒÂ¡c sÃ„Â©') as String;
+              final doctorName = (data['doctorName'] ?? 'Bác sĩ') as String;
               final departmentName =
-                  (data['departmentName'] ?? 'ChuyÃƒÂªn khoa') as String;
+                  (data['departmentName'] ?? 'Chuyên khoa') as String;
               final appointmentDate = (data['appointmentDate'] as Timestamp?)
                   ?.toDate();
               final dateText = appointmentDate == null
-                  ? 'ChÃ†Â°a cÃƒÂ³ ngÃƒÂ y'
+                  ? 'Chưa có ngày'
                   : '${appointmentDate.day.toString().padLeft(2, '0')}/${appointmentDate.month.toString().padLeft(2, '0')}/${appointmentDate.year}';
               final timeSlot =
-                  (data['timeSlot'] ??
-                          data['shift'] ??
-                          'Ã„Âang cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t')
+                  (data['timeSlot'] ?? data['shift'] ?? 'Đang cập nhật')
                       as String;
 
               return Column(
@@ -875,7 +887,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '$departmentName Ã¢â‚¬Â¢ $dateText',
+                    '$departmentName • $dateText',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.73),
                       fontSize: 14,
@@ -932,7 +944,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       child: const Center(
                         child: Text(
-                          'Xem chi tiÃ¡ÂºÂ¿t',
+                          'Xem chi tiết',
                           style: TextStyle(
                             color: Color(0xFF09349E),
                             fontSize: 19,
@@ -953,13 +965,13 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildEmptyUpcomingCard({
     String message =
-        'HÃƒÂ£y Ã„â€˜Ã¡ÂºÂ·t lÃ¡Â»â€¹ch Ã„â€˜Ã¡Â»Æ’ hÃ¡Â»â€¡ thÃ¡Â»â€˜ng hiÃ¡Â»Æ’n thÃ¡Â»â€¹ lÃ¡Â»â€¹ch hÃ¡ÂºÂ¹n mÃ¡Â»â€ºi nhÃ¡ÂºÂ¥t cÃ¡Â»Â§a bÃ¡ÂºÂ¡n.',
+        'Hãy đặt lịch để hệ thống hiển thị lịch hẹn mới nhất của bạn.',
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'ChÃ†Â°a cÃƒÂ³ lÃ¡Â»â€¹ch hÃ¡ÂºÂ¹n',
+          'Chưa có lịch hẹn',
           style: TextStyle(
             color: Colors.white,
             fontSize: 27,
@@ -988,7 +1000,7 @@ class _HomePageState extends State<HomePage> {
             ),
             child: const Center(
               child: Text(
-                'Ã„ÂÃ¡ÂºÂ·t lÃ¡Â»â€¹ch ngay',
+                'Đặt lịch ngay',
                 style: TextStyle(
                   color: Color(0xFF09349E),
                   fontSize: 19,
@@ -1005,25 +1017,25 @@ class _HomePageState extends State<HomePage> {
   Widget _buildActionGrid() {
     const items = [
       _ActionItem(
-        'Ã„ÂÃ¡ÂºÂ·t lÃ¡Â»â€¹ch khÃƒÂ¡m',
+        'Đặt lịch khám',
         Icons.add_circle_outline_rounded,
         Color(0xFFC9D0EE),
         Color(0xFF1348B3),
       ),
       _ActionItem(
-        'KÃ¡ÂºÂ¿t quÃ¡ÂºÂ£ khÃƒÂ¡m',
+        'Kết quả khám',
         Icons.science_outlined,
         Color(0xFF8CE8E5),
         Color(0xFF0B6361),
       ),
       _ActionItem(
-        'Ã„ÂÃ†Â¡n thuÃ¡Â»â€˜c',
+        'Đơn thuốc',
         Icons.medication_outlined,
         Color(0xFFC9D0EE),
         Color(0xFF1348B3),
       ),
       _ActionItem(
-        'Thanh toÃƒÂ¡n',
+        'Thanh toán',
         Icons.payments_outlined,
         Color(0xFFEEDFC8),
         Color(0xFFDB6B00),
@@ -1035,13 +1047,13 @@ class _HomePageState extends State<HomePage> {
         Color(0xFF047857),
       ),
       _ActionItem(
-        'HÃ¡Â»â€œ sÃ†Â¡ bÃ¡Â»â€¡nh ÃƒÂ¡n',
+        'Hồ sơ bệnh án',
         Icons.folder_shared_outlined,
         Color(0xFFCBE0FF),
         Color(0xFF315ED2),
       ),
       _ActionItem(
-        'LÃ¡Â»Å CH SÃ¡Â»Â¬ KHÃƒÂM',
+        'LỊCH SỬ KHÁM',
         Icons.history_toggle_off_rounded,
         Color(0xFFD7DCE6),
         Color(0xFF1F2737),
@@ -1056,28 +1068,28 @@ class _HomePageState extends State<HomePage> {
         crossAxisCount: 3,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.86,
+        childAspectRatio: 0.78,
       ),
       itemBuilder: (context, index) {
         final item = items[index];
         return InkWell(
           onTap: () {
-            if (item.label == 'Ã„ÂÃ¡ÂºÂ·t lÃ¡Â»â€¹ch khÃƒÂ¡m') {
+            if (item.label == 'Đặt lịch khám') {
               Navigator.pushNamed(context, AppRoutes.booking);
-            } else if (item.label == 'HÃ¡Â»â€œ sÃ†Â¡ bÃ¡Â»â€¡nh ÃƒÂ¡n' ||
-                item.label == 'HÃ¡Â»â€œ sÃ†Â¡ sÃ¡Â»Â©c khÃ¡Â»Âe') {
+            } else if (item.label == 'Hồ sơ bệnh án' ||
+                item.label == 'Hồ sơ sức khỏe') {
               Navigator.pushNamed(context, AppRoutes.medicalRecordDashboard);
-            } else if (item.label == 'KÃ¡ÂºÂ¿t quÃ¡ÂºÂ£ khÃƒÂ¡m') {
+            } else if (item.label == 'Kết quả khám') {
               Navigator.pushNamed(context, AppRoutes.resultsDashboard);
-            } else if (item.label == 'Ã„ÂÃ†Â¡n thuÃ¡Â»â€˜c') {
+            } else if (item.label == 'Đơn thuốc') {
               Navigator.pushNamed(
                 context,
                 AppRoutes.medicalVaultCategory,
-                arguments: 'Ã„ÂÃ†Â¡n ThuÃ¡Â»â€˜c',
+                arguments: 'Đơn Thuốc',
               );
-            } else if (item.label == 'LÃ¡Â»Å CH SÃ¡Â»Â¬ KHÃƒÂM') {
+            } else if (item.label == 'LỊCH SỬ KHÁM') {
               Navigator.pushNamed(context, AppRoutes.examinationHistory);
-            } else if (item.label == 'Thanh toÃƒÂ¡n') {
+            } else if (item.label == 'Thanh toán') {
               Navigator.pushNamed(context, AppRoutes.paymentManagement);
             } else if (item.label == 'BHYT') {
               Navigator.pushNamed(context, AppRoutes.healthInsurance);
@@ -1141,7 +1153,7 @@ class _HomePageState extends State<HomePage> {
           children: [
             const Expanded(
               child: Text(
-                'ChuyÃƒÂªn khoa',
+                'Chuyên khoa',
                 style: TextStyle(
                   color: Color(0xFF131826),
                   fontSize: 19,
@@ -1156,7 +1168,7 @@ class _HomePageState extends State<HomePage> {
                 _showDepartmentsSheet(departments);
               },
               child: const Text(
-                'Xem thÃƒÂªm',
+                'Xem thêm',
                 style: TextStyle(
                   color: AppColors.primary,
                   fontSize: 17,
@@ -1177,19 +1189,13 @@ class _HomePageState extends State<HomePage> {
               }
 
               if (snapshot.hasError) {
-                return const Center(
-                  child: Text(
-                    'KhÃƒÂ´ng tÃ¡ÂºÂ£i Ã„â€˜Ã†Â°Ã¡Â»Â£c chuyÃƒÂªn khoa.',
-                  ),
-                );
+                return const Center(child: Text('Không tải được chuyên khoa.'));
               }
 
               final departments = snapshot.data ?? [];
               if (departments.isEmpty) {
                 return const Center(
-                  child: Text(
-                    'ChÃ†Â°a cÃƒÂ³ dÃ¡Â»Â¯ liÃ¡Â»â€¡u chuyÃƒÂªn khoa.',
-                  ),
+                  child: Text('Chưa có dữ liệu chuyên khoa.'),
                 );
               }
 
@@ -1206,7 +1212,7 @@ class _HomePageState extends State<HomePage> {
                   String subtitle = department.location;
 
                   if (title.isEmpty ||
-                      title.contains('TÃ¡ÂºÂ§ng') ||
+                      title.contains('Tầng') ||
                       title.contains('Khu') ||
                       title.length < 2) {
                     title = visual.label;
@@ -1307,7 +1313,7 @@ class _HomePageState extends State<HomePage> {
           children: [
             const Expanded(
               child: Text(
-                'BÃƒÂ¡c sÃ„Â© Nổi bật',
+                'Bác sĩ nổi bật',
                 style: TextStyle(
                   color: Color(0xFF131826),
                   fontSize: 22,
@@ -1322,7 +1328,7 @@ class _HomePageState extends State<HomePage> {
                 _showDoctorsSheet(doctors);
               },
               child: const Text(
-                'Xem thÃƒÂªm',
+                'Xem thêm',
                 style: TextStyle(
                   color: Color(0xFF0A3DA8),
                   fontSize: 17,
@@ -1343,18 +1349,12 @@ class _HomePageState extends State<HomePage> {
               }
 
               if (snapshot.hasError) {
-                return const Center(
-                  child: Text(
-                    'KhÃƒÂ´ng tÃ¡ÂºÂ£i Ã„â€˜Ã†Â°Ã¡Â»Â£c bÃƒÂ¡c sÃ„Â©.',
-                  ),
-                );
+                return const Center(child: Text('Không tải được bác sĩ.'));
               }
 
               final doctors = snapshot.data ?? [];
               if (doctors.isEmpty) {
-                return const Center(
-                  child: Text('ChÃ†Â°a cÃƒÂ³ dÃ¡Â»Â¯ liÃ¡Â»â€¡u bÃƒÂ¡c sÃ„Â©.'),
-                );
+                return const Center(child: Text('Chưa có dữ liệu bác sĩ.'));
               }
 
               return ListView.separated(
@@ -1658,19 +1658,31 @@ class _DoctorCard extends StatelessWidget {
                     width: 95,
                     height: 95,
                     decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
                       borderRadius: BorderRadius.circular(22),
                       border: Border.all(
                         color: const Color(0xFFF1F5F9),
                         width: 2,
                       ),
-                      image: DecorationImage(
-                        image: NetworkImage(
-                          doctor.imageUrl ??
-                              'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300',
-                        ),
-                        fit: BoxFit.cover,
-                      ),
                     ),
+                    clipBehavior: Clip.antiAlias,
+                    child:
+                        doctor.imageUrl != null && doctor.imageUrl!.isNotEmpty
+                        ? Image.network(
+                            doctor.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(
+                                  Icons.medical_services_rounded,
+                                  color: Color(0xFF2563EB),
+                                  size: 42,
+                                ),
+                          )
+                        : const Icon(
+                            Icons.medical_services_rounded,
+                            color: Color(0xFF2563EB),
+                            size: 42,
+                          ),
                   ),
                   Positioned(
                     bottom: 0,
@@ -1757,7 +1769,7 @@ class _DoctorCard extends StatelessWidget {
                           ? doctor.departmentName
                           : (doctor.specialization.isNotEmpty
                                 ? doctor.specialization.toUpperCase()
-                                : 'NÃ¡Â»ËœI TÃ¡Â»â€NG QUÃƒÂT'),
+                                : 'NỘI TỔNG QUÁT'),
                       style: const TextStyle(
                         color: Color(0xFF6366F1),
                         fontWeight: FontWeight.w800,
@@ -1803,7 +1815,7 @@ class _DoctorCard extends StatelessWidget {
                         ),
                         SizedBox(width: 8),
                         Text(
-                          'HÃ¡Â»â€œ sÃ†Â¡',
+                          'Hồ sơ',
                           style: TextStyle(
                             color: Color(0xFF475569),
                             fontWeight: FontWeight.w800,
@@ -1847,7 +1859,7 @@ class _DoctorCard extends StatelessWidget {
                         ),
                         SizedBox(width: 8),
                         Text(
-                          'Ã„ÂÃ¡ÂºÂ·t lÃ¡Â»â€¹ch',
+                          'Đặt lịch',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
