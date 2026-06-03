@@ -30,7 +30,7 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
     Emitter<PaymentState> emit,
   ) async {
     emit(state.copyWith(status: PaymentStatus.loading));
-    
+
     // Cancel existing subscription if any
     await _invoiceSubscription?.cancel();
 
@@ -44,45 +44,53 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
           final List<InvoiceModel> invoices = snapshot.docs
               .map((doc) => InvoiceModel.fromFirestore(doc))
               .toList();
-          
+
           add(UpdateInvoicesList(invoices));
         });
-
   }
 
   void _onUpdateInvoicesList(
     UpdateInvoicesList event,
     Emitter<PaymentState> emit,
   ) {
-    emit(state.copyWith(
-      status: PaymentStatus.success,
-      allInvoices: event.invoices,
-      filteredInvoices: _applyFilters(event.invoices, state.selectedStatus, state.selectedType),
-    ));
+    emit(
+      state.copyWith(
+        status: PaymentStatus.success,
+        allInvoices: event.invoices,
+        filteredInvoices: _applyFilters(
+          event.invoices,
+          state.selectedStatus,
+          state.selectedType,
+        ),
+      ),
+    );
   }
 
-  List<InvoiceModel> _applyFilters(List<InvoiceModel> all, String? status, String? type) {
+  List<InvoiceModel> _applyFilters(
+    List<InvoiceModel> all,
+    String? status,
+    String? type,
+  ) {
     final currentStatus = status ?? 'Tất cả trạng thái';
     final currentType = type ?? 'Tất cả loại';
-    
+
     List<InvoiceModel> filtered = all;
 
     if (currentStatus != 'Tất cả trạng thái') {
       final statusMap = {'Đã thanh toán': 'paid', 'Chưa thanh toán': 'unpaid'};
-      filtered = filtered.where((i) => i.status == statusMap[currentStatus]).toList();
+      filtered = filtered
+          .where((i) => i.status == statusMap[currentStatus])
+          .toList();
     }
 
     if (currentType != 'Tất cả loại') {
       filtered = filtered.where((i) => i.expenseType == currentType).toList();
     }
-    
+
     return filtered;
   }
 
-  void _onFilterInvoices(
-    FilterInvoices event,
-    Emitter<PaymentState> emit,
-  ) {
+  void _onFilterInvoices(FilterInvoices event, Emitter<PaymentState> emit) {
     final status = event.status ?? state.selectedStatus ?? 'Tất cả trạng thái';
     final type = event.type ?? state.selectedType ?? 'Tất cả loại';
 
@@ -97,11 +105,13 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
       filtered = filtered.where((i) => i.expenseType == type).toList();
     }
 
-    emit(state.copyWith(
-      filteredInvoices: filtered,
-      selectedStatus: status,
-      selectedType: type,
-    ));
+    emit(
+      state.copyWith(
+        filteredInvoices: filtered,
+        selectedStatus: status,
+        selectedType: type,
+      ),
+    );
   }
 
   Future<void> _onProcessPayment(
@@ -111,12 +121,19 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
     emit(state.copyWith(status: PaymentStatus.processing));
     try {
       final batch = _firestore.batch();
-      final now = DateTime.now();
+      final requestedStatus = event.paymentMethod.toLowerCase() == 'cash'
+          ? 'pay_at_counter'
+          : 'waiting_confirmation';
+      final requestedMethod = event.paymentMethod.toLowerCase() == 'cash'
+          ? 'cash'
+          : event.paymentMethod;
 
       // 1. Update Invoice
       batch.update(_firestore.collection('Invoices').doc(event.invoiceId), {
-        'status': 'paid',
-        'paymentDate': Timestamp.fromDate(now),
+        'status': requestedStatus,
+        'paymentStatus': requestedStatus,
+        'paymentMethod': requestedMethod,
+        'updatedAt': FieldValue.serverTimestamp(),
       });
 
       // 2. Update Payment record
@@ -128,28 +145,35 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
 
       if (paymentSnapshot.docs.isNotEmpty) {
         batch.update(paymentSnapshot.docs.first.reference, {
-          'status': 'paid',
-          'method': event.paymentMethod,
-          'paymentDate': Timestamp.fromDate(now),
-          'transactionId': 'TXN${now.millisecondsSinceEpoch}',
+          'status': requestedStatus,
+          'paymentStatus': requestedStatus,
+          'method': requestedMethod,
+          'paymentMethod': requestedMethod,
+          'updatedAt': FieldValue.serverTimestamp(),
         });
       }
 
       // 3. Update Appointment
-      batch.update(_firestore.collection('Appointments').doc(event.appointmentId), {
-        'status': 'confirmed',
-        'paymentStatus': 'paid',
-      });
+      batch.update(
+        _firestore.collection('Appointments').doc(event.appointmentId),
+        {
+          'paymentStatus': requestedStatus,
+          'paymentMethod': requestedMethod,
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+      );
 
       await batch.commit();
 
       // Reload invoices
       add(LoadInvoices(event.patientId));
     } catch (e) {
-      emit(state.copyWith(
-        status: PaymentStatus.failure,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(
+          status: PaymentStatus.failure,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -159,5 +183,4 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
   ) async {
     add(LoadInvoices(event.patientId));
   }
-
 }

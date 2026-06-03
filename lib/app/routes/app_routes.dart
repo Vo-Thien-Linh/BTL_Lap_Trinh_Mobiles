@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../data/models/user_model.dart';
 import '../../features/appointment/data/models/invoice_models.dart';
@@ -7,7 +6,6 @@ import '../../features/appointment/domain/entities/appointment_entities.dart';
 import '../../features/appointment/presentation/pages/appointment_management_page.dart';
 import '../../features/appointment/presentation/pages/booking_flow_page.dart';
 import '../../features/appointment/presentation/pages/patient_appointment_detail_page.dart';
-import '../../features/appointment/presentation/payment_management_bloc/payment_bloc.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
@@ -29,12 +27,10 @@ import '../../features/home/presentation/pages/examination_history_page.dart';
 import '../../features/home/presentation/pages/examination_result_detail_page.dart';
 import '../../features/home/presentation/pages/examination_results_dashboard_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
-import '../../features/home/presentation/pages/invoice_detail_page.dart';
 import '../../features/home/presentation/pages/medical_emergency_id_page.dart';
 import '../../features/home/presentation/pages/medical_record_dashboard_page.dart';
 import '../../features/home/presentation/pages/medical_vault_category_page.dart';
 import '../../features/home/presentation/pages/patient_search_page.dart';
-import '../../features/home/presentation/pages/payment_management_page.dart';
 import '../../features/home/presentation/pages/payment_success_page.dart';
 import '../../features/home/presentation/pages/prescription_detail_page.dart';
 import '../../features/notification/presentation/pages/doctor_notifications_page.dart';
@@ -46,6 +42,9 @@ import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/health_insurance/presentation/pages/health_insurance_page.dart';
 import '../../features/profile/presentation/pages/emergency_contact_page.dart';
+import '../../features/payment/data/models/payment_model.dart';
+import '../../features/payment/presentation/pages/patient_payments_page.dart';
+import '../../features/payment/presentation/pages/payment_detail_page.dart';
 
 class AppRoutes {
   static const String onboarding = '/onboarding';
@@ -181,12 +180,13 @@ class AppRoutes {
       case appointmentDetail:
         final args = routeSettings.arguments;
         String id = '';
-        if (args is String)
+        if (args is String) {
           id = args;
-        else if (args is Map<String, dynamic>)
+        } else if (args is Map<String, dynamic>) {
           id = (args['appointmentId'] ?? args['id'] ?? '').toString();
-        else if (args != null && args is HospitalAppointment)
+        } else if (args != null && args is HospitalAppointment) {
           id = args.id;
+        }
 
         if (id.isNotEmpty) {
           return _buildRoute(PatientAppointmentDetailPage(appointmentId: id));
@@ -290,16 +290,16 @@ class AppRoutes {
         return _buildRoute(const MedicalEmergencyIdPage());
 
       case paymentManagement:
-        return _buildRoute(const PaymentManagementPage());
+        return _buildRoute(const PatientPaymentsPage());
 
       case invoiceDetail:
         final args = routeSettings.arguments;
+        if (args is PatientPaymentModel) {
+          return _buildRoute(PaymentDetailPage(initialPayment: args));
+        }
         if (args is InvoiceModel) {
           return _buildRoute(
-            BlocProvider(
-              create: (_) => PaymentBloc(),
-              child: InvoiceDetailPage(invoice: args),
-            ),
+            PaymentDetailPage(initialPayment: _paymentFromInvoice(args)),
           );
         }
         return _buildErrorRoute('Thiếu thông tin hóa đơn.');
@@ -333,8 +333,8 @@ class AppRoutes {
     return PageRouteBuilder<dynamic>(
       transitionDuration: const Duration(milliseconds: 320),
       reverseTransitionDuration: const Duration(milliseconds: 280),
-      pageBuilder: (_, animation, __) => page,
-      transitionsBuilder: (_, animation, __, child) {
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
         final fade = CurvedAnimation(parent: animation, curve: Curves.easeOut);
 
         final slide =
@@ -368,6 +368,41 @@ class AppRoutes {
           ),
         ),
       ),
+    );
+  }
+
+  static PatientPaymentModel _paymentFromInvoice(InvoiceModel invoice) {
+    return PatientPaymentModel(
+      id: invoice.id,
+      sourceCollection: 'Invoices',
+      sourcePath: 'Invoices/${invoice.id}',
+      fromInvoice: true,
+      paymentId: '',
+      invoiceId: invoice.id,
+      appointmentId: invoice.appointmentId,
+      patientId: invoice.patientId,
+      doctorId: '',
+      patientName: '',
+      doctorName: invoice.doctorName ?? '',
+      specialtyName: invoice.departmentName ?? '',
+      appointmentDate: null,
+      amount: invoice.amount,
+      totalAmount: invoice.totalAmount,
+      discountAmount: invoice.discountAmount,
+      currency: 'VND',
+      paymentCode: invoice.id,
+      status: PatientPaymentModel.normalizeStatus(invoice.status),
+      paymentMethod: '',
+      gatewayProvider: '',
+      gatewayOrderCode: '',
+      gatewayTransactionId: '',
+      checkoutUrl: '',
+      createdAt: invoice.createdAt,
+      updatedAt: null,
+      paidAt: invoice.paymentDate,
+      note: '',
+      serviceContent: invoice.serviceContent,
+      expenseType: invoice.expenseType,
     );
   }
 }

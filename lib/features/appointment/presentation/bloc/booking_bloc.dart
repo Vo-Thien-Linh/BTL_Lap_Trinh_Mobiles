@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import '../../domain/entities/appointment_entities.dart';
 import '../../domain/usecases/appointment_usecases.dart';
 import '../../../notification/presentation/utils/notification_facade.dart';
@@ -399,36 +400,68 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
       final paymentId = 'PAY_${DateTime.now().millisecondsSinceEpoch}';
       final invoiceId = 'INV_${DateTime.now().millisecondsSinceEpoch}';
+      final requestedStatus = state.selectedPaymentMethod == 'CASH'
+          ? 'pay_at_counter'
+          : 'waiting_confirmation';
+      final requestedMethod = state.selectedPaymentMethod == 'CASH'
+          ? 'cash'
+          : state.selectedPaymentMethod.toLowerCase();
 
       // 1. Create Payment Record (Pending as requested)
       final paymentRef = db.collection('Payments').doc(paymentId);
       batch.set(paymentRef, {
+        'id': paymentId,
+        'invoiceId': invoiceId,
         'appointmentId': event.appointmentId,
         'patientId': event.patientId,
         'amount': event.amount,
-        'status': 'pending',
+        'status': requestedStatus,
+        'paymentStatus': requestedStatus,
         'createdAt': FieldValue.serverTimestamp(),
-        'method': state.selectedPaymentMethod,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'method': requestedMethod,
+        'paymentMethod': requestedMethod,
+        'paymentCode': invoiceId,
       });
 
       // 2. Create Invoice Record
       final invoiceRef = db.collection('Invoices').doc(invoiceId);
       batch.set(invoiceRef, {
         'id': invoiceId,
+        'paymentId': paymentId,
         'appointmentId': event.appointmentId,
+        'patientId': event.patientId,
         'subtotal': event.amount,
         'discount': 0.0,
         'tax': 0.0,
         'total': event.amount,
-        'status': 'paid', // User said "Sau khi thanh toán hoàn tất..."
+        'amount': event.amount,
+        'totalAmount': event.amount,
+        'discountAmount': 0.0,
+        'paymentStatus': requestedStatus,
+        'method': requestedMethod,
+        'paymentMethod': requestedMethod,
+        'paymentCode': invoiceId,
+        'expenseType': 'Tien kham',
+        'serviceContent': 'Thanh toan phi kham',
+        'status': requestedStatus,
         'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
       });
 
       // 3. Update Appointment Status to Confirmed
       final appointmentRef = db
           .collection('Appointments')
           .doc(event.appointmentId);
-      batch.update(appointmentRef, {'status': 'confirmed'});
+      batch.update(appointmentRef, {
+        'status': 'confirmed',
+        'paymentId': paymentId,
+        'invoiceId': invoiceId,
+        'lastInvoiceId': invoiceId,
+        'paymentStatus': requestedStatus,
+        'paymentMethod': requestedMethod,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
       await batch.commit();
 
@@ -457,7 +490,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       } catch (e) {
         // Không throw lại để tránh người dùng bị báo lỗi thanh toán/đặt lịch
         // chỉ vì phần gửi thông báo gặp sự cố.
-        print('Notification error after booking confirmation: $e');
+        debugPrint('Notification error after booking confirmation: $e');
       }
 
       // Refresh appointment in state (for Ticket UI updates if any)
