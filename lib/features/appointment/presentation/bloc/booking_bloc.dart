@@ -132,27 +132,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         );
         return;
       }
-
-      // Logic 1: Check if patient already has active appointment with THIS doctor
-      final hasDuplicateDoctor = state.patientAppointments.any(
-        (app) => app.doctorId == event.doctor.id && !_isAppointmentInPast(app),
-      );
-
-      if (hasDuplicateDoctor) {
-        final appointment = state.patientAppointments.firstWhere(
-          (app) =>
-              app.doctorId == event.doctor.id && !_isAppointmentInPast(app),
-        );
-        emit(
-          state.copyWith(
-            status: BookingStatus.failure,
-            errorMessage:
-                'Bạn đã có lịch hẹn chưa hoàn thành với bác sĩ ${event.doctor.name} vào ngày ${_formatDate(appointment.appointmentDate)}, ${appointment.timeSlot.isNotEmpty ? appointment.timeSlot : 'ca ${appointment.shiftId}'}. Vui lòng hoàn thành hoặc hủy lịch hẹn đó trước khi đặt thêm với bác sĩ này.',
-          ),
-        );
-        return;
-      }
-
       final schedules = await getDoctorSchedules(event.doctor.id, event.date);
       emit(
         state.copyWith(

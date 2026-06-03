@@ -170,6 +170,7 @@ class AppointmentRemoteDatasourceImpl implements AppointmentRemoteDatasource {
       transaction.set(appointmentRef, {
         ...appointment.toFirestore(),
         'id': appointmentId,
+        'queueOrder': appointment.queueNumber,
         'updatedAt': FieldValue.serverTimestamp(),
       });
     });
@@ -209,13 +210,20 @@ class AppointmentRemoteDatasourceImpl implements AppointmentRemoteDatasource {
         .where('shiftId', isEqualTo: shiftId)
         .get();
 
-    final count = snapshot.docs.where((doc) {
+    var maxQueueNumber = 0;
+    for (final doc in snapshot.docs) {
       final appDate = (doc.data()['appointmentDate'] as Timestamp).toDate();
-      return appDate.isAfter(startOfDay.subtract(const Duration(seconds: 1))) &&
+      final isSameDay =
+          appDate.isAfter(startOfDay.subtract(const Duration(seconds: 1))) &&
           appDate.isBefore(endOfDay);
-    }).length;
+      if (!isSameDay) continue;
 
-    return count + 1;
+      final queueNumber =
+          int.tryParse(doc.data()['queueNumber']?.toString() ?? '0') ?? 0;
+      if (queueNumber > maxQueueNumber) maxQueueNumber = queueNumber;
+    }
+
+    return maxQueueNumber + 1;
   }
 
   @override

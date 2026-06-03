@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../data/doctor_clinical_firestore_service.dart';
 import 'doctor_prescription_builder_page.dart';
 
 class DoctorAppointmentDetailPage extends StatefulWidget {
@@ -19,6 +19,8 @@ class DoctorAppointmentDetailPage extends StatefulWidget {
 
 class _DoctorAppointmentDetailPageState
     extends State<DoctorAppointmentDetailPage> {
+  final DoctorClinicalFirestoreService _clinicalService =
+      DoctorClinicalFirestoreService();
   int _currentStep = 0;
   final List<Map<String, dynamic>> _selectedServices = [];
 
@@ -687,26 +689,30 @@ class _DoctorAppointmentDetailPageState
       );
       return;
     }
-    await FirebaseFirestore.instance
-        .collection('Appointments')
-        .doc(widget.appointmentId)
-        .update({
-          'status': 'completed',
-          'completedAt': FieldValue.serverTimestamp(),
-          'physicalExam': _physicalExamController.text.trim(),
-          'diagnosis': _diagnosisController.text.trim(),
-          'treatment': _treatmentController.text.trim(),
-          'notes': _notesController.text.trim(),
-          'services': _selectedServices,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+    final medicalRecordId = await _clinicalService.completeExamination(
+      appointmentId: widget.appointmentId,
+      appointmentData: widget.initialData,
+      symptoms: _symptomsController.text.trim(),
+      physicalExam: _physicalExamController.text.trim(),
+      diagnosis: _diagnosisController.text.trim(),
+      treatment: _treatmentController.text.trim(),
+      notes: _notesController.text.trim(),
+      services: _selectedServices,
+    );
 
     if (!mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => DoctorPrescriptionBuilderPage(
-          patientData: widget.initialData,
+          patientData: {
+            ...widget.initialData,
+            'medicalRecordId': medicalRecordId,
+            'diagnosis': _diagnosisController.text.trim(),
+            'treatment': _treatmentController.text.trim(),
+            'notes': _notesController.text.trim(),
+            'services': _selectedServices,
+          },
           appointmentId: widget.appointmentId,
         ),
       ),

@@ -28,6 +28,37 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
     super.initState();
   }
 
+  bool _isSameDay(DateTime value, DateTime target) {
+    return value.year == target.year &&
+        value.month == target.month &&
+        value.day == target.day;
+  }
+
+  bool _isWaitingStatus(String status) {
+    return status == 'pending' || status == 'confirmed' || status == 'late';
+  }
+
+  int _effectiveQueueOrder(HospitalAppointmentModel appointment) {
+    return appointment.queueOrder ?? appointment.queueNumber;
+  }
+
+  int _compareByQueue(HospitalAppointmentModel a, HospitalAppointmentModel b) {
+    final orderCompare = _effectiveQueueOrder(
+      a,
+    ).compareTo(_effectiveQueueOrder(b));
+    if (orderCompare != 0) return orderCompare;
+    return a.queueNumber.compareTo(b.queueNumber);
+  }
+
+  List<HospitalAppointmentModel> _todayAppointments(
+    List<HospitalAppointmentModel> appointments,
+  ) {
+    final today = DateTime.now();
+    return appointments
+        .where((a) => _isSameDay(a.appointmentDate, today))
+        .toList();
+  }
+
   Future<void> _handleRefresh() async {
     setState(() => _isLoading = true);
     await Future.delayed(const Duration(milliseconds: 800));
@@ -129,7 +160,7 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
           ),
           const SizedBox(height: 32),
 
-          if (data.status == 'pending' || data.status == 'confirmed')
+          if (_isWaitingStatus(data.status))
             _buildCallAction(data)
           else if (data.status == 'calling')
             _buildOngoingActions(data)
@@ -174,9 +205,10 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
   }
 
   Widget _buildOngoingActions(HospitalAppointmentModel data) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
+        SizedBox(
+          width: double.infinity,
           child: ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
@@ -191,29 +223,52 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
               ),
             ),
             child: const Text(
-              'BẮT ĐẦU KHÁM',
+              'Bắt đầu khám',
               style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.1),
             ),
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () {
-              Navigator.pop(context);
-              _confirmMarkAsAbsent(data);
-            },
-            icon: const Icon(Icons.person_off_rounded),
-            label: const Text('VẮNG MẶT'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFE02424),
-              side: const BorderSide(color: Color(0xFFFFD1D1)),
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _sendToEndOfQueue(data);
+                },
+                icon: const Icon(Icons.low_priority_rounded),
+                label: const Text('Đến muộn'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFD97706),
+                  side: const BorderSide(color: Color(0xFFFCD9A3)),
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
               ),
             ),
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _confirmMarkAsAbsent(data);
+                },
+                icon: const Icon(Icons.person_off_rounded),
+                label: const Text('Vắng mặt'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFE02424),
+                  side: const BorderSide(color: Color(0xFFFFD1D1)),
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -315,6 +370,60 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
       }
     } catch (e) {
       debugPrint('Error starting exam: $e');
+    }
+  }
+
+  Future<void> _sendToEndOfQueue(HospitalAppointmentModel data) async {
+    try {
+      final appointmentsSnapshot = await FirebaseFirestore.instance
+          .collection('Appointments')
+          .where('doctorId', isEqualTo: data.doctorId)
+          .where('shiftId', isEqualTo: data.shiftId)
+          .get();
+
+      var maxQueueOrder = 0;
+      for (final doc in appointmentsSnapshot.docs) {
+        final item = HospitalAppointmentModel.fromFirestore(doc);
+        if (!_isSameDay(item.appointmentDate, data.appointmentDate)) continue;
+        final order = _effectiveQueueOrder(item);
+        if (order > maxQueueOrder) maxQueueOrder = order;
+      }
+
+      await FirebaseFirestore.instance
+          .collection('Appointments')
+          .doc(data.id)
+          .update({
+            'status': 'late',
+            'queueOrder': maxQueueOrder + 1,
+            'originalQueueNumber': data.queueNumber,
+            'lateAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+      await FirebaseFirestore.instance.collection('Notifications').add({
+        'userId': data.patientId,
+        'title': 'Bạn đã được chuyển xuống cuối hàng đợi',
+        'message':
+            'Bạn chưa có mặt khi bác sĩ gọi STT ${data.queueNumber}. Lượt khám đã được chuyển xuống cuối hàng đợi trong ca.',
+        'content':
+            'Bạn chưa có mặt khi bác sĩ gọi STT ${data.queueNumber}. Lượt khám đã được chuyển xuống cuối hàng đợi trong ca.',
+        'type': 'queue',
+        'category': 'appointment',
+        'recipientRole': 'patient',
+        'timestamp': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+        'isRead': false,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Đã chuyển bệnh nhân đến muộn xuống cuối hàng đợi'),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error sending late patient to end of queue: $e');
     }
   }
 
@@ -470,10 +579,15 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
           stream: FirebaseFirestore.instance
               .collection('Appointments')
               .where('doctorId', isEqualTo: actualDoctorId)
-              .where('status', whereIn: ['pending', 'confirmed'])
+              .where('status', whereIn: ['pending', 'confirmed', 'late'])
               .snapshots(),
           builder: (context, snapshot) {
-            final waitingCount = snapshot.data?.docs.length ?? 0;
+            final waitingAppointments = _todayAppointments(
+              (snapshot.data?.docs ?? [])
+                  .map((d) => HospitalAppointmentModel.fromFirestore(d))
+                  .toList(),
+            )..sort(_compareByQueue);
+            final waitingCount = waitingAppointments.length;
 
             return SliverToBoxAdapter(
               child: Container(
@@ -508,11 +622,9 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
                     ElevatedButton(
                       onPressed: waitingCount > 0
                           ? () {
-                              final first =
-                                  HospitalAppointmentModel.fromFirestore(
-                                    snapshot.data!.docs.first,
-                                  );
-                              _showPatientBottomSheet(first);
+                              _showPatientBottomSheet(
+                                waitingAppointments.first,
+                              );
                             }
                           : null,
                       style: ElevatedButton.styleFrom(
@@ -709,15 +821,18 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
             }
 
             final allDocs = snapshot.data?.docs ?? [];
-            final List<HospitalAppointmentModel> allAppointments = allDocs
-                .map((d) => HospitalAppointmentModel.fromFirestore(d))
-                .toList();
+            final List<HospitalAppointmentModel> allAppointments =
+                _todayAppointments(
+                  allDocs
+                      .map((d) => HospitalAppointmentModel.fromFirestore(d))
+                      .toList(),
+                );
 
             // Filtering
             List<HospitalAppointmentModel> filtered = allAppointments;
             if (_selectedFilter != 'Tất cả') {
               final mapping = {
-                'Đang chờ': ['pending', 'confirmed'],
+                'Đang chờ': ['pending', 'confirmed', 'late'],
                 'Đang gọi': ['calling'],
                 'Đang khám': ['ongoing'],
                 'Vắng mặt': ['no_show', 'absent'],
@@ -732,6 +847,7 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
                     (a) => [
                       'pending',
                       'confirmed',
+                      'late',
                       'calling',
                       'ongoing',
                       'no_show',
@@ -741,7 +857,7 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
                   .toList();
             }
 
-            filtered.sort((a, b) => a.queueNumber.compareTo(b.queueNumber));
+            filtered.sort(_compareByQueue);
 
             if (filtered.isEmpty) {
               return const SliverFillRemaining(
@@ -906,6 +1022,8 @@ class _DoctorQueuePageState extends State<DoctorQueuePage> {
 
   String _formatStatus(String s) {
     if (s == 'pending') return 'Đang chờ';
+    if (s == 'confirmed') return 'Đang chờ';
+    if (s == 'late') return 'Đến muộn';
     if (s == 'calling') return 'Đang gọi';
     if (s == 'ongoing') return 'Đang khám';
     if (s == 'absent') return 'Vắng mặt';
