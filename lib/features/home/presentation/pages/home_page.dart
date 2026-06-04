@@ -438,6 +438,35 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _handleLogout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Đăng xuất'),
+          content: const Text(
+            'Bạn có chắc chắn muốn đăng xuất khỏi tài khoản này không?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Hủy'),
+            ),
+            FilledButton.icon(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white,
+              ),
+              icon: const Icon(Icons.logout_rounded, size: 18),
+              label: const Text('Đăng xuất'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
     setState(() => _isLoggingOut = true);
 
     try {
@@ -445,7 +474,7 @@ class _HomePageState extends State<HomePage> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _isLoggingOut = false);
-      _showMessage('Khong the dang xuat. Vui long thu lai.');
+      _showMessage('Không thể đăng xuất. Vui lòng thử lại.');
       return;
     }
 
@@ -505,16 +534,6 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildHeader() {
     final authUser = FirebaseAuth.instance.currentUser;
-    bool isNewUser = false;
-    if (authUser != null) {
-      final cTime = authUser.metadata.creationTime?.millisecondsSinceEpoch ?? 0;
-      final lTime =
-          authUser.metadata.lastSignInTime?.millisecondsSinceEpoch ?? 0;
-      if ((lTime - cTime).abs() < 60000) {
-        isNewUser = true;
-      }
-    }
-    final welcomeStr = isNewUser ? 'CHÀO MỪNG,' : 'CHÀO MỪNG TRỞ LẠI,';
 
     return StreamBuilder<DocumentSnapshot>(
       stream: authUser != null
@@ -544,171 +563,139 @@ class _HomePageState extends State<HomePage> {
           userName = authUser.displayName!;
         }
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.profile),
-                  child: CircleAvatar(
-                    radius: 25,
-                    backgroundColor: const Color(0xFF0E8B8E),
-                    child: ClipOval(
-                      child: avatarUrl != null && avatarUrl.isNotEmpty
-                          ? Image.network(
-                              avatarUrl,
-                              fit: BoxFit.cover,
-                              width: 44,
-                              height: 44,
-                            )
-                          : Container(
-                              width: 44,
-                              height: 44,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFBEE6EA),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.person,
-                                color: Color(0xFF1E3148),
-                                size: 24,
-                              ),
-                            ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        welcomeStr,
-                        style: const TextStyle(
-                          color: Color(0xFF222638),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        userName,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 19,
-                          fontWeight: FontWeight.w800,
-                          height: 1.12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                StreamBuilder<QuerySnapshot>(
-                  stream: authUser != null
-                      ? FirebaseFirestore.instance
-                            .collection('Notifications')
-                            .where('userId', isEqualTo: authUser.uid)
-                            .where('recipientRole', isEqualTo: 'patient')
-                            .where('isRead', isEqualTo: false)
-                            .snapshots()
-                      : const Stream.empty(),
-                  builder: (context, snapshot) {
-                    final unreadCount = snapshot.hasData
-                        ? snapshot.data!.docs.length
-                        : 0;
-                    return IconButton(
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () =>
-                          Navigator.pushNamed(context, AppRoutes.notifications),
-                      icon: Badge(
-                        label: Text(unreadCount.toString()),
-                        isLabelVisible: unreadCount > 0,
-                        backgroundColor: AppColors.error,
-                        child: const Icon(
-                          Icons.notifications_none_rounded,
-                          color: Color(0xFF202637),
-                          size: 26,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () async {
-                    setState(() {
-                      _departmentsFuture = _loadDepartments();
-                      _featuredDoctorsFuture = _loadFeaturedDoctors();
-                    });
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Row(
-                          children: [
-                            SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            ),
-                            SizedBox(width: 12),
-                            Text('Đang làm mới dữ liệu...'),
-                          ],
-                        ),
-                        duration: Duration(seconds: 1),
-                        backgroundColor: Color(0xFF0E8B8E),
-                      ),
-                    );
-                  },
-                  icon: const Icon(
-                    Icons.refresh_rounded,
-                    color: Color(0xFF202637),
-                    size: 24,
-                  ),
-                  tooltip: 'Làm mới',
-                ),
-                const SizedBox(width: 8),
-                TextButton.icon(
-                  onPressed: _isLoggingOut ? null : _handleLogout,
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFFC62828),
-                    backgroundColor: const Color(0xFFFFEBEE),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                  ),
-                  icon: _isLoggingOut
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+            GestureDetector(
+              onTap: () => Navigator.pushNamed(context, AppRoutes.profile),
+              child: CircleAvatar(
+                radius: 24,
+                backgroundColor: const Color(0xFF0E8B8E),
+                child: ClipOval(
+                  child: avatarUrl != null && avatarUrl.isNotEmpty
+                      ? Image.network(
+                          avatarUrl,
+                          fit: BoxFit.cover,
+                          width: 44,
+                          height: 44,
                         )
-                      : const Icon(Icons.logout_rounded, size: 18),
-                  label: Text(
-                    _isLoggingOut ? '...' : 'Đăng xuất',
-                    style: const TextStyle(
+                      : Container(
+                          width: 44,
+                          height: 44,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFBEE6EA),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.person,
+                            color: Color(0xFF1E3148),
+                            size: 24,
+                          ),
+                        ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Chào mừng,',
+                    style: TextStyle(
+                      color: Color(0xFF222638),
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    userName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      height: 1.12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            StreamBuilder<QuerySnapshot>(
+              stream: authUser != null
+                  ? FirebaseFirestore.instance
+                        .collection('Notifications')
+                        .where('userId', isEqualTo: authUser.uid)
+                        .where('recipientRole', isEqualTo: 'patient')
+                        .where('isRead', isEqualTo: false)
+                        .snapshots()
+                  : const Stream.empty(),
+              builder: (context, snapshot) {
+                final unreadCount = snapshot.hasData
+                    ? snapshot.data!.docs.length
+                    : 0;
+                return _HeaderIconButton(
+                  tooltip: 'Thông báo',
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.notifications),
+                  child: Badge(
+                    label: Text(unreadCount.toString()),
+                    isLabelVisible: unreadCount > 0,
+                    backgroundColor: AppColors.error,
+                    child: const Icon(Icons.notifications_none_rounded),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(width: 6),
+            _HeaderIconButton(
+              tooltip: 'Làm mới',
+              onPressed: () async {
+                setState(() {
+                  _departmentsFuture = _loadDepartments();
+                  _featuredDoctorsFuture = _loadFeaturedDoctors();
+                });
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Row(
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Text('Đang làm mới dữ liệu...'),
+                      ],
+                    ),
+                    duration: Duration(seconds: 1),
+                    backgroundColor: Color(0xFF0E8B8E),
+                  ),
+                );
+              },
+              child: const Icon(Icons.refresh_rounded),
+            ),
+            const SizedBox(width: 6),
+            _HeaderIconButton(
+              tooltip: 'Đăng xuất',
+              onPressed: _isLoggingOut ? null : _handleLogout,
+              foregroundColor: const Color(0xFFC62828),
+              backgroundColor: const Color(0xFFFFEBEE),
+              child: _isLoggingOut
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.logout_rounded),
             ),
           ],
         );
@@ -1574,6 +1561,49 @@ class _HomePageState extends State<HomePage> {
         ),
         'doctor': doctor,
       },
+    );
+  }
+}
+
+class _HeaderIconButton extends StatelessWidget {
+  const _HeaderIconButton({
+    required this.tooltip,
+    required this.onPressed,
+    required this.child,
+    this.foregroundColor = const Color(0xFF202637),
+    this.backgroundColor = const Color(0xFFF3F6FB),
+  });
+
+  final String tooltip;
+  final VoidCallback? onPressed;
+  final Widget child;
+  final Color foregroundColor;
+  final Color backgroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: SizedBox(
+        width: 40,
+        height: 40,
+        child: IconButton(
+          onPressed: onPressed,
+          visualDensity: VisualDensity.compact,
+          padding: EdgeInsets.zero,
+          style: IconButton.styleFrom(
+            backgroundColor: backgroundColor,
+            foregroundColor: foregroundColor,
+            disabledBackgroundColor: const Color(0xFFE2E8F0),
+            disabledForegroundColor: const Color(0xFF94A3B8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          iconSize: 22,
+          icon: child,
+        ),
+      ),
     );
   }
 }

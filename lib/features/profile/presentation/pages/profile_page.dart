@@ -368,7 +368,8 @@ class _ProfilePageState extends State<ProfilePage>
 
     double bmi = 0.0;
     String bmiValueStr = '--';
-    String bmiStatus = 'Chưa có dữ liệu';
+    String bmiStatus =
+        'Chưa có dữ liệu. Bác sĩ sẽ cập nhật sau khi bạn thăm khám.';
     Color bmiColor = AppColors.textHint;
 
     if (hasWeight && hasHeight) {
@@ -384,7 +385,7 @@ class _ProfilePageState extends State<ProfilePage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'CHỈ SỐ SINH TỒN',
+            'CHỈ SỐ SỨC KHỎE',
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w900,
@@ -409,7 +410,7 @@ class _ProfilePageState extends State<ProfilePage>
                 child: _buildInteractiveVitalCard(
                   'NHÓM MÁU',
                   hasBloodType ? user.bloodType! : '--',
-                  hasBloodType ? 'Tương thích cao' : 'Chưa cập nhật',
+                  hasBloodType ? 'Do bác sĩ cập nhật' : 'Chưa cập nhật',
                   Icons.water_drop_rounded,
                   hasBloodType ? const Color(0xFFEF4444) : AppColors.textHint,
                 ),
@@ -425,7 +426,7 @@ class _ProfilePageState extends State<ProfilePage>
                   hasHeight
                       ? '${user.height!.toInt() == user.height ? user.height!.toInt() : user.height} cm'
                       : '-- cm',
-                  hasHeight ? 'Tăng 1.2% year' : 'Chưa cập nhật',
+                  hasHeight ? 'Do bác sĩ cập nhật' : 'Chưa cập nhật',
                   Icons.straighten_rounded,
                   hasHeight ? const Color(0xFF3B82F6) : AppColors.textHint,
                 ),
@@ -437,7 +438,7 @@ class _ProfilePageState extends State<ProfilePage>
                   hasWeight
                       ? '${user.weight!.toInt() == user.weight ? user.weight!.toInt() : user.weight} kg'
                       : '-- kg',
-                  hasWeight ? 'Ổn định' : 'Chưa cập nhật',
+                  hasWeight ? 'Do bác sĩ cập nhật' : 'Chưa cập nhật',
                   Icons.monitor_weight_rounded,
                   hasWeight ? const Color(0xFF10B981) : AppColors.textHint,
                 ),
@@ -467,7 +468,7 @@ class _ProfilePageState extends State<ProfilePage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
@@ -477,12 +478,18 @@ class _ProfilePageState extends State<ProfilePage>
                 ),
                 child: Icon(icon, color: color, size: 18),
               ),
-              Text(
-                status,
-                style: TextStyle(
-                  fontSize: 8,
-                  fontWeight: FontWeight.w900,
-                  color: color,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  status,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontSize: 8,
+                    fontWeight: FontWeight.w900,
+                    color: color,
+                  ),
                 ),
               ),
             ],
@@ -498,6 +505,8 @@ class _ProfilePageState extends State<ProfilePage>
           ),
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w900,

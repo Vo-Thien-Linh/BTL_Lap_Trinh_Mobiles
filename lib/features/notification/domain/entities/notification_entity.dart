@@ -25,6 +25,7 @@ enum NotificationRecipientRole { patient, doctor, admin }
 
 class NotificationEntity extends Equatable {
   final String id;
+  final String? notificationCode;
   final String userId;
   final String? patientId;
   final String? doctorId;
@@ -46,6 +47,7 @@ class NotificationEntity extends Equatable {
 
   const NotificationEntity({
     required this.id,
+    this.notificationCode,
     required this.userId,
     this.patientId,
     this.doctorId,
@@ -71,6 +73,7 @@ class NotificationEntity extends Equatable {
 
   NotificationEntity copyWith({
     String? id,
+    String? notificationCode,
     String? userId,
     String? patientId,
     String? doctorId,
@@ -92,6 +95,7 @@ class NotificationEntity extends Equatable {
   }) {
     return NotificationEntity(
       id: id ?? this.id,
+      notificationCode: notificationCode ?? this.notificationCode,
       userId: userId ?? this.userId,
       patientId: patientId ?? this.patientId,
       doctorId: doctorId ?? this.doctorId,
@@ -115,26 +119,27 @@ class NotificationEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        userId,
-        patientId,
-        doctorId,
-        recipientRole,
-        type,
-        category,
-        title,
-        body,
-        data,
-        createdAt,
-        scheduledAt,
-        isRead,
-        deepLink,
-        sendPush,
-        sendEmail,
-        email,
-        deliveryStatus,
-        deliveredAt,
-      ];
+    id,
+    notificationCode,
+    userId,
+    patientId,
+    doctorId,
+    recipientRole,
+    type,
+    category,
+    title,
+    body,
+    data,
+    createdAt,
+    scheduledAt,
+    isRead,
+    deepLink,
+    sendPush,
+    sendEmail,
+    email,
+    deliveryStatus,
+    deliveredAt,
+  ];
 }
 
 class NotificationTemplateEntity extends Equatable {
@@ -160,13 +165,13 @@ class NotificationTemplateEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        departmentId,
-        departmentName,
-        templateType,
-        title,
-        message,
-        instructions,
-        isActive,
-      ];
+    id,
+    departmentId,
+    departmentName,
+    templateType,
+    title,
+    message,
+    instructions,
+    isActive,
+  ];
 }

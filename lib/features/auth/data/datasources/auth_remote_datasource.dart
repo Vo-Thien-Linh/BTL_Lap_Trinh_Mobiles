@@ -4,6 +4,7 @@ import '../../../../data/models/user_model.dart';
 import '../../domain/entities/register_request_entity.dart';
 import '../../../../core/enums/app_role.dart';
 import '../../../../core/enums/user_status.dart';
+import '../../../../services/firestore_sequence_service.dart';
 
 abstract class AuthRemoteDatasource {
   Future<UserModel> register(RegisterRequestEntity request);
@@ -43,30 +44,44 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
 
     final now = DateTime.now();
 
-    final userData = {
-      'uid': user.uid,
-      'email': request.email.trim(),
-      'fullName': request.fullName.trim(),
-      'phone': request.phone.trim(),
-      'phoneVerified': false,
-      'cccd': request.cccd.trim(),
-      'avatarUrl': null,
-      'gender': null,
-      'dateOfBirth': null,
-      'role': AppRole.patient.value,
-      'status': UserStatus.active.value,
-      'emailVerified': user.emailVerified,
-      'createdAt': Timestamp.fromDate(now),
-      'updatedAt': Timestamp.fromDate(now),
-    };
+    late final Map<String, dynamic> userData;
 
-    final batch = firestore.batch();
+    await firestore.runTransaction((transaction) async {
+      final patientCode =
+          await FirestoreSequenceService.generateNextCodeInTransaction(
+            transaction: transaction,
+            firestore: firestore,
+            entityType: 'patients',
+          );
 
-    batch.set(firestore.collection('users').doc(user.uid), userData);
+      userData = {
+        'uid': user.uid,
+        'patientCode': patientCode,
+        'email': request.email.trim(),
+        'fullName': request.fullName.trim(),
+        'phone': request.phone.trim(),
+        'phoneVerified': false,
+        'cccd': request.cccd.trim(),
+        'avatarUrl': null,
+        'gender': null,
+        'dateOfBirth': _formatDateOnly(request.dateOfBirth),
+        'role': AppRole.patient.value,
+        'status': UserStatus.active.value,
+        'emailVerified': user.emailVerified,
+        'createdAt': Timestamp.fromDate(now),
+        'updatedAt': Timestamp.fromDate(now),
+      };
 
-    await batch.commit();
+      transaction.set(firestore.collection('users').doc(user.uid), userData);
+    });
 
     return UserModel.fromMap(userData);
+  }
+
+  String _formatDateOnly(DateTime value) {
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    return '${value.year}-$month-$day';
   }
 
   @override

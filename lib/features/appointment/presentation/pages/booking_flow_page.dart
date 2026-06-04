@@ -25,18 +25,18 @@ class BookingFlowPage extends StatelessWidget {
     return BlocProvider(
       create: (context) {
         final bloc = getIt<BookingBloc>()..add(LoadInitialData());
-        
+
         // If we have a department, select it to skip step 0
         if (initialDepartment != null) {
           bloc.add(SelectDepartment(initialDepartment!));
-          
-          // Note: If we have a doctor too, we'll need to ensure the Bloc 
+
+          // Note: If we have a doctor too, we'll need to ensure the Bloc
           // knows about it. Currently, SelectDepartment only takes a dept.
           // We'll handle this by letting the Bloc stay at Step 1 with doctor pre-filled
           // OR we could add a specialized initiation event if needed.
           // For now, this logic will land us on Step 1.
         }
-        
+
         return bloc;
       },
       child: BookingFlowView(initialDoctor: initialDoctor),
@@ -64,7 +64,8 @@ class _BookingFlowViewState extends State<BookingFlowView> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<BookingBloc, BookingState>(
-      listenWhen: (prev, curr) => prev.currentStep != curr.currentStep || prev.status != curr.status,
+      listenWhen: (prev, curr) =>
+          prev.currentStep != curr.currentStep || prev.status != curr.status,
       listener: (context, state) {
         if (_pageController.hasClients) {
           _pageController.animateToPage(
@@ -74,7 +75,8 @@ class _BookingFlowViewState extends State<BookingFlowView> {
           );
         }
 
-        if (state.status == BookingStatus.failure && state.errorMessage != null) {
+        if (state.status == BookingStatus.failure &&
+            state.errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Lỗi: ${state.errorMessage}'),
@@ -148,7 +150,9 @@ class _BookingFlowViewState extends State<BookingFlowView> {
                       height: 24,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: isActive ? AppColors.primaryDark : AppColors.border,
+                        color: isActive
+                            ? AppColors.primaryDark
+                            : AppColors.border,
                         shape: BoxShape.circle,
                         boxShadow: isCurrent
                             ? [
@@ -156,7 +160,7 @@ class _BookingFlowViewState extends State<BookingFlowView> {
                                   color: AppColors.primaryDark.withOpacity(0.3),
                                   blurRadius: 8,
                                   spreadRadius: 2,
-                                )
+                                ),
                               ]
                             : null,
                       ),

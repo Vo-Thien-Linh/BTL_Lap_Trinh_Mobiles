@@ -11,6 +11,9 @@ class InvoiceModel {
   final double totalAmount; // Base price
   final double discountAmount; // Discount or Insurance coverage
   final double amount; // Final price to pay
+  final int discountPercent;
+  final String discountType;
+  final bool insuranceApplied;
   final String status; // 'paid', 'unpaid'
   final DateTime createdAt;
   final DateTime? paymentDate;
@@ -26,6 +29,9 @@ class InvoiceModel {
     this.totalAmount = 0.0,
     this.discountAmount = 0.0,
     required this.amount,
+    this.discountPercent = 0,
+    this.discountType = 'none',
+    this.insuranceApplied = false,
     required this.status,
     required this.createdAt,
     this.paymentDate,
@@ -43,7 +49,11 @@ class InvoiceModel {
       departmentName: data['departmentName'],
       totalAmount: (data['totalAmount'] ?? data['amount'] ?? 0.0).toDouble(),
       discountAmount: (data['discountAmount'] ?? 0.0).toDouble(),
-      amount: (data['amount'] ?? 0.0).toDouble(),
+      amount: (data['finalAmount'] ?? data['amount'] ?? 0.0).toDouble(),
+      discountPercent:
+          int.tryParse(data['discountPercent']?.toString() ?? '0') ?? 0,
+      discountType: data['discountType']?.toString() ?? 'none',
+      insuranceApplied: data['insuranceApplied'] == true,
       status: data['status'] ?? 'unpaid',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       paymentDate: (data['paymentDate'] as Timestamp?)?.toDate(),
@@ -61,9 +71,15 @@ class InvoiceModel {
       'totalAmount': totalAmount,
       'discountAmount': discountAmount,
       'amount': amount,
+      'finalAmount': amount,
+      'discountPercent': discountPercent,
+      'discountType': discountType,
+      'insuranceApplied': insuranceApplied,
       'status': status,
       'createdAt': Timestamp.fromDate(createdAt),
-      'paymentDate': paymentDate != null ? Timestamp.fromDate(paymentDate!) : null,
+      'paymentDate': paymentDate != null
+          ? Timestamp.fromDate(paymentDate!)
+          : null,
     };
   }
 }

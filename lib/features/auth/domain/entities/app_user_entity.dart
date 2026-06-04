@@ -5,6 +5,7 @@ class AppUserEntity {
   final String phone;
   final String fullName;
   final String cccd;
+  final String? patientCode;
   final String role;
   final String status;
   final bool emailVerified;
@@ -24,6 +25,7 @@ class AppUserEntity {
     required this.phone,
     required this.fullName,
     required this.cccd,
+    this.patientCode,
     required this.role,
     required this.status,
     required this.emailVerified,

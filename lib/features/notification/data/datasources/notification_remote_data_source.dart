@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../models/notification_model.dart';
+import '../../../../services/firestore_sequence_service.dart';
 
 class NotificationRemoteDataSource {
   static const String notificationsCollection = 'Notifications';
@@ -11,19 +12,28 @@ class NotificationRemoteDataSource {
   NotificationRemoteDataSource(this.firestore);
 
   Future<void> saveNotification(NotificationModel notification) async {
+    final payload = notification.toFirestore();
+    payload['notificationCode'] ??= await FirestoreSequenceService(
+      firestore: firestore,
+    ).generateNextCode('notifications');
     await firestore
         .collection(notificationsCollection)
         .doc(notification.id)
-        .set(notification.toFirestore(), SetOptions(merge: true));
+        .set(payload, SetOptions(merge: true));
   }
 
   Future<void> saveNotifications(List<NotificationModel> notifications) async {
     final batch = firestore.batch();
+    final sequenceService = FirestoreSequenceService(firestore: firestore);
     for (final notification in notifications) {
       final ref = firestore
           .collection(notificationsCollection)
           .doc(notification.id);
-      batch.set(ref, notification.toFirestore(), SetOptions(merge: true));
+      final payload = notification.toFirestore();
+      payload['notificationCode'] ??= await sequenceService.generateNextCode(
+        'notifications',
+      );
+      batch.set(ref, payload, SetOptions(merge: true));
     }
     await batch.commit();
   }

@@ -2,20 +2,27 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import '../../domain/entities/appointment_entities.dart';
 import '../../domain/usecases/appointment_usecases.dart';
 import '../../../notification/presentation/utils/notification_facade.dart';
+import '../../../payment/data/services/billing_calculation_service.dart';
+import '../../../../services/firestore_sequence_service.dart';
 
 part 'booking_event.dart';
 part 'booking_state.dart';
 
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
+  static const String _scheduleConflictMessage =
+      'Bạn đã có lịch khám trong ca này. Vui lòng chọn ngày, buổi hoặc bác sĩ khác.';
+
   final GetDepartmentsUsecase getDepartments;
   final GetDoctorsByDeptUsecase getDoctorsByDept;
   final GetDoctorSchedulesUsecase getDoctorSchedules;
   final CreateAppointmentUsecase createAppointment;
   final GetNextQueueNumberUsecase getNextQueueNumber;
   final GetTakenQueueNumbersUsecase getTakenQueueNumbers;
+  final HasScheduleConflictUsecase hasScheduleConflict;
   final GetPatientActiveAppointmentsUsecase getPatientActiveAppointments;
 
   BookingBloc({
@@ -25,10 +32,14 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     required this.createAppointment,
     required this.getNextQueueNumber,
     required this.getTakenQueueNumbers,
+    required this.hasScheduleConflict,
     required this.getPatientActiveAppointments,
   }) : super(const BookingState()) {
     on<LoadInitialData>(_onLoadInitialData);
     on<SelectDepartment>(_onSelectDepartment);
+    on<SelectAppointmentDate>(_onSelectAppointmentDate);
+    on<SelectAppointmentSession>(_onSelectAppointmentSession);
+    on<SelectDoctorForSession>(_onSelectDoctorForSession);
     on<SelectDoctorAndDate>(_onSelectDoctorAndDate);
     on<SelectShift>(_onSelectShift);
     on<SelectQueueNumber>(_onSelectQueueNumber);
@@ -55,14 +66,14 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           name: 'Sáng',
           startTime: '07:30',
           endTime: '11:30',
-          maxSlots: 20,
+          maxSlots: 10,
         ),
         const ShiftEntity(
           id: 'afternoon',
           name: 'Chiều',
           startTime: '13:30',
           endTime: '17:00',
-          maxSlots: 20,
+          maxSlots: 10,
         ),
       ];
       // Fetch patient's active appointments if patientId is provided
@@ -81,9 +92,16 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         ),
       );
     } catch (e) {
+      /*
+      final message = e.toString();
+      final isConflict =
+          message.contains('lịch khám trong ca này') ||
+          message.contains('lich kham trong ca nay');
+      */
       emit(
         state.copyWith(
           status: BookingStatus.failure,
+          isCheckingConflict: false,
           errorMessage: e.toString(),
         ),
       );
@@ -94,22 +112,109 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     SelectDepartment event,
     Emitter<BookingState> emit,
   ) async {
+    emit(
+      state.copyWith(
+        status: BookingStatus.initial,
+        selectedDepartment: event.department,
+        doctors: const [],
+        schedules: const [],
+        takenQueueNumbers: const [],
+        currentStep: 1,
+        resetSelectedTime: true,
+        clearConflict: true,
+        clearErrorMessage: true,
+        clearSelectedDoctor: true,
+        clearSelectedDate: true,
+        clearSelectedSession: true,
+      ),
+    );
+  }
+
+  Future<void> _onSelectAppointmentDate(
+    SelectAppointmentDate event,
+    Emitter<BookingState> emit,
+  ) async {
+    await _loadDoctorsForSelectedSession(emit, date: event.date);
+  }
+
+  Future<void> _onSelectAppointmentSession(
+    SelectAppointmentSession event,
+    Emitter<BookingState> emit,
+  ) async {
+    await _loadDoctorsForSelectedSession(emit, session: event.session);
+  }
+
+  Future<void> _onSelectDoctorForSession(
+    SelectDoctorForSession event,
+    Emitter<BookingState> emit,
+  ) async {
+    final date = state.selectedDate;
+    final session = state.selectedSession;
+    if (date == null || session == null) {
+      emit(
+        state.copyWith(
+          status: BookingStatus.failure,
+          errorMessage: 'Vui lòng chọn ngày khám và buổi khám trước.',
+        ),
+      );
+      return;
+    }
+
     emit(state.copyWith(status: BookingStatus.loading));
     try {
-      final doctors = await getDoctorsByDept(event.department.id);
+      var doctorSchedules = state.schedules
+          .where(
+            (schedule) =>
+                schedule.doctorId == event.doctor.id &&
+                _scheduleMatchesSession(schedule, session) &&
+                schedule.isActive &&
+                schedule.availableSlots > 0 &&
+                !_isScheduleFinished(date, schedule),
+          )
+          .toList();
+
+      if (doctorSchedules.isEmpty) {
+        final latestSchedules = await getDoctorSchedules(event.doctor.id, date);
+        doctorSchedules = latestSchedules
+            .where(
+              (schedule) =>
+                  _scheduleMatchesSession(schedule, session) &&
+                  schedule.isActive &&
+                  schedule.availableSlots > 0 &&
+                  !_isScheduleFinished(date, schedule),
+            )
+            .toList();
+      }
+
+      if (doctorSchedules.isEmpty) {
+        emit(
+          state.copyWith(
+            status: BookingStatus.failure,
+            errorMessage: 'Bác sĩ này không còn lịch trống trong buổi đã chọn.',
+            resetSelectedTime: true,
+            clearSelectedDoctor: true,
+          ),
+        );
+        return;
+      }
+
+      doctorSchedules.sort((a, b) => a.shiftId.compareTo(b.shiftId));
       emit(
         state.copyWith(
           status: BookingStatus.initial,
-          selectedDepartment: event.department,
-          doctors: doctors,
-          currentStep: 1,
+          selectedDoctor: event.doctor,
+          takenQueueNumbers: const [],
+          currentStep: 2,
           resetSelectedTime: true,
+          clearConflict: true,
+          clearErrorMessage: true,
         ),
       );
     } catch (e) {
       emit(
         state.copyWith(
           status: BookingStatus.failure,
+          isCheckingConflict: false,
           errorMessage: e.toString(),
         ),
       );
@@ -161,9 +266,13 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   ) async {
     emit(
       state.copyWith(
-        status: BookingStatus.loading,
+        status: BookingStatus.initial,
         selectedShift: event.shift,
         selectedSchedule: event.schedule,
+        isCheckingConflict: true,
+        clearSelectedQueueNumber: true,
+        clearConflict: true,
+        clearErrorMessage: true,
       ),
     );
     try {
@@ -192,19 +301,26 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         return;
       }
 
-      // Logic 2: Check for time slot conflict (Same DATE + Same SHIFT)
-      final conflict = state.patientAppointments.where((app) {
-        final isSameDate =
-            app.appointmentDate.year == selectedDate.year &&
-            app.appointmentDate.month == selectedDate.month &&
-            app.appointmentDate.day == selectedDate.day;
-        return isSameDate &&
-            app.shiftId == event.shift.id &&
-            !_isAppointmentInPast(app);
-      }).toList();
+      final conflict = await _hasConflictForSelection(
+        selectedDate,
+        event.shift,
+      );
 
-      if (conflict.isNotEmpty) {
-        final conflicting = conflict.first;
+      if (conflict) {
+        emit(
+          state.copyWith(
+            status: BookingStatus.initial,
+            selectedShift: event.shift,
+            selectedSchedule: event.schedule,
+            hasScheduleConflict: true,
+            conflictMessage: _scheduleConflictMessage,
+            isCheckingConflict: false,
+            currentStep: 2,
+            clearSelectedQueueNumber: true,
+          ),
+        );
+        return;
+        /*
         emit(
           state.copyWith(
             status: BookingStatus.failure,
@@ -213,6 +329,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           ),
         );
         return;
+        */
       }
 
       final taken = await getTakenQueueNumbers(
@@ -225,7 +342,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           status: BookingStatus.initial,
           selectedShift: event.shift,
           takenQueueNumbers: taken,
-          selectedQueueNumber: null, // Reset when shift changes
+          isCheckingConflict: false,
+          clearConflict: true,
+          clearSelectedQueueNumber: true,
           currentStep: 2, // Stay on Step 2 to select STT
         ),
       );
@@ -239,13 +358,64 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     }
   }
 
-  void _onSelectQueueNumber(
+  Future<void> _onSelectQueueNumber(
     SelectQueueNumber event,
     Emitter<BookingState> emit,
-  ) {
+  ) async {
+    final selectedDate = state.selectedDate;
+    final selectedShift = state.selectedShift;
+    final selectedSchedule = state.selectedSchedule;
+    if (selectedDate == null ||
+        selectedShift == null ||
+        selectedSchedule == null ||
+        selectedSchedule.availableSlots <= 0 ||
+        state.takenQueueNumbers.contains(event.queueNumber)) {
+      emit(
+        state.copyWith(
+          status: BookingStatus.initial,
+          clearSelectedQueueNumber: true,
+          hasScheduleConflict: selectedSchedule?.availableSlots == 0
+              ? true
+              : state.hasScheduleConflict,
+          conflictMessage: selectedSchedule?.availableSlots == 0
+              ? 'Slot này đã hết chỗ. Vui lòng chọn ca hoặc bác sĩ khác.'
+              : state.conflictMessage,
+        ),
+      );
+      return;
+    }
+
     emit(
       state.copyWith(
         selectedQueueNumber: event.queueNumber,
+        isCheckingConflict: true,
+        clearConflict: true,
+        clearErrorMessage: true,
+      ),
+    );
+
+    final conflict = await _hasConflictForSelection(
+      selectedDate,
+      selectedShift,
+    );
+    if (conflict) {
+      emit(
+        state.copyWith(
+          hasScheduleConflict: true,
+          conflictMessage: _scheduleConflictMessage,
+          isCheckingConflict: false,
+          clearSelectedQueueNumber: true,
+          currentStep: 2,
+        ),
+      );
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        selectedQueueNumber: event.queueNumber,
+        isCheckingConflict: false,
+        clearConflict: true,
         currentStep: 3, // Auto-advance to Booking Summary
       ),
     );
@@ -266,14 +436,29 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     ConfirmBooking event,
     Emitter<BookingState> emit,
   ) async {
-    if (state.selectedDoctor == null ||
+    if (!state.canSubmit ||
+        state.selectedDoctor == null ||
         state.selectedDate == null ||
         state.selectedShift == null ||
         state.selectedSchedule == null) {
+      if (state.hasScheduleConflict) {
+        emit(
+          state.copyWith(
+            status: BookingStatus.initial,
+            conflictMessage: state.conflictMessage ?? _scheduleConflictMessage,
+          ),
+        );
+      }
       return;
     }
 
-    emit(state.copyWith(status: BookingStatus.loading));
+    emit(
+      state.copyWith(
+        status: BookingStatus.loading,
+        isSubmitting: true,
+        clearErrorMessage: true,
+      ),
+    );
     try {
       if (_isPastDate(state.selectedDate!) ||
           _isShiftFinished(state.selectedDate!, state.selectedShift!)) {
@@ -287,6 +472,22 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         return;
       }
 
+      final finalConflict = await _hasConflictForSelection(
+        state.selectedDate!,
+        state.selectedShift!,
+      );
+      if (finalConflict) {
+        emit(
+          state.copyWith(
+            status: BookingStatus.initial,
+            isSubmitting: false,
+            hasScheduleConflict: true,
+            conflictMessage: _scheduleConflictMessage,
+          ),
+        );
+        return;
+      }
+
       final patientData = await _getUserData(event.patientId);
       final doctorData =
           (await _getUserData(state.selectedDoctor!.userId)) ??
@@ -294,6 +495,12 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
       final dob = _firstText(patientData, const ['dateOfBirth']);
       final gender = _firstText(patientData, const ['gender']);
+      final patientCode =
+          _firstText(patientData, const ['patientCode', 'userCode', 'code']) ??
+          '';
+      final doctorCode =
+          _firstText(doctorData, const ['doctorCode', 'userCode', 'code']) ??
+          state.selectedDoctor!.id;
       final patientName =
           _firstText(patientData, const [
             'fullName',
@@ -326,10 +533,12 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       final appointment = HospitalAppointment(
         id: '', // Will be set by Firestore
         patientId: event.patientId,
+        patientCode: patientCode,
         patientDOB: dob,
         patientGender: gender,
         patientName: patientName,
         doctorId: state.selectedDoctor!.id,
+        doctorCode: doctorCode,
         doctorName: doctorName,
         departmentId: state.selectedDepartment!.id,
         departmentName: state.selectedDepartment!.name,
@@ -345,23 +554,55 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         insuranceNumber: event.insuranceNumber,
         symptoms: state.symptoms,
         status: 'pending',
+        paymentStatus: 'unpaid',
         paymentMethod: state.selectedPaymentMethod,
         createdAt: DateTime.now(),
       );
 
       final created = await createAppointment(appointment);
+
+      try {
+        final appointmentTime = NotificationFacade.combineDateAndTimeSlot(
+          created.appointmentDate,
+          created.timeSlot,
+        );
+        await NotificationFacade.onAppointmentCreated(
+          appointmentId: created.id,
+          appointmentCode: created.appointmentCode,
+          patientId: created.patientId,
+          patientName: created.patientName,
+          doctorId: created.doctorId,
+          doctorName: created.doctorName,
+          departmentId: created.departmentId,
+          departmentName: created.departmentName,
+          appointmentTime: appointmentTime,
+          patientEmail: FirebaseAuth.instance.currentUser?.email,
+        );
+      } catch (e) {
+        debugPrint('Notification error after appointment creation: $e');
+      }
+
       emit(
         state.copyWith(
           status: BookingStatus.success,
+          isSubmitting: false,
           createdAppointment: created,
+          clearConflict: true,
           currentStep: 4,
         ),
       );
     } catch (e) {
+      final message = e.toString();
+      final isConflict =
+          message.contains('lịch khám trong ca này') ||
+          message.contains('lich kham trong ca nay');
       emit(
         state.copyWith(
-          status: BookingStatus.failure,
-          errorMessage: e.toString(),
+          status: isConflict ? BookingStatus.initial : BookingStatus.failure,
+          isSubmitting: false,
+          hasScheduleConflict: isConflict,
+          conflictMessage: isConflict ? _scheduleConflictMessage : null,
+          errorMessage: isConflict ? null : message,
         ),
       );
     }
@@ -378,76 +619,86 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
       final paymentId = 'PAY_${DateTime.now().millisecondsSinceEpoch}';
       final invoiceId = 'INV_${DateTime.now().millisecondsSinceEpoch}';
+      final sequenceService = FirestoreSequenceService(firestore: db);
+      final paymentCode = await sequenceService.generateNextCode('payments');
+      final invoiceCode = await sequenceService.generateNextCode('invoices');
+      final billing = await BillingCalculationService(
+        firestore: db,
+      ).calculate(patientId: event.patientId, originalAmount: event.amount);
+      final requestedStatus = state.selectedPaymentMethod == 'CASH'
+          ? 'pay_at_counter'
+          : 'waiting_confirmation';
+      final requestedMethod = state.selectedPaymentMethod == 'CASH'
+          ? 'cash'
+          : state.selectedPaymentMethod.toLowerCase();
 
       // 1. Create Payment Record (Pending as requested)
       final paymentRef = db.collection('Payments').doc(paymentId);
       batch.set(paymentRef, {
+        'id': paymentId,
+        'invoiceId': invoiceId,
         'appointmentId': event.appointmentId,
         'patientId': event.patientId,
-        'amount': event.amount,
-        'status': 'pending',
+        'status': requestedStatus,
+        'paymentStatus': requestedStatus,
+        'paymentCode': paymentCode,
+        'invoiceCode': invoiceCode,
+        ...billing.toFirestoreFields(),
         'createdAt': FieldValue.serverTimestamp(),
-        'method': state.selectedPaymentMethod,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'method': requestedMethod,
+        'paymentMethod': requestedMethod,
       });
 
       // 2. Create Invoice Record
       final invoiceRef = db.collection('Invoices').doc(invoiceId);
       batch.set(invoiceRef, {
         'id': invoiceId,
+        'paymentId': paymentId,
         'appointmentId': event.appointmentId,
-        'subtotal': event.amount,
-        'discount': 0.0,
+        'patientId': event.patientId,
         'tax': 0.0,
-        'total': event.amount,
-        'status': 'paid', // User said "Sau khi thanh toán hoàn tất..."
+        ...billing.toFirestoreFields(),
+        'paymentStatus': requestedStatus,
+        'method': requestedMethod,
+        'paymentMethod': requestedMethod,
+        'paymentCode': paymentCode,
+        'invoiceCode': invoiceCode,
+        'expenseType': 'Tien kham',
+        'serviceContent': 'Thanh toan phi kham',
+        'status': requestedStatus,
         'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
       });
 
       // 3. Update Appointment Status to Confirmed
       final appointmentRef = db
           .collection('Appointments')
           .doc(event.appointmentId);
-      batch.update(appointmentRef, {'status': 'confirmed'});
+      batch.update(appointmentRef, {
+        'status': 'confirmed',
+        'paymentId': paymentId,
+        'invoiceId': invoiceId,
+        'lastInvoiceId': invoiceId,
+        'paymentStatus': requestedStatus,
+        'paymentMethod': requestedMethod,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
       await batch.commit();
-
-      // Gửi thông báo sau khi đặt lịch/thanh toán thành công.
-      // Lỗi thông báo không được làm hỏng flow đặt lịch.
-      try {
-        final appointment = state.createdAppointment;
-        if (appointment != null) {
-          final appointmentTime = NotificationFacade.combineDateAndTimeSlot(
-            appointment.appointmentDate,
-            appointment.timeSlot,
-          );
-
-          await NotificationFacade.onAppointmentCreated(
-            appointmentId: event.appointmentId,
-            patientId: event.patientId,
-            patientName: appointment.patientName,
-            doctorId: appointment.doctorId,
-            doctorName: appointment.doctorName,
-            departmentId: appointment.departmentId,
-            departmentName: appointment.departmentName,
-            appointmentTime: appointmentTime,
-            patientEmail: FirebaseAuth.instance.currentUser?.email,
-          );
-        }
-      } catch (e) {
-        // Không throw lại để tránh người dùng bị báo lỗi thanh toán/đặt lịch
-        // chỉ vì phần gửi thông báo gặp sự cố.
-        print('Notification error after booking confirmation: $e');
-      }
 
       // Refresh appointment in state (for Ticket UI updates if any)
       if (state.createdAppointment != null) {
         final updated = HospitalAppointment(
           id: state.createdAppointment!.id,
+          appointmentCode: state.createdAppointment!.appointmentCode,
           patientId: state.createdAppointment!.patientId,
+          patientCode: state.createdAppointment!.patientCode,
           patientDOB: state.createdAppointment!.patientDOB,
           patientGender: state.createdAppointment!.patientGender,
           patientName: state.createdAppointment!.patientName,
           doctorId: state.createdAppointment!.doctorId,
+          doctorCode: state.createdAppointment!.doctorCode,
           doctorName: state.createdAppointment!.doctorName,
           departmentId: state.createdAppointment!.departmentId,
           departmentName: state.createdAppointment!.departmentName,
@@ -461,6 +712,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           insuranceNumber: state.createdAppointment!.insuranceNumber,
           symptoms: state.createdAppointment!.symptoms,
           status: 'confirmed',
+          paymentStatus: requestedStatus,
           paymentMethod: state.createdAppointment!.paymentMethod,
           createdAt: state.createdAppointment!.createdAt,
         );
@@ -494,6 +746,113 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     add(LoadInitialData());
   }
 
+  Future<void> _loadDoctorsForSelectedSession(
+    Emitter<BookingState> emit, {
+    DateTime? date,
+    String? session,
+  }) async {
+    final selectedDepartment = state.selectedDepartment;
+    final selectedDate = date ?? state.selectedDate;
+    final selectedSession = session ?? state.selectedSession;
+
+    if (selectedDepartment == null) return;
+
+    if (selectedDate != null && _isPastDate(selectedDate)) {
+      emit(
+        state.copyWith(
+          status: BookingStatus.failure,
+          selectedDate: selectedDate,
+          doctors: const [],
+          schedules: const [],
+          errorMessage:
+              'Ngày khám đã qua nên không thể đặt lịch. Vui lòng chọn hôm nay hoặc một ngày sau hôm nay.',
+          resetSelectedTime: true,
+          clearSelectedDoctor: true,
+        ),
+      );
+      return;
+    }
+
+    if (selectedDate == null || selectedSession == null) {
+      emit(
+        state.copyWith(
+          status: BookingStatus.initial,
+          selectedDate: selectedDate,
+          selectedSession: selectedSession,
+          doctors: const [],
+          schedules: const [],
+          takenQueueNumbers: const [],
+          currentStep: 1,
+          resetSelectedTime: true,
+          clearSelectedDoctor: true,
+          clearConflict: true,
+          clearErrorMessage: true,
+        ),
+      );
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        status: BookingStatus.loading,
+        selectedDate: selectedDate,
+        selectedSession: selectedSession,
+        doctors: const [],
+        schedules: const [],
+        takenQueueNumbers: const [],
+        resetSelectedTime: true,
+        clearSelectedDoctor: true,
+      ),
+    );
+
+    try {
+      final departmentDoctors = await getDoctorsByDept(selectedDepartment.id);
+      final availableDoctors = <DoctorEntity>[];
+      final availableSchedules = <ScheduleEntity>[];
+
+      for (final doctor in departmentDoctors) {
+        final schedules = await getDoctorSchedules(doctor.id, selectedDate);
+        final matchingSchedules = schedules
+            .where(
+              (schedule) =>
+                  schedule.isActive &&
+                  schedule.id.isNotEmpty &&
+                  schedule.availableSlots > 0 &&
+                  _scheduleMatchesSession(schedule, selectedSession) &&
+                  !_isScheduleFinished(selectedDate, schedule),
+            )
+            .toList();
+
+        if (matchingSchedules.isEmpty) continue;
+        availableDoctors.add(doctor);
+        availableSchedules.addAll(matchingSchedules);
+      }
+
+      emit(
+        state.copyWith(
+          status: BookingStatus.initial,
+          selectedDate: selectedDate,
+          selectedSession: selectedSession,
+          doctors: availableDoctors,
+          schedules: availableSchedules,
+          takenQueueNumbers: const [],
+          currentStep: 1,
+          resetSelectedTime: true,
+          clearSelectedDoctor: true,
+          clearConflict: true,
+          clearErrorMessage: true,
+        ),
+      );
+    } catch (e) {
+      emit(
+        state.copyWith(
+          status: BookingStatus.failure,
+          errorMessage: e.toString(),
+        ),
+      );
+    }
+  }
+
   Future<Map<String, dynamic>?> _getUserData(String userId) async {
     if (userId.trim().isEmpty) return null;
 
@@ -521,6 +880,59 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     final text = value?.trim();
     if (text == null || text.isEmpty) return null;
     return text;
+  }
+
+  Future<bool> _hasConflictForSelection(
+    DateTime date,
+    ShiftEntity shift,
+  ) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
+
+    try {
+      return await hasScheduleConflict(
+        patientId: user.uid,
+        date: date,
+        shiftId: shift.id,
+        timeSlot: shift.startTime,
+      );
+    } catch (e) {
+      debugPrint('Schedule conflict query failed, using local cache: $e');
+      return state.patientAppointments.any((appointment) {
+        if (!_isSameDay(appointment.appointmentDate, date)) return false;
+        if (!_isHoldingAppointment(appointment)) return false;
+        return appointment.shiftId == shift.id ||
+            appointment.timeSlot.trim() == shift.startTime.trim();
+      });
+    }
+  }
+
+  bool _isHoldingAppointment(HospitalAppointment appointment) {
+    final status = appointment.status.trim().toLowerCase();
+    if (status == 'scheduled' ||
+        status == 'confirmed' ||
+        status == 'pending' ||
+        status == 'cancel_requested' ||
+        status.startsWith('waiting')) {
+      return true;
+    }
+    if (status == 'completed') {
+      return !_isAppointmentInPast(appointment);
+    }
+    return false;
+  }
+
+  bool _scheduleMatchesSession(ScheduleEntity schedule, String session) {
+    return schedule.shiftId.toLowerCase().trim() ==
+        session.toLowerCase().trim();
+  }
+
+  bool _isScheduleFinished(DateTime date, ScheduleEntity schedule) {
+    final matchingShift = state.shifts.where(
+      (shift) => shift.id == schedule.shiftId,
+    );
+    if (matchingShift.isEmpty) return false;
+    return _isShiftFinished(date, matchingShift.first);
   }
 
   bool _isPastDate(DateTime date) {

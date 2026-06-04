@@ -6,6 +6,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/routes/app_routes.dart';
+import '../../../../services/firestore_sequence_service.dart';
 import '../../data/models/appointment_models.dart';
 import '../../../home/presentation/widgets/premium_login_required.dart';
 
@@ -720,33 +721,65 @@ class _MedicalTicketCard extends StatelessWidget {
   }
 
   Future<void> _confirmCancelAppointment(BuildContext context) async {
-    final shouldCancel = await showDialog<bool>(
+    final reasonController = TextEditingController();
+    final cancelReason = await showDialog<String>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Gửi yêu cầu hủy lịch?'),
-        content: Text(
-          'Bạn chỉ có thể gửi yêu cầu hủy trước giờ khám ít nhất 24 giờ. '
-          'Yêu cầu hủy lịch với ${appointment.doctorName} vào '
-          '${DateFormat('dd/MM/yyyy').format(appointment.appointmentDate)} lúc ${appointment.timeSlot} sẽ được gửi cho admin duyệt.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('KHÔNG'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
+      builder: (dialogContext) {
+        String? errorText;
+        return StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            title: const Text('Gửi yêu cầu hủy lịch?'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Yêu cầu hủy lịch với ${appointment.doctorName} vào '
+                  '${DateFormat('dd/MM/yyyy').format(appointment.appointmentDate)} lúc ${appointment.timeSlot} sẽ được gửi cho nhân viên duyệt.',
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: reasonController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: 'Lý do hủy',
+                    hintText: 'Nhập lý do hủy lịch',
+                    errorText: errorText,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+              ],
             ),
-            child: const Text('GỬI YÊU CẦU'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('KHÔNG'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final reason = reasonController.text.trim();
+                  if (reason.isEmpty) {
+                    setDialogState(() {
+                      errorText = 'Vui lòng nhập lý do hủy.';
+                    });
+                    return;
+                  }
+                  Navigator.pop(dialogContext, reason);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('GỬI YÊU CẦU'),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
+    reasonController.dispose();
 
-    if (shouldCancel != true) return;
+    if (cancelReason == null) return;
 
     try {
       final db = FirebaseFirestore.instance;
@@ -761,8 +794,19 @@ class _MedicalTicketCard extends StatelessWidget {
           throw Exception('Lịch hẹn này không còn ở trạng thái có thể hủy.');
         }
 
+        final cancelRequestCode =
+            await FirestoreSequenceService.generateNextCodeInTransaction(
+              transaction: transaction,
+              firestore: db,
+              entityType: 'cancel_requests',
+            );
+
         transaction.update(appointmentRef, {
           'status': 'cancel_requested',
+          'statusBeforeCancelRequest': currentStatus,
+          'cancelRequestCode': cancelRequestCode,
+          'cancelRequestStatus': 'pending',
+          'cancelReason': cancelReason,
           'cancelRequestedBy': 'patient',
           'cancelRequestedAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
@@ -1082,7 +1126,7 @@ class _CompactHistoryCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     DateFormat(
-                      'dd/MM/yyyy • HH:mm',
+                      'dd/MM/yyyy â€¢ HH:mm',
                     ).format(appointment.appointmentDate),
                     style: const TextStyle(
                       fontSize: 12,

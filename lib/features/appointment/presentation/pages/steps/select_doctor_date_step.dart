@@ -14,19 +14,17 @@ class SelectDoctorDateStep extends StatefulWidget {
 }
 
 class _SelectDoctorDateStepState extends State<SelectDoctorDateStep> {
-  DateTime _selectedDate = DateTime.now();
-  DoctorEntity? _selectedDoctor;
-
   @override
   void initState() {
     super.initState();
     if (widget.initialDoctor != null) {
-      _selectedDoctor = widget.initialDoctor;
-      // Auto-notify Bloc to select this doctor and load their schedules
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.read<BookingBloc>().add(
-          SelectDoctorAndDate(_selectedDoctor!, _selectedDate),
-        );
+        final state = context.read<BookingBloc>().state;
+        if (state.selectedDate != null && state.selectedSession != null) {
+          context.read<BookingBloc>().add(
+            SelectDoctorForSession(widget.initialDoctor!),
+          );
+        }
       });
     }
   }
@@ -35,6 +33,10 @@ class _SelectDoctorDateStepState extends State<SelectDoctorDateStep> {
   Widget build(BuildContext context) {
     return BlocBuilder<BookingBloc, BookingState>(
       builder: (context, state) {
+        final waitingForFilters =
+            state.selectedDate == null || state.selectedSession == null;
+        final isLoading = state.status == BookingStatus.loading;
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -47,22 +49,25 @@ class _SelectDoctorDateStepState extends State<SelectDoctorDateStep> {
                         context.read<BookingBloc>().add(StepBack()),
                     icon: const Icon(Icons.arrow_back_ios_rounded, size: 18),
                   ),
-                  const Text(
-                    'Chọn bác sĩ & ngày khám',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.text,
+                  const Expanded(
+                    child: Text(
+                      'Chọn ngày, buổi và bác sĩ',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.text,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            _buildDatePicker(),
+            _DatePicker(selectedDate: state.selectedDate),
+            _SessionPicker(selectedSession: state.selectedSession),
             const Padding(
               padding: EdgeInsets.fromLTRB(20, 20, 20, 10),
               child: Text(
-                'Bác sĩ khả dụng',
+                'Bác sĩ có lịch trống',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -71,25 +76,59 @@ class _SelectDoctorDateStepState extends State<SelectDoctorDateStep> {
               ),
             ),
             Expanded(
-              child: state.doctors.isEmpty
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : waitingForFilters
                   ? const Center(
-                      child: Text('Không có bác sĩ khả dụng cho khoa này.'),
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text(
+                          'Vui lòng chọn ngày khám và buổi khám để xem bác sĩ còn lịch.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.hint,
+                          ),
+                        ),
+                      ),
+                    )
+                  : state.doctors.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text(
+                          'Không có bác sĩ còn lịch trống trong ngày và buổi này.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.hint,
+                          ),
+                        ),
+                      ),
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       itemCount: state.doctors.length,
                       itemBuilder: (context, index) {
                         final doctor = state.doctors[index];
-                        final isSelected = _selectedDoctor?.id == doctor.id;
+                        final schedules = state.schedules
+                            .where((schedule) => schedule.doctorId == doctor.id)
+                            .toList();
+                        final availableSlots = schedules.fold<int>(
+                          0,
+                          (sum, schedule) => sum + schedule.availableSlots,
+                        );
+                        final isSelected =
+                            state.selectedDoctor?.id == doctor.id;
                         return _DoctorListItem(
                           doctor: doctor,
+                          availableSlots: availableSlots,
                           isSelected: isSelected,
-                          onTap: () {
-                            setState(() => _selectedDoctor = doctor);
-                            context.read<BookingBloc>().add(
-                              SelectDoctorAndDate(doctor, _selectedDate),
-                            );
-                          },
+                          onTap: () => context.read<BookingBloc>().add(
+                            SelectDoctorForSession(doctor),
+                          ),
                         );
                       },
                     ),
@@ -99,113 +138,188 @@ class _SelectDoctorDateStepState extends State<SelectDoctorDateStep> {
       },
     );
   }
+}
 
-  Widget _buildDatePicker() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-          child: SizedBox(
-            height: 90,
-            child: ShaderMask(
-              shaderCallback: (Rect rect) {
-                return const LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    Colors.purple,
-                    Colors.transparent,
-                    Colors.transparent,
-                    Colors.purple,
-                  ],
-                  stops: [0.0, 0.05, 0.95, 1.0],
-                ).createShader(rect);
-              },
-              blendMode: BlendMode.dstOut,
-              child: ListView.builder(
-                physics: const BouncingScrollPhysics(),
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                itemCount: 14,
-                itemBuilder: (context, index) {
-                  final date = DateTime.now().add(Duration(days: index));
-                  final isSelected = DateUtils.isSameDay(date, _selectedDate);
-                  final dayName = DateFormat('EEE').format(date);
-                  final dayNum = DateFormat('dd').format(date);
+class _DatePicker extends StatelessWidget {
+  final DateTime? selectedDate;
 
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() => _selectedDate = date);
-                      if (_selectedDoctor != null) {
-                        context.read<BookingBloc>().add(
-                          SelectDoctorAndDate(_selectedDoctor!, date),
-                        );
-                      }
-                    },
-                    child: Container(
-                      width: 64,
-                      margin: const EdgeInsets.only(
-                        right: 12,
-                        top: 4,
-                        bottom: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.primaryDark
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            dayName,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: isSelected
-                                  ? Colors.white70
-                                  : AppColors.hint,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            dayNum,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected ? Colors.white : AppColors.text,
-                            ),
-                          ),
-                        ],
-                      ),
+  const _DatePicker({required this.selectedDate});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 100,
+      child: ListView.builder(
+        physics: const BouncingScrollPhysics(),
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(20, 10, 8, 0),
+        itemCount: 14,
+        itemBuilder: (context, index) {
+          final date = DateTime.now().add(Duration(days: index));
+          final selected =
+              selectedDate != null && DateUtils.isSameDay(date, selectedDate);
+
+          return GestureDetector(
+            onTap: () =>
+                context.read<BookingBloc>().add(SelectAppointmentDate(date)),
+            child: Container(
+              width: 64,
+              margin: const EdgeInsets.only(right: 12, top: 4, bottom: 4),
+              decoration: BoxDecoration(
+                color: selected ? AppColors.primaryDark : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    DateFormat('EEE').format(date),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: selected ? Colors.white70 : AppColors.hint,
                     ),
-                  );
-                },
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    DateFormat('dd').format(date),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: selected ? Colors.white : AppColors.text,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ),
-      ],
+          );
+        },
+      ),
     );
   }
 }
 
+class _SessionPicker extends StatelessWidget {
+  final String? selectedSession;
+
+  const _SessionPicker({required this.selectedSession});
+
+  @override
+  Widget build(BuildContext context) {
+    const sessions = [
+      _SessionOption(
+        id: 'morning',
+        label: 'Buổi sáng',
+        time: '07:30 - 11:30',
+        icon: Icons.wb_sunny_rounded,
+      ),
+      _SessionOption(
+        id: 'afternoon',
+        label: 'Buổi chiều',
+        time: '13:30 - 17:00',
+        icon: Icons.nights_stay_rounded,
+      ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+      child: Row(
+        children: sessions.map((option) {
+          final selected = selectedSession == option.id;
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: InkWell(
+                onTap: () => context.read<BookingBloc>().add(
+                  SelectAppointmentSession(option.id),
+                ),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: selected ? AppColors.primaryDark : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: selected
+                          ? AppColors.primaryDark
+                          : Colors.grey.shade200,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        option.icon,
+                        color: selected ? Colors.white : AppColors.primaryDark,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              option.label,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: selected ? Colors.white : AppColors.text,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              option.time,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: selected
+                                    ? Colors.white70
+                                    : AppColors.hint,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _SessionOption {
+  final String id;
+  final String label;
+  final String time;
+  final IconData icon;
+
+  const _SessionOption({
+    required this.id,
+    required this.label,
+    required this.time,
+    required this.icon,
+  });
+}
+
 class _DoctorListItem extends StatelessWidget {
   final DoctorEntity doctor;
+  final int availableSlots;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _DoctorListItem({
     required this.doctor,
+    required this.availableSlots,
     required this.isSelected,
     required this.onTap,
   });
@@ -262,12 +376,12 @@ class _DoctorListItem extends StatelessWidget {
           children: [
             const SizedBox(height: 4),
             Text(
-              '${doctor.specialization} • ${doctor.yearsOfExperience} năm KN',
+              '${doctor.specialization} - ${doctor.yearsOfExperience} năm KN',
               style: const TextStyle(fontSize: 13, color: AppColors.hint),
             ),
             const SizedBox(height: 4),
             Text(
-              'Phí khám: ${NumberFormat.decimalPattern().format(doctor.consultationFee)} đ',
+              'Còn $availableSlots chỗ - Phí khám: ${NumberFormat.decimalPattern().format(doctor.consultationFee)} đ',
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,

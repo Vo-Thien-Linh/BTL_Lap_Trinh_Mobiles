@@ -30,7 +30,8 @@ class HospitalNotificationModel {
       id: doc.id,
       title: raw['title']?.toString() ?? '',
       body: (raw['body'] ?? raw['content'] ?? raw['message'] ?? '').toString(),
-      timestamp: _readDate(raw['timestamp']) ??
+      timestamp:
+          _readDate(raw['timestamp']) ??
           _readDate(raw['createdAt']) ??
           _readDate(raw['scheduledAt']) ??
           DateTime.now(),
@@ -42,12 +43,18 @@ class HospitalNotificationModel {
 
   static HospitalNotificationType _parseHospitalType(dynamic value) {
     final type = value?.toString() ?? '';
-    if (type.contains('payment') || type.contains('bill') || type.contains('invoice')) {
+    if (type.contains('payment') ||
+        type.contains('bill') ||
+        type.contains('invoice')) {
       return HospitalNotificationType.bill;
     }
-    if (type.contains('appointment')) return HospitalNotificationType.appointment;
+    if (type.contains('appointment'))
+      return HospitalNotificationType.appointment;
     if (type.contains('service')) return HospitalNotificationType.service;
-    if (type.contains('medical') || type.contains('examination') || type.contains('result') || type.contains('medication')) {
+    if (type.contains('medical') ||
+        type.contains('examination') ||
+        type.contains('result') ||
+        type.contains('medication')) {
       return HospitalNotificationType.medical;
     }
     return HospitalNotificationType.system;
@@ -86,6 +93,7 @@ class HospitalNotificationModel {
 
 class NotificationModel extends Equatable {
   final String id;
+  final String? notificationCode;
   final String userId;
   final String? patientId;
   final String? doctorId;
@@ -107,6 +115,7 @@ class NotificationModel extends Equatable {
 
   const NotificationModel({
     required this.id,
+    this.notificationCode,
     required this.userId,
     this.patientId,
     this.doctorId,
@@ -130,6 +139,7 @@ class NotificationModel extends Equatable {
   factory NotificationModel.fromEntity(NotificationEntity entity) {
     return NotificationModel(
       id: entity.id,
+      notificationCode: entity.notificationCode,
       userId: entity.userId,
       patientId: entity.patientId,
       doctorId: entity.doctorId,
@@ -155,7 +165,9 @@ class NotificationModel extends Equatable {
     final raw = (doc.data() as Map<String, dynamic>?) ?? {};
     return NotificationModel(
       id: doc.id,
-      userId: (raw['userId'] ?? raw['patientId'] ?? raw['doctorId'] ?? '').toString(),
+      notificationCode: raw['notificationCode']?.toString(),
+      userId: (raw['userId'] ?? raw['patientId'] ?? raw['doctorId'] ?? '')
+          .toString(),
       patientId: raw['patientId']?.toString(),
       doctorId: raw['doctorId']?.toString(),
       recipientRole: (raw['recipientRole'] ?? _inferRole(raw)).toString(),
@@ -164,7 +176,10 @@ class NotificationModel extends Equatable {
       title: raw['title']?.toString() ?? '',
       body: (raw['body'] ?? raw['content'] ?? raw['message'] ?? '').toString(),
       data: Map<String, dynamic>.from((raw['data'] as Map?) ?? raw),
-      createdAt: _readDate(raw['createdAt']) ?? _readDate(raw['timestamp']) ?? DateTime.now(),
+      createdAt:
+          _readDate(raw['createdAt']) ??
+          _readDate(raw['timestamp']) ??
+          DateTime.now(),
       scheduledAt: _readDate(raw['scheduledAt']),
       isRead: raw['isRead'] == true,
       deepLink: raw['deepLink']?.toString(),
@@ -179,6 +194,7 @@ class NotificationModel extends Equatable {
   Map<String, dynamic> toFirestore() {
     final map = <String, dynamic>{
       'id': id,
+      'notificationCode': notificationCode,
       'userId': userId,
       'patientId': patientId,
       'doctorId': doctorId,
@@ -191,14 +207,18 @@ class NotificationModel extends Equatable {
       'data': data,
       'createdAt': Timestamp.fromDate(createdAt),
       'timestamp': Timestamp.fromDate(createdAt), // giữ tương thích với UI cũ
-      'scheduledAt': scheduledAt == null ? null : Timestamp.fromDate(scheduledAt!),
+      'scheduledAt': scheduledAt == null
+          ? null
+          : Timestamp.fromDate(scheduledAt!),
       'isRead': isRead,
       'deepLink': deepLink,
       'sendPush': sendPush,
       'sendEmail': sendEmail,
       'email': email,
       'deliveryStatus': deliveryStatus,
-      'deliveredAt': deliveredAt == null ? null : Timestamp.fromDate(deliveredAt!),
+      'deliveredAt': deliveredAt == null
+          ? null
+          : Timestamp.fromDate(deliveredAt!),
       'updatedAt': FieldValue.serverTimestamp(),
     };
     map.removeWhere((_, value) => value == null);
@@ -208,6 +228,7 @@ class NotificationModel extends Equatable {
   NotificationEntity toEntity() {
     return NotificationEntity(
       id: id,
+      notificationCode: notificationCode,
       userId: userId,
       patientId: patientId,
       doctorId: doctorId,
@@ -252,26 +273,27 @@ class NotificationModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        userId,
-        patientId,
-        doctorId,
-        recipientRole,
-        type,
-        category,
-        title,
-        body,
-        data,
-        createdAt,
-        scheduledAt,
-        isRead,
-        deepLink,
-        sendPush,
-        sendEmail,
-        email,
-        deliveryStatus,
-        deliveredAt,
-      ];
+    id,
+    notificationCode,
+    userId,
+    patientId,
+    doctorId,
+    recipientRole,
+    type,
+    category,
+    title,
+    body,
+    data,
+    createdAt,
+    scheduledAt,
+    isRead,
+    deepLink,
+    sendPush,
+    sendEmail,
+    email,
+    deliveryStatus,
+    deliveredAt,
+  ];
 }
 
 class NotificationTemplateModel extends Equatable {
@@ -304,36 +326,47 @@ class NotificationTemplateModel extends Equatable {
       templateType: raw['templateType']?.toString() ?? 'preparation',
       title: raw['title']?.toString() ?? '',
       message: raw['message']?.toString() ?? '',
-      instructions: List<String>.from((raw['instructions'] as List?) ?? const []),
+      instructions: List<String>.from(
+        (raw['instructions'] as List?) ?? const [],
+      ),
       isActive: raw['isActive'] != false,
     );
   }
 
   Map<String, dynamic> toFirestore() => {
-        'id': id,
-        'departmentId': departmentId,
-        'departmentName': departmentName,
-        'templateType': templateType,
-        'title': title,
-        'message': message,
-        'instructions': instructions,
-        'isActive': isActive,
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
+    'id': id,
+    'departmentId': departmentId,
+    'departmentName': departmentName,
+    'templateType': templateType,
+    'title': title,
+    'message': message,
+    'instructions': instructions,
+    'isActive': isActive,
+    'updatedAt': FieldValue.serverTimestamp(),
+  };
 
   NotificationTemplateEntity toEntity() => NotificationTemplateEntity(
-        id: id,
-        departmentId: departmentId,
-        departmentName: departmentName,
-        templateType: templateType,
-        title: title,
-        message: message,
-        instructions: instructions,
-        isActive: isActive,
-      );
+    id: id,
+    departmentId: departmentId,
+    departmentName: departmentName,
+    templateType: templateType,
+    title: title,
+    message: message,
+    instructions: instructions,
+    isActive: isActive,
+  );
 
   @override
-  List<Object?> get props => [id, departmentId, departmentName, templateType, title, message, instructions, isActive];
+  List<Object?> get props => [
+    id,
+    departmentId,
+    departmentName,
+    templateType,
+    title,
+    message,
+    instructions,
+    isActive,
+  ];
 }
 
 DateTime? _readDate(dynamic value) {
@@ -354,6 +387,9 @@ String _inferCategory(dynamic type) {
   if (value.contains('payment')) return 'payment';
   if (value.contains('appointment')) return 'appointment';
   if (value.contains('service')) return 'service';
-  if (value.contains('result') || value.contains('examination') || value.contains('medication')) return 'medical';
+  if (value.contains('result') ||
+      value.contains('examination') ||
+      value.contains('medication'))
+    return 'medical';
   return 'system';
 }

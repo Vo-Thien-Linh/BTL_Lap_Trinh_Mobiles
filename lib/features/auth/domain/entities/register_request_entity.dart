@@ -4,6 +4,7 @@ class RegisterRequestEntity {
   final String cccd;
   final String email;
   final String password;
+  final DateTime dateOfBirth;
 
   const RegisterRequestEntity({
     required this.fullName,
@@ -11,5 +12,6 @@ class RegisterRequestEntity {
     required this.cccd,
     required this.email,
     required this.password,
+    required this.dateOfBirth,
   });
 }

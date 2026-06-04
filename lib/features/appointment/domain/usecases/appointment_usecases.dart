@@ -5,7 +5,8 @@ class GetDepartmentsUsecase {
   final AppointmentRepository repository;
   GetDepartmentsUsecase(this.repository);
 
-  Future<List<DepartmentEntity>> call() async => await repository.getDepartments();
+  Future<List<DepartmentEntity>> call() async =>
+      await repository.getDepartments();
 }
 
 class GetDoctorsByDeptUsecase {
@@ -44,8 +45,28 @@ class GetTakenQueueNumbersUsecase {
   final AppointmentRepository repository;
   GetTakenQueueNumbersUsecase(this.repository);
 
-  Future<List<int>> call(String doctorId, DateTime date, String shiftId) async =>
-      await repository.getTakenQueueNumbers(doctorId, date, shiftId);
+  Future<List<int>> call(
+    String doctorId,
+    DateTime date,
+    String shiftId,
+  ) async => await repository.getTakenQueueNumbers(doctorId, date, shiftId);
+}
+
+class HasScheduleConflictUsecase {
+  final AppointmentRepository repository;
+  HasScheduleConflictUsecase(this.repository);
+
+  Future<bool> call({
+    required String patientId,
+    required DateTime date,
+    required String shiftId,
+    String? timeSlot,
+  }) async => await repository.hasScheduleConflict(
+    patientId: patientId,
+    date: date,
+    shiftId: shiftId,
+    timeSlot: timeSlot,
+  );
 }
 
 class GetPatientActiveAppointmentsUsecase {
