@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:baitaplon/features/appointment/presentation/bloc/booking_bloc.dart';
-import 'package:baitaplon/features/appointment/domain/entities/appointment_entities.dart';
-import 'package:baitaplon/app/theme/app_colors.dart';
+import 'package:intl/intl.dart';
+
+import '../../../../../app/theme/app_colors.dart';
+import '../../../domain/entities/appointment_entities.dart';
+import '../../bloc/booking_bloc.dart';
 
 class SelectTimeSlotStep extends StatelessWidget {
   const SelectTimeSlotStep({super.key});
@@ -12,7 +14,12 @@ class SelectTimeSlotStep extends StatelessWidget {
     return BlocBuilder<BookingBloc, BookingState>(
       builder: (context, state) {
         final activeSchedules = state.schedules
-            .where((schedule) => schedule.isActive && schedule.id.isNotEmpty)
+            .where(
+              (schedule) =>
+                  schedule.isActive &&
+                  schedule.id.isNotEmpty &&
+                  schedule.doctorId == state.selectedDoctor?.id,
+            )
             .toList();
 
         return Column(
@@ -27,12 +34,15 @@ class SelectTimeSlotStep extends StatelessWidget {
                         context.read<BookingBloc>().add(StepBack()),
                     icon: const Icon(Icons.arrow_back_ios_rounded, size: 18),
                   ),
-                  const Text(
-                    'Chọn thời gian khám',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.text,
+                  const Expanded(
+                    child: Text(
+                      'Chọn ca và số thứ tự khám',
+                      maxLines: 2,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.text,
+                      ),
                     ),
                   ),
                 ],
@@ -55,8 +65,8 @@ class SelectTimeSlotStep extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Bác sĩ ${state.selectedDoctor?.name} nhận khám vào các ca sau:',
-                        style: TextStyle(
+                        'Bác sĩ ${state.selectedDoctor?.name ?? ''} nhận khám vào các ca còn slot dưới đây.',
+                        style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                           color: AppColors.text,
@@ -67,6 +77,14 @@ class SelectTimeSlotStep extends StatelessWidget {
                 ),
               ),
             ),
+            if (state.hasScheduleConflict)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                child: _buildConflictPanel(
+                  state.conflictMessage ??
+                      'Bạn đã có lịch khám trong ca này. Vui lòng chọn ngày, buổi hoặc bác sĩ khác.',
+                ),
+              ),
             Expanded(
               child: activeSchedules.isEmpty
                   ? const Center(
@@ -124,7 +142,7 @@ class SelectTimeSlotStep extends StatelessWidget {
                                 ),
                             ],
                           );
-                        }).toList(),
+                        }),
                         const SizedBox(height: 20),
                       ],
                     ),
@@ -147,7 +165,7 @@ class SelectTimeSlotStep extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 20, left: 4, right: 4),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.secondary.withOpacity(0.5),
+        color: AppColors.secondary.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -161,23 +179,29 @@ class SelectTimeSlotStep extends StatelessWidget {
               color: AppColors.text,
             ),
           ),
+          const SizedBox(height: 6),
+          const Text(
+            'Thời gian chỉ là dự kiến và có thể thay đổi theo thực tế khám.',
+            style: TextStyle(fontSize: 12, color: AppColors.hint),
+          ),
           const SizedBox(height: 12),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 5,
+              crossAxisCount: 3,
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
-              childAspectRatio: 1,
+              childAspectRatio: 1.45,
             ),
             itemCount: maxSlots,
             itemBuilder: (context, index) {
               final number = index + 1;
               final isTaken = state.takenQueueNumbers.contains(number);
               final isBookedByMe = state.selectedQueueNumber == number;
+              final timeRange = _estimatedTimeRange(shift, number, maxSlots);
 
-              return GestureDetector(
+              return InkWell(
                 onTap: isTaken
                     ? null
                     : () {
@@ -185,27 +209,52 @@ class SelectTimeSlotStep extends StatelessWidget {
                           SelectQueueNumber(number),
                         );
                       },
+                borderRadius: BorderRadius.circular(12),
                 child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
                   decoration: BoxDecoration(
                     color: isBookedByMe
                         ? AppColors.primaryDark
                         : (isTaken ? Colors.grey.shade300 : Colors.white),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isBookedByMe
                           ? AppColors.primaryDark
                           : Colors.grey.shade200,
                     ),
                   ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    '$number',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: isBookedByMe
-                          ? Colors.white
-                          : (isTaken ? Colors.grey.shade500 : AppColors.text),
-                    ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'STT $number',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          color: isBookedByMe
+                              ? Colors.white
+                              : (isTaken
+                                    ? Colors.grey.shade500
+                                    : AppColors.text),
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        timeRange,
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                          color: isBookedByMe
+                              ? Colors.white.withValues(alpha: 0.9)
+                              : (isTaken
+                                    ? Colors.grey.shade500
+                                    : AppColors.hint),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -215,15 +264,87 @@ class SelectTimeSlotStep extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildConflictPanel(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.error.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.error_outline_rounded, color: AppColors.error),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: AppColors.error,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _estimatedTimeRange(
+    ShiftEntity shift,
+    int queueNumber,
+    int slotCount,
+  ) {
+    final start = _timeOnDate(shift.startTime);
+    final end = _timeOnDate(shift.endTime);
+    if (start == null || end == null || !end.isAfter(start)) {
+      return shift.startTime;
+    }
+
+    final safeSlotCount = slotCount <= 0 ? 1 : slotCount;
+    final slotMinutes = end.difference(start).inMinutes / safeSlotCount;
+    final slotStart = start.add(
+      Duration(minutes: ((queueNumber - 1) * slotMinutes).round()),
+    );
+    final slotEnd = start.add(
+      Duration(minutes: (queueNumber * slotMinutes).round()),
+    );
+
+    return '${DateFormat('HH:mm').format(slotStart)} - ${DateFormat('HH:mm').format(slotEnd)}';
+  }
+
+  DateTime? _timeOnDate(String value) {
+    final parts = value.split(':');
+    if (parts.length < 2) return null;
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return null;
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day, hour, minute);
+  }
+
+  bool _isShiftFinished(DateTime? selectedDate, ShiftEntity shift) {
+    if (selectedDate == null) return false;
+    final now = DateTime.now();
+    final selectedDay = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+    );
+    final today = DateTime(now.year, now.month, now.day);
+    if (selectedDay.isAfter(today)) return false;
+    if (selectedDay.isBefore(today)) return true;
+
+    final end = _timeOnDate(shift.endTime);
+    return end != null && now.isAfter(end);
+  }
 }
 
 class _ShiftListItem extends StatelessWidget {
-  final ShiftEntity shift;
-  final ScheduleEntity schedule;
-  final bool isSelected;
-  final bool isFinished;
-  final VoidCallback onTap;
-
   const _ShiftListItem({
     required this.shift,
     required this.schedule,
@@ -232,132 +353,75 @@ class _ShiftListItem extends StatelessWidget {
     required this.onTap,
   });
 
+  final ShiftEntity shift;
+  final ScheduleEntity schedule;
+  final bool isSelected;
+  final bool isFinished;
+  final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
-    final bool isFull = schedule.availableSlots <= 0;
-    final bool isUnavailable = isFull || isFinished;
+    final isAvailable =
+        schedule.availableSlots > 0 && schedule.isActive && !isFinished;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: isSelected ? AppColors.primaryDark : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    return InkWell(
+      onTap: isAvailable ? onTap : null,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primaryDark : Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isSelected ? AppColors.primaryDark : AppColors.border,
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: isUnavailable ? null : onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? Colors.white.withOpacity(0.2)
-                        : AppColors.secondary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    shift.id == 'morning'
-                        ? Icons.wb_sunny_rounded
-                        : Icons.nights_stay_rounded,
-                    color: isSelected ? Colors.white : AppColors.primaryDark,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Ca ${shift.name}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? Colors.white : AppColors.text,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${shift.startTime} - ${shift.endTime}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: isSelected ? Colors.white70 : AppColors.hint,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      isFinished
-                          ? 'Đã qua giờ'
-                          : (isFull
-                                ? 'Hết chỗ'
-                                : '${schedule.availableSlots} chỗ trống'),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: isSelected
-                            ? Colors.white
-                            : (isUnavailable
-                                  ? AppColors.error
-                                  : AppColors.success),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    if (isSelected)
-                      const Icon(
-                        Icons.check_circle_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                  ],
-                ),
-              ],
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.access_time_rounded,
+              color: isSelected ? Colors.white : AppColors.primaryDark,
             ),
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${shift.name} (${shift.startTime} - ${shift.endTime})',
+                    maxLines: 2,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : AppColors.text,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    isFinished
+                        ? 'Ca này đã qua'
+                        : 'Còn ${schedule.availableSlots} slot',
+                    style: TextStyle(
+                      color: isSelected
+                          ? Colors.white.withValues(alpha: 0.82)
+                          : AppColors.hint,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              isSelected
+                  ? Icons.check_circle_rounded
+                  : Icons.chevron_right_rounded,
+              color: isSelected ? Colors.white : AppColors.hint,
+            ),
+          ],
         ),
       ),
     );
   }
-}
-
-bool _isShiftFinished(DateTime? date, ShiftEntity shift) {
-  if (date == null || !_isSameDay(date, DateTime.now())) return false;
-
-  final end = _timeOnDate(date, shift.endTime);
-  if (end == null) return false;
-
-  return !DateTime.now().isBefore(end);
-}
-
-bool _isSameDay(DateTime left, DateTime right) {
-  return left.year == right.year &&
-      left.month == right.month &&
-      left.day == right.day;
-}
-
-DateTime? _timeOnDate(DateTime date, String time) {
-  final parts = time.trim().split(':');
-  if (parts.length < 2) return null;
-
-  final hour = int.tryParse(parts[0]);
-  final minute = int.tryParse(parts[1]);
-  if (hour == null || minute == null) return null;
-
-  return DateTime(date.year, date.month, date.day, hour, minute);
 }

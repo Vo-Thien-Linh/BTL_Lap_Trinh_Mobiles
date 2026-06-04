@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 import '../../../../app/routes/app_routes.dart';
+import '../../../../app/theme/app_colors.dart';
 
 class VerifyEmailPage extends StatefulWidget {
   const VerifyEmailPage({super.key});
@@ -11,32 +12,51 @@ class VerifyEmailPage extends StatefulWidget {
 }
 
 class _VerifyEmailPageState extends State<VerifyEmailPage> {
-  bool _isLoading = false;
+  bool _isChecking = false;
+  bool _isResending = false;
 
   Future<void> _checkVerified() async {
-    setState(() => _isLoading = true);
+    setState(() => _isChecking = true);
 
-    final user = FirebaseAuth.instance.currentUser;
+    try {
+      await FirebaseAuth.instance.currentUser?.reload();
+      final user = FirebaseAuth.instance.currentUser;
 
-    await user?.reload();
-
-    if (user != null && user.emailVerified) {
       if (!mounted) return;
-
-      Navigator.pushReplacementNamed(context, '/home');
-    } else {
-      _showMessage('Bạn vẫn chưa xác thực email.');
+      if (user != null && user.emailVerified) {
+        Navigator.pushReplacementNamed(context, AppRoutes.home);
+      } else {
+        _showMessage('Email chưa được xác thực.');
+      }
+    } catch (_) {
+      if (mounted) {
+        _showMessage(
+          'Không kiểm tra được trạng thái xác thực. Vui lòng thử lại.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isChecking = false);
     }
-
-    setState(() => _isLoading = false);
   }
 
   Future<void> _resendEmail() async {
-    final user = FirebaseAuth.instance.currentUser;
+    setState(() => _isResending = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        _showMessage('Không tìm thấy tài khoản đang đăng nhập.');
+        return;
+      }
 
-    if (user != null) {
       await user.sendEmailVerification();
-      _showMessage('Đã gửi lại email xác thực.');
+      if (!mounted) return;
+      _showMessage('Đã gửi lại email xác thực.', isError: false);
+    } catch (_) {
+      if (mounted) {
+        _showMessage('Không gửi được email xác thực. Vui lòng thử lại sau.');
+      }
+    } finally {
+      if (mounted) setState(() => _isResending = false);
     }
   }
 
@@ -47,10 +67,14 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
     Navigator.pushReplacementNamed(context, AppRoutes.login);
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+  void _showMessage(String message, {bool isError = true}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? AppColors.error : AppColors.success,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
@@ -77,7 +101,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF1A4FA8).withOpacity(0.12),
+                    color: const Color(0xFF1A4FA8).withValues(alpha: 0.12),
                     blurRadius: 30,
                     offset: const Offset(0, 12),
                   ),
@@ -125,7 +149,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                   ),
                   const SizedBox(height: 10),
                   const Text(
-                    'Sau khi bấm link xác thực trong Gmail, nhấn "Tôi đã xác thực".',
+                    'Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13.5,
@@ -137,36 +161,42 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _checkVerified,
+                      onPressed: _isChecking ? null : _checkVerified,
                       style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50),
+                        minimumSize: const Size.fromHeight(52),
                         textStyle: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      child: _isLoading
+                      child: _isChecking
                           ? const SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Tôi đã xác thực'),
+                          : const Text('Tôi đã xác thực, kiểm tra lại'),
                     ),
                   ),
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                      onPressed: _resendEmail,
+                      onPressed: _isResending ? null : _resendEmail,
                       style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50),
+                        minimumSize: const Size.fromHeight(52),
                         textStyle: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      child: const Text('Gửi lại email'),
+                      child: _isResending
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Gửi lại email xác thực'),
                     ),
                   ),
                   const SizedBox(height: 8),

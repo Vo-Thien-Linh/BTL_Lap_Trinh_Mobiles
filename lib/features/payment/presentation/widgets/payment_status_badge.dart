@@ -31,25 +31,25 @@ class PaymentStatusBadge extends StatelessWidget {
   static String statusLabel(String status) {
     switch (status) {
       case 'paid':
-        return 'Da thanh toan';
+        return 'Đã thanh toán';
       case 'payos_pending':
       case 'qr_generated':
-        return 'Dang thanh toan payOS';
+        return 'Đang thanh toán payOS';
       case 'waiting_confirmation':
-        return 'Cho xac nhan';
+        return 'Chờ xác nhận';
       case 'pay_at_counter':
-        return 'Thanh toan tai quay';
+        return 'Thanh toán tại quầy';
       case 'cancelled':
-        return 'Da huy';
+        return 'Đã hủy';
       case 'expired':
-        return 'Het han';
+        return 'Hết hạn';
       case 'failed':
-        return 'That bai';
+        return 'Thất bại';
       case 'pending':
-        return 'Cho thanh toan';
+        return 'Chờ thanh toán';
       case 'unpaid':
       default:
-        return 'Chua thanh toan';
+        return 'Chưa thanh toán';
     }
   }
 

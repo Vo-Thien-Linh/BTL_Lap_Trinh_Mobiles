@@ -9,10 +9,12 @@ class ExaminationResultsDashboardPage extends StatefulWidget {
   const ExaminationResultsDashboardPage({super.key});
 
   @override
-  State<ExaminationResultsDashboardPage> createState() => _ExaminationResultsDashboardPageState();
+  State<ExaminationResultsDashboardPage> createState() =>
+      _ExaminationResultsDashboardPageState();
 }
 
-class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDashboardPage> {
+class _ExaminationResultsDashboardPageState
+    extends State<ExaminationResultsDashboardPage> {
   bool _isLoading = false;
 
   @override
@@ -47,13 +49,18 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
       'patientName': 'Bệnh nhân Demo',
       'doctorName': 'BS. Nguyễn Văn A',
       'departmentName': 'Khoa Nội tổng quát',
-      'appointmentDate': Timestamp.fromDate(now.subtract(const Duration(days: 2))),
+      'appointmentDate': Timestamp.fromDate(
+        now.subtract(const Duration(days: 2)),
+      ),
       'status': 'completed',
       'appointmentTime': '08:30 AM',
       'symptoms': 'Đau đầu nhẹ, chóng mặt kéo dài 3 ngày.',
-      'diagnosis': 'Suy nhược cơ thể nhẹ do làm việc quá sức. Cần điều chỉnh chế độ sinh hoạt.',
-      'physicalExam': 'Niêm mạc hồng, tim đều, phổi trong, không rale. Huyết áp ổn định.',
-      'treatment': 'Nghỉ ngơi 3 ngày, ăn uống đầy đủ dưỡng chất, hạn chế sử dụng thiết bị điện tử sau 10 giờ tối.',
+      'diagnosis':
+          'Suy nhược cơ thể nhẹ do làm việc quá sức. Cần điều chỉnh chế độ sinh hoạt.',
+      'physicalExam':
+          'Niêm mạc hồng, tim đều, phổi trong, không rale. Huyết áp ổn định.',
+      'treatment':
+          'Nghỉ ngơi 3 ngày, ăn uống đầy đủ dưỡng chất, hạn chế sử dụng thiết bị điện tử sau 10 giờ tối.',
       'vitals': {
         'pressure': '120/80',
         'pulse': '72',
@@ -102,50 +109,86 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   _buildPatientIdentityCard(uid),
-                   const SizedBox(height: 28),
-                   _buildVitalsSummarySection(uid),
-                   const SizedBox(height: 28),
-                   Row(
-                     children: [
-                       Container(width: 4, height: 16, decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(2))),
-                       const SizedBox(width: 8),
-                       const Text(
+                  _buildPatientIdentityCard(uid),
+                  const SizedBox(height: 28),
+                  _buildVitalsSummarySection(uid),
+                  const SizedBox(height: 28),
+                  Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
                         'KHO HỒ SƠ Y TẾ',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.0),
-                       ),
-                     ],
-                   ),
-                   const SizedBox(height: 16),
-                   _buildCategoryGrid(context),
-                   const SizedBox(height: 28),
-                   Row(
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.textSecondary,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildCategoryGrid(context),
+                  const SizedBox(height: 28),
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
                         children: [
-                          Container(width: 4, height: 16, decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(2))),
+                          Container(
+                            width: 4,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
                           const SizedBox(width: 8),
                           const Text(
                             'KẾT QUẢ GẦN ĐÂY',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.0),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.textSecondary,
+                              letterSpacing: 1.0,
+                            ),
                           ),
                         ],
                       ),
                       TextButton(
-                        onPressed: () => Navigator.pushNamed(context, AppRoutes.examinationHistory, arguments: 'Hoàn thành'),
-                        style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+                        onPressed: () => Navigator.pushNamed(
+                          context,
+                          AppRoutes.examinationHistory,
+                          arguments: 'Hoàn thành',
+                        ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                        ),
                         child: const Row(
                           children: [
-                            Text('Tất cả', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                            Text(
+                              'Tất cả',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                              ),
+                            ),
                             Icon(Icons.chevron_right_rounded, size: 18),
                           ],
                         ),
                       ),
                     ],
-                   ),
-                   _buildRecentResultsList(uid),
-                   const SizedBox(height: 48),
+                  ),
+                  _buildRecentResultsList(uid),
+                  const SizedBox(height: 48),
                 ],
               ),
             ),
@@ -168,27 +211,44 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
       ),
       title: const Text(
         'TRUNG TÂM KẾT QUẢ',
-        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 1.2),
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1.2,
+        ),
       ),
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [AppColors.primary, Color(0xFF3B82F6)],
-              begin: Alignment.topLeft, end: Alignment.bottomRight,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
         ),
       ),
       actions: [
-        _isLoading 
-          ? const Center(child: Padding(padding: EdgeInsets.only(right: 16), child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))))
-          : IconButton(
-              onPressed: _handleRefresh, 
-              icon: const Icon(Icons.refresh_rounded, size: 22)
-            ),
+        _isLoading
+            ? const Center(
+                child: Padding(
+                  padding: EdgeInsets.only(right: 16),
+                  child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              )
+            : IconButton(
+                onPressed: _handleRefresh,
+                icon: const Icon(Icons.refresh_rounded, size: 22),
+              ),
         IconButton(
-          onPressed: () => _showHelpDialog(context), 
+          onPressed: () => _showHelpDialog(context),
           icon: const Icon(Icons.help_outline_rounded, size: 20),
           tooltip: 'Hướng dẫn sử dụng',
         ),
@@ -198,7 +258,9 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
 
   Widget _buildPatientIdentityCard(String? uid) {
     return StreamBuilder<DocumentSnapshot>(
-      stream: uid == null ? null : FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
+      stream: uid == null
+          ? null
+          : FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
       builder: (context, snapshot) {
         String name = 'Vui lòng đăng nhập';
         String id = 'N/A';
@@ -218,7 +280,11 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
             ),
             borderRadius: BorderRadius.circular(32),
             boxShadow: [
-              BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10)),
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
             ],
           ),
           child: Row(
@@ -231,7 +297,11 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: Colors.white.withOpacity(0.2)),
                 ),
-                child: const Icon(Icons.fingerprint_rounded, color: Colors.white, size: 36),
+                child: const Icon(
+                  Icons.fingerprint_rounded,
+                  color: Colors.white,
+                  size: 36,
+                ),
               ),
               const SizedBox(width: 20),
               Expanded(
@@ -240,15 +310,31 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
                   children: [
                     Text(
                       name.toUpperCase(),
-                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       child: Text(
                         'MÃ BN: $id',
-                        style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
                   ],
@@ -257,14 +343,32 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
               const SizedBox(width: 8),
               Column(
                 children: [
-                  const Text('NHÓM MÁU', style: TextStyle(color: Colors.white60, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                  const Text(
+                    'NHÓM MÁU',
+                    style: TextStyle(
+                      color: Colors.white60,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     child: const Text(
                       'O+',
-                      style: TextStyle(color: AppColors.primary, fontSize: 16, fontWeight: FontWeight.w900),
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                 ],
@@ -278,13 +382,15 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
 
   Widget _buildVitalsSummarySection(String? uid) {
     return StreamBuilder<QuerySnapshot>(
-      stream: uid == null ? null : FirebaseFirestore.instance
-          .collection('Appointments')
-          .where('patientId', isEqualTo: uid)
-          .where('status', isEqualTo: 'completed')
-          .snapshots(),
+      stream: uid == null
+          ? null
+          : FirebaseFirestore.instance
+                .collection('Appointments')
+                .where('patientId', isEqualTo: uid)
+                .where('status', isEqualTo: 'completed')
+                .snapshots(),
       builder: (context, snapshot) {
-        if (snapshot.hasError) return const SizedBox.shrink(); 
+        if (snapshot.hasError) return const SizedBox.shrink();
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return const _EmptyVitalsPlaceholder();
         }
@@ -292,8 +398,12 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
         // Sort in memory to avoid index requirement
         final docs = snapshot.data!.docs.toList();
         docs.sort((a, b) {
-          final da = (a.data() as Map<String, dynamic>)['appointmentDate'] as Timestamp;
-          final db = (b.data() as Map<String, dynamic>)['appointmentDate'] as Timestamp;
+          final da =
+              (a.data() as Map<String, dynamic>)['appointmentDate']
+                  as Timestamp;
+          final db =
+              (b.data() as Map<String, dynamic>)['appointmentDate']
+                  as Timestamp;
           return db.compareTo(da);
         });
 
@@ -305,11 +415,23 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
           children: [
             Row(
               children: [
-                Container(width: 4, height: 16, decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(2))),
+                Container(
+                  width: 4,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
                 const SizedBox(width: 8),
                 const Text(
                   'CHỈ SỐ SỨC KHỎE MỚI NHẤT',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.0),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textSecondary,
+                    letterSpacing: 1.0,
+                  ),
                 ),
               ],
             ),
@@ -319,13 +441,37 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
               clipBehavior: Clip.none,
               child: Row(
                 children: [
-                  _buildVitalCard('Huyết áp', vitals['pressure'] ?? '120/80', 'mmHg', AppColors.error, Icons.speed_rounded),
+                  _buildVitalCard(
+                    'Huyết áp',
+                    vitals['pressure'] ?? '120/80',
+                    'mmHg',
+                    AppColors.error,
+                    Icons.speed_rounded,
+                  ),
                   const SizedBox(width: 16),
-                  _buildVitalCard('Nhịp tim', vitals['pulse'] ?? '75', 'bpm', const Color(0xFFF97316), Icons.favorite_rounded),
+                  _buildVitalCard(
+                    'Nhịp tim',
+                    vitals['pulse'] ?? '75',
+                    'bpm',
+                    const Color(0xFFF97316),
+                    Icons.favorite_rounded,
+                  ),
                   const SizedBox(width: 16),
-                  _buildVitalCard('BMI', vitals['bmi'] ?? '22.4', 'Normal', AppColors.success, Icons.fitness_center_rounded),
+                  _buildVitalCard(
+                    'BMI',
+                    vitals['bmi'] ?? '22.4',
+                    'Normal',
+                    AppColors.success,
+                    Icons.fitness_center_rounded,
+                  ),
                   const SizedBox(width: 16),
-                  _buildVitalCard('Nhiệt độ', vitals['temp'] ?? '36.6', '°C', AppColors.primary, Icons.thermostat_rounded),
+                  _buildVitalCard(
+                    'Nhiệt độ',
+                    vitals['temp'] ?? '36.6',
+                    '°C',
+                    AppColors.primary,
+                    Icons.thermostat_rounded,
+                  ),
                 ],
               ),
             ),
@@ -335,14 +481,26 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
     );
   }
 
-  Widget _buildVitalCard(String label, String value, String unit, Color color, IconData icon) {
+  Widget _buildVitalCard(
+    String label,
+    String value,
+    String unit,
+    Color color,
+    IconData icon,
+  ) {
     return Container(
       width: 150,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(28),
-        boxShadow: [BoxShadow(color: AppColors.textBody.withOpacity(0.02), blurRadius: 15, offset: const Offset(0, 5))],
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textBody.withOpacity(0.02),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
         border: Border.all(color: AppColors.border.withOpacity(0.5)),
       ),
       child: Column(
@@ -350,20 +508,41 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: 16),
           Text(
             value,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.textBody),
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textBody,
+            ),
           ),
           const SizedBox(height: 4),
           Row(
             children: [
-              Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textBody)),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textBody,
+                ),
+              ),
               const Spacer(),
-              Text(unit, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.textHint)),
+              Text(
+                unit,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textHint,
+                ),
+              ),
             ],
           ),
         ],
@@ -373,10 +552,26 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
 
   Widget _buildCategoryGrid(BuildContext context) {
     final categories = [
-      {'label': 'Sổ Xét Nghiệm', 'icon': Icons.science_rounded, 'color': AppColors.primary},
-      {'label': 'Đơn Thuốc', 'icon': Icons.medication_rounded, 'color': AppColors.success},
-      {'label': 'Chẩn Đoán HA', 'icon': Icons.image_search_rounded, 'color': const Color(0xFF6366F1)},
-      {'label': 'Lịch Sử Khám', 'icon': Icons.history_edu_rounded, 'color': AppColors.warning},
+      {
+        'label': 'Sổ Xét Nghiệm',
+        'icon': Icons.science_rounded,
+        'color': AppColors.primary,
+      },
+      {
+        'label': 'Đơn Thuốc',
+        'icon': Icons.medication_rounded,
+        'color': AppColors.success,
+      },
+      {
+        'label': 'Chẩn Đoán HA',
+        'icon': Icons.image_search_rounded,
+        'color': const Color(0xFF6366F1),
+      },
+      {
+        'label': 'Lịch Sử Khám',
+        'icon': Icons.history_edu_rounded,
+        'color': AppColors.warning,
+      },
     ];
 
     return GridView.builder(
@@ -395,9 +590,17 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
         return InkWell(
           onTap: () {
             if (cat['label'] == 'Lịch Sử Khám') {
-              Navigator.pushNamed(context, AppRoutes.examinationHistory, arguments: 'Hoàn thành');
+              Navigator.pushNamed(
+                context,
+                AppRoutes.examinationHistory,
+                arguments: 'Hoàn thành',
+              );
             } else {
-              Navigator.pushNamed(context, AppRoutes.medicalVaultCategory, arguments: cat['label'] as String);
+              Navigator.pushNamed(
+                context,
+                AppRoutes.medicalVaultCategory,
+                arguments: cat['label'] as String,
+              );
             }
           },
           borderRadius: BorderRadius.circular(28),
@@ -406,7 +609,13 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(28),
-              boxShadow: [BoxShadow(color: AppColors.textBody.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.textBody.withOpacity(0.02),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
               border: Border.all(color: AppColors.border.withOpacity(0.5)),
             ),
             child: Column(
@@ -415,12 +624,19 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
               children: [
                 Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(14)),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                   child: Icon(cat['icon'] as IconData, color: color, size: 24),
                 ),
                 Text(
                   cat['label'] as String,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: AppColors.textBody),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textBody,
+                  ),
                 ),
               ],
             ),
@@ -432,21 +648,27 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
 
   Widget _buildRecentResultsList(String? uid) {
     return StreamBuilder<QuerySnapshot>(
-      stream: uid == null ? null : FirebaseFirestore.instance
-          .collection('Appointments')
-          .where('patientId', isEqualTo: uid)
-          .where('status', isEqualTo: 'completed')
-          .snapshots(),
+      stream: uid == null
+          ? null
+          : FirebaseFirestore.instance
+                .collection('Appointments')
+                .where('patientId', isEqualTo: uid)
+                .where('status', isEqualTo: 'completed')
+                .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) return const SizedBox.shrink();
-        if (snapshot.connectionState == ConnectionState.waiting) return const SizedBox(height: 100);
+        if (snapshot.connectionState == ConnectionState.waiting)
+          return const SizedBox(height: 100);
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Center(
               child: Text(
                 'Chưa có kết quả khám gần đây',
-                style: TextStyle(color: AppColors.textHint, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: AppColors.textHint,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           );
@@ -455,12 +677,19 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
         // Sort in memory to avoid index requirement
         final docs = snapshot.data!.docs.toList();
         docs.sort((a, b) {
-          final da = (a.data() as Map<String, dynamic>)['appointmentDate'] as Timestamp;
-          final db = (b.data() as Map<String, dynamic>)['appointmentDate'] as Timestamp;
+          final da =
+              (a.data() as Map<String, dynamic>)['appointmentDate']
+                  as Timestamp;
+          final db =
+              (b.data() as Map<String, dynamic>)['appointmentDate']
+                  as Timestamp;
           return db.compareTo(da);
         });
 
-        final items = docs.take(3).map((d) => HospitalAppointmentModel.fromFirestore(d)).toList();
+        final items = docs
+            .take(3)
+            .map((d) => HospitalAppointmentModel.fromFirestore(d))
+            .toList();
 
         return ListView.separated(
           shrinkWrap: true,
@@ -474,37 +703,68 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(24),
-                boxShadow: [BoxShadow(color: AppColors.textBody.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.textBody.withOpacity(0.02),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
                 border: Border.all(color: AppColors.border.withOpacity(0.5)),
               ),
               child: InkWell(
-                onTap: () => Navigator.pushNamed(context, AppRoutes.examinationDetail, arguments: item),
+                onTap: () => Navigator.pushNamed(
+                  context,
+                  AppRoutes.examinationDetail,
+                  arguments: item,
+                ),
                 borderRadius: BorderRadius.circular(24),
                 child: Row(
                   children: [
                     Container(
                       width: 52,
                       height: 52,
-                      decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
-                      child: const Icon(Icons.assignment_rounded, color: AppColors.primary, size: 24),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.assignment_rounded,
+                        color: AppColors.primary,
+                        size: 24,
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(item.doctorName, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppColors.textBody)),
+                          Text(
+                            item.doctorName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                              color: AppColors.textBody,
+                            ),
+                          ),
                           const SizedBox(height: 2),
                           Text(
                             item.diagnosis ?? "Đã có bệnh án chi tiết",
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    const Icon(Icons.chevron_right_rounded, color: AppColors.border),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.border,
+                    ),
                   ],
                 ),
               ),
@@ -531,7 +791,8 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [AppColors.primary, Color(0xFF3B82F6)],
-                    begin: Alignment.topLeft, end: Alignment.bottomRight,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(32),
@@ -542,25 +803,56 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
                   children: [
                     Container(
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
-                      child: const Icon(Icons.help_outline_rounded, color: Colors.white, size: 36),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.help_outline_rounded,
+                        color: Colors.white,
+                        size: 36,
+                      ),
                     ),
                     const SizedBox(height: 16),
-                    const Text('TRUNG TÂM KẾT QUẢ', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+                    const Text(
+                      'TRUNG TÂM KẾT QUẢ',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              
+
               Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildHelpItem(Icons.folder_shared_rounded, 'Kho Hồ Sơ Y Tế', 'Lưu trữ tất cả kết quả khám, đơn thuốc, xét nghiệm máu và hình ảnh X-Quang/Siêu âm của bạn.'),
-                    _buildHelpItem(Icons.sync_rounded, 'Cập Nhật Tự Động', 'Dữ liệu sẽ được cập nhật tự động sau ca khám từ 30-60 phút. Bạn có thể nhấn nút làm mới ở góc trên.'),
-                    _buildHelpItem(Icons.security_rounded, 'Bảo Mật Thông Tin', 'Tất cả dữ liệu y tế đều được mã hóa và chỉ có bạn cùng bác sĩ điều trị mới có quyền truy cập.'),
-                    _buildHelpItem(Icons.history_rounded, 'Lịch Sử Trọn Đời', 'Hệ thống lưu trữ lịch sử sức khỏe giúp bác sĩ theo dõi tiến trình và đưa ra chẩn đoán chính xác hơn.'),
-                    
+                    _buildHelpItem(
+                      Icons.folder_shared_rounded,
+                      'Kho Hồ Sơ Y Tế',
+                      'Lưu trữ tất cả kết quả khám, đơn thuốc, xét nghiệm máu và hình ảnh X-Quang/Siêu âm của bạn.',
+                    ),
+                    _buildHelpItem(
+                      Icons.sync_rounded,
+                      'Cập Nhật Tự Động',
+                      'Dữ liệu sẽ được cập nhật tự động sau ca khám từ 30-60 phút. Bạn có thể nhấn nút làm mới ở góc trên.',
+                    ),
+                    _buildHelpItem(
+                      Icons.security_rounded,
+                      'Bảo Mật Thông Tin',
+                      'Tất cả dữ liệu y tế đều được mã hóa và chỉ có bạn cùng bác sĩ điều trị mới có quyền truy cập.',
+                    ),
+                    _buildHelpItem(
+                      Icons.history_rounded,
+                      'Lịch Sử Trọn Đời',
+                      'Hệ thống lưu trữ lịch sử sức khỏe giúp bác sĩ theo dõi tiến trình và đưa ra chẩn đoán chính xác hơn.',
+                    ),
+
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
@@ -570,10 +862,18 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                           elevation: 0,
                         ),
-                        child: const Text('ĐÃ HIỂU', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+                        child: const Text(
+                          'ĐÃ HIỂU',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -594,7 +894,10 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight,
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: Icon(icon, color: AppColors.primary, size: 18),
           ),
           const SizedBox(width: 16),
@@ -602,9 +905,24 @@ class _ExaminationResultsDashboardPageState extends State<ExaminationResultsDash
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textBody)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textBody,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(desc, style: const TextStyle(fontSize: 12, color: AppColors.textHint, height: 1.5, fontWeight: FontWeight.w500)),
+                Text(
+                  desc,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textHint,
+                    height: 1.5,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ],
             ),
           ),
@@ -630,19 +948,35 @@ class _EmptyVitalsPlaceholder extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(color: AppColors.background, shape: BoxShape.circle),
-            child: const Icon(Icons.monitor_heart_outlined, size: 40, color: AppColors.textHint),
+            decoration: const BoxDecoration(
+              color: AppColors.background,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.monitor_heart_outlined,
+              size: 40,
+              color: AppColors.textHint,
+            ),
           ),
           const SizedBox(height: 16),
           const Text(
             'Chưa có chỉ số sinh tồn',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textBody),
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textBody,
+            ),
           ),
           const SizedBox(height: 8),
           const Text(
             'Các chỉ số của bạn sẽ được cập nhật tự động sau ca khám đầu tiên.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: AppColors.textHint, height: 1.5, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.textHint,
+              height: 1.5,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),

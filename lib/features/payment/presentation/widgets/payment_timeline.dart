@@ -13,21 +13,21 @@ class PaymentTimeline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final events = <_TimelineEvent>[
-      _TimelineEvent('Tao hoa don', payment.createdAt),
+      _TimelineEvent('Tạo hóa đơn', payment.createdAt),
       if (payment.updatedAt != null)
         _TimelineEvent(
           PaymentStatusBadge.statusLabel(payment.status),
           payment.updatedAt!,
         ),
       if (payment.paidAt != null)
-        _TimelineEvent('Thanh toan thanh cong', payment.paidAt!),
+        _TimelineEvent('Thanh toán thành công', payment.paidAt!),
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Trang thai',
+          'Trạng thái',
           style: TextStyle(
             color: AppColors.textBody,
             fontSize: 16,

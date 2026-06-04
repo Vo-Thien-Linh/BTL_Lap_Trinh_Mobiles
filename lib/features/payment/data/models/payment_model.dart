@@ -19,6 +19,12 @@ class PatientPaymentModel {
   final double discountAmount;
   final String currency;
   final String paymentCode;
+  final String invoiceCode;
+  final String discountType;
+  final bool insuranceApplied;
+  final int insuranceCoveragePercent;
+  final double insuranceCoveredAmount;
+  final double patientPayAmount;
   final String status;
   final String paymentMethod;
   final String gatewayProvider;
@@ -51,6 +57,12 @@ class PatientPaymentModel {
     required this.discountAmount,
     required this.currency,
     required this.paymentCode,
+    required this.invoiceCode,
+    required this.discountType,
+    required this.insuranceApplied,
+    required this.insuranceCoveragePercent,
+    required this.insuranceCoveredAmount,
+    required this.patientPayAmount,
     required this.status,
     required this.paymentMethod,
     required this.gatewayProvider,
@@ -72,13 +84,33 @@ class PatientPaymentModel {
     final rawStatus = _readString(data, ['paymentStatus', 'status']);
     final rawMethod = _readString(data, ['paymentMethod', 'method']);
     final amount = _readDouble(data, [
+      'finalAmount',
+      'amountDue',
+      'payableAmount',
       'amount',
       'total',
       'totalAmount',
       'subtotal',
     ]);
-    final totalAmount = _readDouble(data, ['totalAmount', 'total', 'subtotal']);
+    final totalAmount = _readDouble(data, [
+      'originalAmount',
+      'totalAmount',
+      'total',
+      'subtotal',
+    ]);
     final paidAt = _readDate(data, ['paidAt', 'paymentDate']);
+    final insuranceApplied =
+        data['insuranceApplied'] == true ||
+        _readString(data, ['discountType']) == 'health_insurance';
+    final insuranceCoveragePercent = _readInt(data, [
+      'insuranceCoveragePercent',
+      'discountPercent',
+    ]);
+    final insuranceCoveredAmount = _readDouble(data, [
+      'insuranceCoveredAmount',
+      'discountAmount',
+      'discount',
+    ]);
 
     return PatientPaymentModel(
       id: doc.id,
@@ -104,9 +136,27 @@ class PatientPaymentModel {
       currency: _readString(data, ['currency']).isEmpty
           ? 'VND'
           : _readString(data, ['currency']),
-      paymentCode: _readString(data, ['paymentCode', 'code', 'id']).isEmpty
+      paymentCode:
+          _readString(data, [
+            'paymentCode',
+            'invoiceCode',
+            'code',
+            'id',
+          ]).isEmpty
           ? doc.id
-          : _readString(data, ['paymentCode', 'code', 'id']),
+          : _readString(data, ['paymentCode', 'invoiceCode', 'code', 'id']),
+      invoiceCode: _readString(data, ['invoiceCode', 'receiptCode']),
+      discountType: _readString(data, ['discountType']),
+      insuranceApplied: insuranceApplied,
+      insuranceCoveragePercent: insuranceApplied
+          ? (insuranceCoveragePercent == 0 ? 80 : insuranceCoveragePercent)
+          : 0,
+      insuranceCoveredAmount: insuranceApplied ? insuranceCoveredAmount : 0,
+      patientPayAmount: _readDouble(data, [
+        'patientPayAmount',
+        'finalAmount',
+        'amount',
+      ]),
       status: normalizeStatus(rawStatus),
       paymentMethod: normalizeMethod(rawMethod),
       gatewayProvider: _readString(data, ['gatewayProvider', 'provider']),
@@ -163,6 +213,12 @@ class PatientPaymentModel {
       discountAmount: discountAmount,
       currency: currency,
       paymentCode: paymentCode,
+      invoiceCode: invoiceCode,
+      discountType: discountType,
+      insuranceApplied: insuranceApplied,
+      insuranceCoveragePercent: insuranceCoveragePercent,
+      insuranceCoveredAmount: insuranceCoveredAmount,
+      patientPayAmount: patientPayAmount,
       status: status,
       paymentMethod: paymentMethod,
       gatewayProvider: gatewayProvider,
@@ -243,6 +299,17 @@ class PatientPaymentModel {
       final value = data[key];
       if (value is num) return value.toDouble();
       final parsed = double.tryParse(value?.toString() ?? '');
+      if (parsed != null) return parsed;
+    }
+    return 0;
+  }
+
+  static int _readInt(Map<String, dynamic> data, List<String> keys) {
+    for (final key in keys) {
+      final value = data[key];
+      if (value is int) return value;
+      if (value is num) return value.toInt();
+      final parsed = int.tryParse(value?.toString() ?? '');
       if (parsed != null) return parsed;
     }
     return 0;

@@ -295,10 +295,8 @@ class PatientAppointmentDetailPage extends StatelessWidget {
           ),
           _buildInfoRow(
             Icons.access_time_rounded,
-            'Giờ khám',
-            appointment.timeSlot.isNotEmpty
-                ? appointment.timeSlot
-                : 'Chưa cập nhật',
+            'Thời gian khám dự kiến',
+            _estimatedTimeRange(appointment),
           ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
@@ -322,9 +320,78 @@ class PatientAppointmentDetailPage extends StatelessWidget {
                 ? appointment.queueNumber.toString()
                 : '---',
           ),
+          const SizedBox(height: 14),
+          _buildArrivalNote(),
         ],
       ),
     );
+  }
+
+  Widget _buildArrivalNote() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFED7AA)),
+      ),
+      child: const Text(
+        'Bạn nên đến sớm hơn khoảng 30 phút để đảm bảo việc khám diễn ra thuận lợi.',
+        style: TextStyle(
+          color: Color(0xFF9A3412),
+          fontSize: 12.5,
+          fontWeight: FontWeight.w700,
+          height: 1.35,
+        ),
+      ),
+    );
+  }
+
+  String _estimatedTimeRange(HospitalAppointmentModel appointment) {
+    final defaults = _defaultShiftTime(appointment.shiftId);
+    final startText = appointment.timeSlot.trim().isNotEmpty
+        ? appointment.timeSlot.trim()
+        : defaults.start;
+    final start = _timeOnDate(startText);
+    final end = _timeOnDate(defaults.end);
+    if (start == null || end == null || !end.isAfter(start)) return startText;
+
+    final shiftStart = _timeOnDate(defaults.start) ?? start;
+    final queueNumber = appointment.queueNumber <= 0
+        ? 1
+        : appointment.queueNumber;
+    final slotMinutes =
+        end.difference(shiftStart).inMinutes / defaults.slotCount;
+    final slotStart = shiftStart.add(
+      Duration(minutes: ((queueNumber - 1) * slotMinutes).round()),
+    );
+    final slotEnd = shiftStart.add(
+      Duration(minutes: (queueNumber * slotMinutes).round()),
+    );
+    return '${DateFormat('HH:mm').format(slotStart)} - ${DateFormat('HH:mm').format(slotEnd)}';
+  }
+
+  ({String start, String end, int slotCount}) _defaultShiftTime(
+    String shiftId,
+  ) {
+    switch (shiftId.trim().toLowerCase()) {
+      case 'afternoon':
+        return (start: '13:30', end: '17:00', slotCount: 10);
+      case 'morning':
+      default:
+        return (start: '07:30', end: '11:30', slotCount: 10);
+    }
+  }
+
+  DateTime? _timeOnDate(String value) {
+    final parts = value.split(':');
+    if (parts.length < 2) return null;
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return null;
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day, hour, minute);
   }
 
   Widget _buildPatientInfoCard(HospitalAppointmentModel appointment) {

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../app/routes/app_routes.dart';
+import '../../../payment/data/services/billing_calculation_service.dart';
 import '../../data/doctor_clinical_firestore_service.dart';
 
 class DoctorInvoicePage extends StatefulWidget {
@@ -74,6 +75,10 @@ class _DoctorInvoicePageState extends State<DoctorInvoicePage> {
         );
       }
 
+      final billing = await BillingCalculationService(
+        firestore: FirebaseFirestore.instance,
+      ).calculate(patientId: patientId, originalAmount: widget.totalPrice);
+
       final invoiceRef = await FirebaseFirestore.instance
           .collection('Invoices')
           .add({
@@ -89,9 +94,7 @@ class _DoctorInvoicePageState extends State<DoctorInvoicePage> {
                 effectivePatientData['name'] ??
                 'Bệnh nhân',
             'meds': widget.selectedMeds,
-            'totalAmount': widget.totalPrice,
-            'amount': widget.totalPrice,
-            'discountAmount': 0.0,
+            ...billing.toFirestoreFields(),
             'serviceContent': widget.selectedMeds.isNotEmpty
                 ? 'Thanh toán phí khám & thuốc'
                 : 'Thanh toán phí khám bệnh',
@@ -120,7 +123,7 @@ class _DoctorInvoicePageState extends State<DoctorInvoicePage> {
       await FirebaseFirestore.instance.collection('Notifications').add({
         'title': 'Yêu cầu thanh toán mới',
         'content':
-            'Bác sĩ đã hoàn tất khám. Vui lòng thanh toán hóa đơn trị giá ${_formatMoney(widget.totalPrice.toInt())}đ.',
+            'Bác sĩ đã hoàn tất khám. Vui lòng thanh toán hóa đơn trị giá ${_formatMoney(billing.finalAmount.toInt())}đ.',
         'type': 'payment',
         'timestamp': FieldValue.serverTimestamp(),
         'isRead': false,

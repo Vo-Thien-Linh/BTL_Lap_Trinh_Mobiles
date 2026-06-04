@@ -133,7 +133,7 @@ class PatientPaymentRepositoryImpl implements PatientPaymentRepository {
     final baseUrl = AppConstants.paymentApiBaseUrl.trim();
     if (baseUrl.isEmpty) {
       throw Exception(
-        'Chua cau hinh PAYMENT_API_BASE_URL de tao link thanh toan payOS.',
+        'Chưa cấu hình PAYMENT_API_BASE_URL để tạo link thanh toán payOS.',
       );
     }
 
@@ -249,6 +249,6 @@ class PatientPaymentRepositoryImpl implements PatientPaymentRepository {
     } catch (_) {
       // Keep the raw backend message below.
     }
-    return body.isEmpty ? 'Khong tao duoc link thanh toan payOS.' : body;
+    return body.isEmpty ? 'Không tạo được link thanh toán payOS.' : body;
   }
 }

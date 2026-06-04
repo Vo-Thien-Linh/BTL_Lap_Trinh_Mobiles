@@ -21,6 +21,7 @@ class NotificationFacade {
 
   static Future<void> onAppointmentCreated({
     required String appointmentId,
+    String? appointmentCode,
     required String patientId,
     required String patientName,
     required String doctorId,
@@ -32,6 +33,9 @@ class NotificationFacade {
   }) async {
     final doctorUserId = await _resolveDoctorUserId(doctorId) ?? doctorId;
     final email = patientEmail ?? await _resolveEmail(patientId);
+    final displayCode = (appointmentCode?.trim().isNotEmpty ?? false)
+        ? appointmentCode!.trim()
+        : appointmentId;
 
     await _repo.notify(
       NotificationEntity(
@@ -47,6 +51,7 @@ class NotificationFacade {
             'Bạn đã đặt lịch với BS. $doctorName tại $departmentName vào ${_formatDateTime(appointmentTime)}.',
         data: {
           'appointmentId': appointmentId,
+          'appointmentCode': displayCode,
           'doctorId': doctorId,
           'doctorUserId': doctorUserId,
           'doctorName': doctorName,
@@ -75,6 +80,7 @@ class NotificationFacade {
             '$patientName đã đặt lịch khám vào ${_formatDateTime(appointmentTime)} tại $departmentName.',
         data: {
           'appointmentId': appointmentId,
+          'appointmentCode': displayCode,
           'patientId': patientId,
           'patientName': patientName,
           'departmentId': departmentId,

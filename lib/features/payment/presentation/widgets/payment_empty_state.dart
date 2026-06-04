@@ -30,7 +30,7 @@ class PaymentEmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             const Text(
-              'Chua co hoa don',
+              'Chưa có hóa đơn',
               style: TextStyle(
                 color: AppColors.textBody,
                 fontSize: 17,

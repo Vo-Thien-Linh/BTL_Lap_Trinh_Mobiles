@@ -25,7 +25,7 @@ class _PatientPaymentsPageState extends State<PatientPaymentsPage> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       return const Scaffold(
-        body: Center(child: Text('Vui long dang nhap de xem thanh toan.')),
+        body: Center(child: Text('Vui lòng đăng nhập để xem thanh toán.')),
       );
     }
 
@@ -42,12 +42,12 @@ class _PatientPaymentsPageState extends State<PatientPaymentsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Thanh toan',
+                'Thanh toán',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
               ),
               SizedBox(height: 2),
               Text(
-                'Theo doi hoa don va lich su thanh toan cua ban.',
+                'Theo ?õi hóa đơn và lịch sử thanh toán của bạn.',
                 style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,
@@ -63,15 +63,15 @@ class _PatientPaymentsPageState extends State<PatientPaymentsPage> {
             indicatorColor: AppColors.primary,
             labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
             tabs: [
-              Tab(text: 'Can thanh toan'),
-              Tab(text: 'Dang xu ly'),
-              Tab(text: 'Da thanh toan'),
-              Tab(text: 'Tat ca'),
+              Tab(text: 'Cần thanh toán'),
+              Tab(text: 'Đang xử lý'),
+              Tab(text: 'Đã thanh toán'),
+              Tab(text: 'Tất cả'),
             ],
           ),
           actions: [
             IconButton(
-              tooltip: 'Lam moi',
+              tooltip: 'Làm mới',
               onPressed: () => setState(() {}),
               icon: const Icon(Icons.refresh_rounded),
             ),
@@ -87,7 +87,7 @@ class _PatientPaymentsPageState extends State<PatientPaymentsPage> {
 
             if (snapshot.hasError) {
               return PaymentEmptyState(
-                message: 'Khong doc duoc lich su thanh toan: ${snapshot.error}',
+                message: 'Không đọc được lịch sử thanh toán: ${snapshot.error}',
               );
             }
 
@@ -101,23 +101,23 @@ class _PatientPaymentsPageState extends State<PatientPaymentsPage> {
                       _PaymentTab(
                         payments: payments.where(_needPayment).toList(),
                         emptyMessage:
-                            'Cac hoa don moi hoac chua thanh toan se hien o day.',
+                            'Chưa có hóa đơn cần thanh toán. Hóa đơn sẽ được tạo sau khi bạn hoàn tất khám.',
                       ),
                       _PaymentTab(
                         payments: payments.where(_processing).toList(),
-                        emptyMessage: 'Chua co thanh toan nao dang cho xu ly.',
+                        emptyMessage: 'Chưa có thanh toán nào đang chờ xử lý.',
                       ),
                       _PaymentTab(
                         payments: payments
                             .where((payment) => payment.status == 'paid')
                             .toList(),
                         emptyMessage:
-                            'Lich su da thanh toan se duoc cap nhat realtime.',
+                            'Lịch sử đã thanh toán sẽ được cập nhật realtime.',
                       ),
                       _PaymentTab(
                         payments: payments,
                         emptyMessage:
-                            'Khi co hoa don moi, ban se thay tai day.',
+                            'Khi có hóa đơn mới, bạn sẽ thấy tại đây.',
                       ),
                     ],
                   ),
@@ -184,12 +184,12 @@ class _PaymentCard extends StatelessWidget {
         ? payment.doctorName
         : (payment.specialtyName.isNotEmpty
               ? payment.specialtyName
-              : 'Hoa don kham benh');
+              : 'Hóa đơn khám bệnh');
     final subtitle = payment.specialtyName.isNotEmpty
         ? payment.specialtyName
         : (payment.serviceContent.isNotEmpty
               ? payment.serviceContent
-              : 'Dich vu y te');
+              : 'Dịch vụ y tế');
     final date = payment.appointmentDate ?? payment.createdAt;
 
     return InkWell(
@@ -259,13 +259,13 @@ class _PaymentCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _MiniInfo(
-                    label: 'Ma hoa don',
+                    label: 'M? h?a ??n',
                     value: payment.paymentCode,
                   ),
                 ),
                 Expanded(
                   child: _MiniInfo(
-                    label: 'Ngay kham',
+                    label: 'Ng?y kh?m',
                     value: DateFormat('dd/MM/yyyy').format(date),
                   ),
                 ),
@@ -276,7 +276,7 @@ class _PaymentCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '${NumberFormat('#,###').format(payment.amount)} d',
+                  '${NumberFormat('#,###').format(payment.amount)} ?',
                   style: const TextStyle(
                     color: AppColors.textBody,
                     fontSize: 20,

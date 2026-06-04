@@ -43,12 +43,12 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
             foregroundColor: AppColors.textBody,
             elevation: 0,
             title: const Text(
-              'Chi tiet thanh toan',
+              'Chi ti?t thanh to?n',
               style: TextStyle(fontWeight: FontWeight.w900),
             ),
             actions: [
               IconButton(
-                tooltip: 'Lam moi trang thai',
+                tooltip: 'L?m m?i tr?ng th?i',
                 onPressed: () => setState(() {}),
                 icon: const Icon(Icons.refresh_rounded),
               ),
@@ -62,17 +62,20 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
               _InfoCard(
                 title: 'Thong tin cuoc hen',
                 rows: [
-                  _InfoRow('Ma hoa don', payment.paymentCode),
+                  _InfoRow('M? thanh to?n', payment.paymentCode),
+                  if (payment.invoiceCode.isNotEmpty &&
+                      payment.invoiceCode != payment.paymentCode)
+                    _InfoRow('M? h?a ??n', payment.invoiceCode),
                   _InfoRow(
-                    'Bac si',
+                    'B?c s?',
                     payment.doctorName.isEmpty ? '-' : payment.doctorName,
                   ),
                   _InfoRow(
-                    'Chuyen khoa',
+                    'Chuy?n khoa',
                     payment.specialtyName.isEmpty ? '-' : payment.specialtyName,
                   ),
                   _InfoRow(
-                    'Ngay kham',
+                    'Ng?y kh?m',
                     DateFormat(
                       'dd/MM/yyyy HH:mm',
                     ).format(payment.appointmentDate ?? payment.createdAt),
@@ -100,7 +103,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Thanh toan thanh cong',
+              'Thanh to?n th?nh c?ng',
               style: TextStyle(
                 color: AppColors.success,
                 fontSize: 18,
@@ -108,13 +111,13 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
               ),
             ),
             const SizedBox(height: 10),
-            Text('So tien: ${NumberFormat('#,###').format(payment.amount)} d'),
+            Text('S? ti?n: ${NumberFormat('#,###').format(payment.amount)} ?'),
             if (payment.paidAt != null)
               Text(
-                'Thoi gian: ${DateFormat('dd/MM/yyyy HH:mm').format(payment.paidAt!)}',
+                'Th?i gian: ${DateFormat('dd/MM/yyyy HH:mm').format(payment.paidAt!)}',
               ),
             if (payment.gatewayTransactionId.isNotEmpty)
-              Text('Ma giao dich: ${payment.gatewayTransactionId}'),
+              Text('M? giao ??ch: ${payment.gatewayTransactionId}'),
             const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: () => Navigator.pushNamed(
@@ -123,7 +126,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
                 arguments: _toInvoice(payment),
               ),
               icon: const Icon(Icons.receipt_long_rounded),
-              label: const Text('Xem bien nhan'),
+              label: const Text('Xem bi?n nh?n'),
             ),
           ],
         ),
@@ -136,7 +139,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Thanh toan tai quay',
+              'Thanh to?n t?i qu?y',
               style: TextStyle(
                 color: AppColors.textBody,
                 fontSize: 18,
@@ -154,7 +157,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Vui long dua ma hoa don nay cho nhan vien tai quay. Nhan vien se xac nhan da thanh toan sau khi thu tien.',
+              'Vui l?ng ??a m? h?a ??n n?y cho nh?n vi?n t?i qu?y. Nh?n vi?n s? x?c nh?n ?? thanh to?n sau khi thu ti?n.',
               style: TextStyle(color: AppColors.textSecondary, height: 1.45),
             ),
           ],
@@ -168,12 +171,12 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Dang cho thanh toan payOS',
+              '?ang ch? thanh to?n payOS',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 8),
             const Text(
-              'Sau khi ban thanh toan, backend/webhook se cap nhat trang thai. App se tu doi sang thanh cong.',
+              'Sau khi b?n thanh to?n, backend/webhook s? c?p nh?t tr?ng th?i. App s? t? ??i sang th?nh c?ng.',
               style: TextStyle(color: AppColors.textSecondary, height: 1.45),
             ),
             const SizedBox(height: 16),
@@ -182,13 +185,13 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
                   ? null
                   : () => _openCheckoutUrl(payment.checkoutUrl),
               icon: const Icon(Icons.open_in_new_rounded),
-              label: const Text('Mo lai trang thanh toan'),
+              label: const Text('M? l?i trang thanh to?n'),
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: () => setState(() {}),
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Lam moi trang thai'),
+              label: const Text('L?m m?i tr?ng th?i'),
             ),
           ],
         ),
@@ -199,7 +202,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Chon phuong thuc',
+          'Ch?n ph??ng th?c',
           style: TextStyle(
             color: AppColors.textBody,
             fontSize: 16,
@@ -209,9 +212,9 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
         const SizedBox(height: 12),
         PaymentMethodCard(
           icon: Icons.qr_code_2_rounded,
-          title: 'Thanh toan qua payOS',
+          title: 'Thanh to?n qua payOS',
           subtitle:
-              'Mo checkoutUrl do backend tao. Flutter khong chua secret key payOS.',
+              'M? checkoutUrl ?o backend t?o. Flutter kh?ng ch?a secret key payOS.',
           color: AppColors.primary,
           enabled: payment.canStartPayos && !_isCreatingPayosLink,
           onTap: () => _createPayosLink(payment),
@@ -219,9 +222,9 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
         const SizedBox(height: 12),
         PaymentMethodCard(
           icon: Icons.payments_rounded,
-          title: 'Thanh toan tien mat tai quay',
+          title: 'Thanh to?n ti?n m?t t?i qu?y',
           subtitle:
-              'Chuyen sang cho thanh toan tai quay. Nhan vien van la nguon xac nhan paid.',
+              'Chuy?n sang ch? thanh to?n t?i qu?y. Nh?n vi?n v?n l? ngu?n x?c nh?n paid.',
           color: AppColors.success,
           enabled: payment.canChooseCash && !_isChoosingCash,
           onTap: () => _markPayAtCounter(payment),
@@ -246,7 +249,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Sau khi thanh toan, trang thai se tu cap nhat trong app.',
+            'Sau khi thanh to?n, tr?ng th?i s? t? c?p nh?t trong app.',
           ),
         ),
       );
@@ -255,7 +258,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AppColors.error,
-          content: Text('Khong tao duoc link payOS: $e'),
+          content: Text('Kh?ng t?o ???c link payOS: $e'),
         ),
       );
     } finally {
@@ -270,7 +273,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Da chuyen sang cho thanh toan tai quay.'),
+          content: Text('?? chuy?n sang ch? thanh to?n t?i qu?y.'),
         ),
       );
     } catch (e) {
@@ -278,7 +281,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AppColors.error,
-          content: Text('Khong cap nhat duoc thanh toan tai quay: $e'),
+          content: Text('Kh?ng c?p nh?t ???c thanh to?n t?i qu?y: $e'),
         ),
       );
     } finally {
@@ -288,10 +291,10 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
 
   Future<void> _openCheckoutUrl(String checkoutUrl) async {
     final uri = Uri.tryParse(checkoutUrl);
-    if (uri == null) throw Exception('checkoutUrl khong hop le.');
+    if (uri == null) throw Exception('checkoutUrl kh?ng h?p l?.');
 
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!opened) throw Exception('Khong mo duoc trang thanh toan payOS.');
+    if (!opened) throw Exception('Kh?ng m? ???c trang thanh to?n payOS.');
   }
 
   void _notifyPaidOnce(PatientPaymentModel payment) {
@@ -302,7 +305,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           backgroundColor: AppColors.success,
-          content: Text('Thanh toan thanh cong.'),
+          content: Text('Thanh to?n th?nh c?ng.'),
         ),
       );
     });
@@ -314,10 +317,10 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
       appointmentId: payment.appointmentId,
       patientId: payment.patientId,
       expenseType: payment.expenseType.isEmpty
-          ? 'Dich vu y te'
+          ? 'D?ch v? y t?'
           : payment.expenseType,
       serviceContent: payment.serviceContent.isEmpty
-          ? 'Thanh toan kham benh'
+          ? 'Thanh to?n kh?m b?nh'
           : payment.serviceContent,
       doctorName: payment.doctorName,
       departmentName: payment.specialtyName,
@@ -378,7 +381,7 @@ class _StatusHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${NumberFormat('#,###').format(payment.amount)} d',
+                  '${NumberFormat('#,###').format(payment.amount)} ?',
                   style: const TextStyle(
                     color: AppColors.primary,
                     fontSize: 20,
@@ -403,19 +406,23 @@ class _PriceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _InfoCard(
-      title: 'Chi tiet chi phi',
+      title: 'Chi tiết chi phí',
       rows: [
         _InfoRow(
-          'Tong tien',
-          '${NumberFormat('#,###').format(payment.totalAmount)} d',
+          'Tạm tính',
+          '${NumberFormat('#,###').format(payment.totalAmount)} đ',
         ),
         _InfoRow(
-          'Giam tru',
-          '${NumberFormat('#,###').format(payment.discountAmount)} d',
+          payment.insuranceApplied
+              ? 'BHYT hỗ trợ ${payment.insuranceCoveragePercent}%'
+              : 'BHYT hỗ trợ',
+          '${NumberFormat('#,###').format(payment.insuranceCoveredAmount)} đ',
         ),
+        if (payment.insuranceApplied)
+          const _InfoRow('Bảo hiểm', 'Đã áp ?ụng BHYT'),
         _InfoRow(
-          'Can thanh toan',
-          '${NumberFormat('#,###').format(payment.amount)} d',
+          'Bệnh nhân cần thanh toán',
+          '${NumberFormat('#,###').format(payment.patientPayAmount == 0 ? payment.amount : payment.patientPayAmount)} đ',
         ),
       ],
     );

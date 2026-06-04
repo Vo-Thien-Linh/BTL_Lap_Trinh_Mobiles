@@ -18,6 +18,8 @@ class _HealthInsurancePageState extends State<HealthInsurancePage> {
 
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _hasTouchedInsuranceNumber = false;
+  bool _hasSubmitted = false;
   HealthInsuranceInfo? _currentInfo;
 
   @override
@@ -52,19 +54,21 @@ class _HealthInsurancePageState extends State<HealthInsurancePage> {
   }
 
   Future<void> _saveInsurance() async {
+    setState(() => _hasSubmitted = true);
     if (!_formKey.currentState!.validate()) return;
 
     FocusScope.of(context).unfocus();
     setState(() => _isSaving = true);
 
     try {
-      await _service.saveInsuranceNumber(_controller.text);
+      final normalized = HealthInsuranceValidator.normalize(_controller.text);
+      _controller.text = normalized;
+
+      await _service.saveInsuranceNumber(normalized);
       await _loadInsurance();
 
       if (!mounted) return;
-      _showSnackBar(
-        'Đã cập nhật mã BHYT thành công. Thông tin đang chờ xác minh.',
-      );
+      _showSnackBar('Đã gửi yêu cầu xác minh BHYT.');
     } catch (e) {
       if (!mounted) return;
       _showSnackBar('Không thể lưu BHYT: $e', isError: true);
@@ -86,6 +90,7 @@ class _HealthInsurancePageState extends State<HealthInsurancePage> {
 
   Color _statusColor(String status) {
     switch (status) {
+      case 'approved':
       case 'verified':
         return Colors.green;
       case 'pending':
@@ -109,20 +114,20 @@ class _HealthInsurancePageState extends State<HealthInsurancePage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildInfoCard(),
-              const SizedBox(height: 18),
-              _buildFormCard(),
-              const SizedBox(height: 18),
-              _buildNoteCard(),
-            ],
-          ),
-        ),
-      ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildInfoCard(),
+                    const SizedBox(height: 18),
+                    _buildFormCard(),
+                    const SizedBox(height: 18),
+                    _buildNoteCard(),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 
@@ -230,18 +235,37 @@ class _HealthInsurancePageState extends State<HealthInsurancePage> {
               _currentInfo?.hasNumber == true
                   ? 'Cập nhật mã BHYT'
                   : 'Thêm mã BHYT',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 14),
             TextFormField(
               controller: _controller,
               textCapitalization: TextCapitalization.characters,
               inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                TextInputFormatter.withFunction((oldValue, newValue) {
+                  final normalized = HealthInsuranceValidator.normalize(
+                    newValue.text,
+                  );
+                  return TextEditingValue(
+                    text: normalized,
+                    selection: TextSelection.collapsed(
+                      offset: normalized.length,
+                    ),
+                  );
+                }),
               ],
+              autovalidateMode: AutovalidateMode.always,
+              onTap: () {
+                if (!_hasTouchedInsuranceNumber) {
+                  setState(() => _hasTouchedInsuranceNumber = true);
+                }
+              },
+              onChanged: (_) {
+                if (!_hasTouchedInsuranceNumber) {
+                  setState(() => _hasTouchedInsuranceNumber = true);
+                }
+              },
               decoration: InputDecoration(
                 labelText: 'Mã số thẻ BHYT',
                 hintText: 'Ví dụ: DN4010123456789',
@@ -250,7 +274,10 @@ class _HealthInsurancePageState extends State<HealthInsurancePage> {
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              validator: HealthInsuranceValidator.validate,
+              validator: (value) {
+                if (!_hasTouchedInsuranceNumber && !_hasSubmitted) return null;
+                return HealthInsuranceValidator.validate(value);
+              },
             ),
             const SizedBox(height: 16),
             SizedBox(
@@ -265,17 +292,17 @@ class _HealthInsurancePageState extends State<HealthInsurancePage> {
                 ),
                 child: _isSaving
                     ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
                     : const Text(
-                  'Lưu thông tin BHYT',
-                  style: TextStyle(fontWeight: FontWeight.w800),
-                ),
+                        'Lưu thông tin BHYT',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
               ),
             ),
           ],

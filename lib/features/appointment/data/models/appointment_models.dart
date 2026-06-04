@@ -233,11 +233,28 @@ class ScheduleModel extends ScheduleEntity {
     super.roomNumber,
     required super.maxSlots,
     required super.availableSlots,
+    super.bookedSlots = 0,
     required super.isActive,
   });
 
   factory ScheduleModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    final maxSlots =
+        int.tryParse(
+          (data['slotCapacity'] ?? data['maxSlots'] ?? 10).toString(),
+        ) ??
+        10;
+    final availableSlots =
+        int.tryParse(
+          (data['remainingSlots'] ?? data['availableSlots'] ?? maxSlots)
+              .toString(),
+        ) ??
+        maxSlots;
+    final bookedSlots =
+        int.tryParse(
+          (data['bookedSlots'] ?? (maxSlots - availableSlots)).toString(),
+        ) ??
+        0;
     return ScheduleModel(
       id: doc.id,
       doctorId: data['doctorId'] ?? '',
@@ -246,9 +263,9 @@ class ScheduleModel extends ScheduleEntity {
       date: (data['scheduleDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
       roomId: data['roomId'] as String?,
       roomNumber: data['roomNumber'] as String?,
-      maxSlots: int.tryParse(data['maxSlots']?.toString() ?? '0') ?? 0,
-      availableSlots:
-          int.tryParse(data['availableSlots']?.toString() ?? '0') ?? 0,
+      maxSlots: maxSlots,
+      availableSlots: availableSlots,
+      bookedSlots: bookedSlots,
       isActive: (data['isActive'] ?? true) as bool,
     );
   }
@@ -263,6 +280,9 @@ class ScheduleModel extends ScheduleEntity {
       'roomNumber': roomNumber,
       'maxSlots': maxSlots,
       'availableSlots': availableSlots,
+      'slotCapacity': maxSlots,
+      'remainingSlots': availableSlots,
+      'bookedSlots': bookedSlots,
       'isActive': isActive,
     };
   }
@@ -271,11 +291,14 @@ class ScheduleModel extends ScheduleEntity {
 class HospitalAppointmentModel extends HospitalAppointment {
   const HospitalAppointmentModel({
     required super.id,
+    super.appointmentCode,
     required super.patientId,
+    super.patientCode,
     super.patientDOB,
     super.patientGender,
     required super.patientName,
     required super.doctorId,
+    super.doctorCode,
     required super.doctorName,
     required super.departmentId,
     required super.departmentName,
@@ -297,6 +320,7 @@ class HospitalAppointmentModel extends HospitalAppointment {
     super.labResults,
     super.vitals,
     required super.status,
+    super.paymentStatus,
     required super.paymentMethod,
     required super.createdAt,
   });
@@ -305,11 +329,16 @@ class HospitalAppointmentModel extends HospitalAppointment {
     final data = doc.data() as Map<String, dynamic>;
     return HospitalAppointmentModel(
       id: doc.id,
+      appointmentCode:
+          _firstText(data, const ['appointmentCode', 'code', 'bookingCode']) ??
+          doc.id,
       patientId: data['patientId'] ?? '',
+      patientCode: _firstText(data, const ['patientCode', 'userCode']) ?? '',
       patientDOB: data['patientDOB'] as String?,
       patientGender: data['patientGender'] as String?,
       patientName: data['patientName'] ?? '',
       doctorId: data['doctorId'] ?? '',
+      doctorCode: _firstText(data, const ['doctorCode']) ?? '',
       doctorName: data['doctorName'] ?? '',
       departmentId: data['departmentId'] ?? '',
       departmentName: data['departmentName'] ?? '',
@@ -336,6 +365,7 @@ class HospitalAppointmentModel extends HospitalAppointment {
           .toList(),
       vitals: data['vitals'] as Map<String, dynamic>?,
       status: data['status'] ?? 'pending',
+      paymentStatus: data['paymentStatus']?.toString() ?? '',
       paymentMethod: data['paymentMethod'] ?? 'CASH',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
@@ -344,10 +374,13 @@ class HospitalAppointmentModel extends HospitalAppointment {
   Map<String, dynamic> toFirestore() {
     return {
       'patientId': patientId,
+      'appointmentCode': appointmentCode.isEmpty ? null : appointmentCode,
+      'patientCode': patientCode.isEmpty ? null : patientCode,
       'patientDOB': patientDOB,
       'patientGender': patientGender,
       'patientName': patientName,
       'doctorId': doctorId,
+      'doctorCode': doctorCode.isEmpty ? null : doctorCode,
       'doctorName': doctorName,
       'departmentId': departmentId,
       'departmentName': departmentName,
@@ -369,8 +402,17 @@ class HospitalAppointmentModel extends HospitalAppointment {
       'labResults': labResults,
       'vitals': vitals,
       'status': status,
+      'paymentStatus': paymentStatus.isEmpty ? null : paymentStatus,
       'paymentMethod': paymentMethod,
       'createdAt': createdAt,
     };
+  }
+
+  static String? _firstText(Map<String, dynamic> data, List<String> keys) {
+    for (final key in keys) {
+      final value = data[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+    return null;
   }
 }

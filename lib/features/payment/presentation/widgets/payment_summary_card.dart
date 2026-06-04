@@ -29,11 +29,11 @@ class PaymentSummaryCard extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: _Metric(label: 'Can thanh toan', amount: waiting),
+            child: _Metric(label: 'Cần thanh toán', amount: waiting),
           ),
           Container(width: 1, height: 42, color: AppColors.border),
           Expanded(
-            child: _Metric(label: 'Da thanh toan', amount: paid),
+            child: _Metric(label: 'Đã thanh toán', amount: paid),
           ),
         ],
       ),
@@ -64,7 +64,7 @@ class _Metric extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '${NumberFormat('#,###').format(amount)} d',
+            '${NumberFormat('#,###').format(amount)} đ',
             style: const TextStyle(
               color: AppColors.textBody,
               fontSize: 18,
