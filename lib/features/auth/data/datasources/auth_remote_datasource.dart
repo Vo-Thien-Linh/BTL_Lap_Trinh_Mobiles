@@ -171,7 +171,7 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       if (doc == null || !doc.exists) {
         try {
           final upperDoc = await firestore
-              .collection('users')
+              .collection('Users')
               .doc(currentUser.uid)
               .get();
           if (upperDoc.exists) {
@@ -192,7 +192,7 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       final userData = doc.data() ?? <String, dynamic>{};
 
       // Chạy các cập nhật ngầm, không dùng await để không làm chậm login
-      final finalUserRef = firestore.collection('users').doc(currentUser.uid);
+      final finalUserRef = doc.reference;
       _runBackgroundUpdates(finalUserRef, userData);
 
       print('--- [PERF] TOTAL LOGIN TIME: ${stopwatch.elapsedMilliseconds}ms');
@@ -207,6 +207,9 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
     Map<String, dynamic> userData,
   ) {
     try {
+      final role = userData['role']?.toString().toLowerCase();
+      if (role == 'doctor') return;
+
       final Map<String, dynamic> updates = {};
       final authEmailVerified =
           firebaseAuth.currentUser?.emailVerified ?? false;

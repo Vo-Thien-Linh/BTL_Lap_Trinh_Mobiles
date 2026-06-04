@@ -625,12 +625,11 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       final billing = await BillingCalculationService(
         firestore: db,
       ).calculate(patientId: event.patientId, originalAmount: event.amount);
-      final requestedStatus = state.selectedPaymentMethod == 'CASH'
-          ? 'pay_at_counter'
-          : 'waiting_confirmation';
-      final requestedMethod = state.selectedPaymentMethod == 'CASH'
-          ? 'cash'
-          : state.selectedPaymentMethod.toLowerCase();
+      final now = DateTime.now();
+      final paymentMethod = _normalizePaymentMethod(
+        state.selectedPaymentMethod,
+      );
+      const requestedStatus = 'pending';
 
       // 1. Create Payment Record (Pending as requested)
       final paymentRef = db.collection('Payments').doc(paymentId);
@@ -639,15 +638,19 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         'invoiceId': invoiceId,
         'appointmentId': event.appointmentId,
         'patientId': event.patientId,
+        'amount': billing.finalAmount,
+        'method': paymentMethod,
         'status': requestedStatus,
-        'paymentStatus': requestedStatus,
         'paymentCode': paymentCode,
         'invoiceCode': invoiceCode,
         ...billing.toFirestoreFields(),
+        'paidAt': null,
+        'confirmedBy': 'patient',
+        'confirmedAt': Timestamp.fromDate(now),
+        'paymentStatus': requestedStatus,
+        'paymentMethod': paymentMethod,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
-        'method': requestedMethod,
-        'paymentMethod': requestedMethod,
       });
 
       // 2. Create Invoice Record
@@ -660,28 +663,29 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         'tax': 0.0,
         ...billing.toFirestoreFields(),
         'paymentStatus': requestedStatus,
-        'method': requestedMethod,
-        'paymentMethod': requestedMethod,
+        'method': paymentMethod,
+        'paymentMethod': paymentMethod,
         'paymentCode': paymentCode,
         'invoiceCode': invoiceCode,
-        'expenseType': 'Tien kham',
-        'serviceContent': 'Thanh toan phi kham',
+        'expenseType': 'Tiền khám',
+        'serviceContent': 'Thanh toán phí khám',
         'status': requestedStatus,
+        'paymentConfirmedByPatientAt': Timestamp.fromDate(now),
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      // 3. Update Appointment Status to Confirmed
+      // 3. Keep Appointment waiting until staff/admin approves payment.
       final appointmentRef = db
           .collection('Appointments')
           .doc(event.appointmentId);
       batch.update(appointmentRef, {
-        'status': 'confirmed',
+        'status': 'waiting_payment',
         'paymentId': paymentId,
         'invoiceId': invoiceId,
         'lastInvoiceId': invoiceId,
         'paymentStatus': requestedStatus,
-        'paymentMethod': requestedMethod,
+        'paymentMethod': paymentMethod,
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
@@ -711,7 +715,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           consultationFee: state.createdAppointment!.consultationFee,
           insuranceNumber: state.createdAppointment!.insuranceNumber,
           symptoms: state.createdAppointment!.symptoms,
-          status: 'confirmed',
+          status: 'waiting_payment',
           paymentStatus: requestedStatus,
           paymentMethod: state.createdAppointment!.paymentMethod,
           createdAt: state.createdAppointment!.createdAt,
@@ -992,5 +996,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     final day = date.day.toString().padLeft(2, '0');
     final month = date.month.toString().padLeft(2, '0');
     return '$day/$month/${date.year}';
+  }
+
+  String _normalizePaymentMethod(String method) {
+    return 'bank_transfer';
   }
 }

@@ -30,6 +30,10 @@ class _DoctorAppointmentDetailPageState
   late TextEditingController _diagnosisController;
   late TextEditingController _treatmentController;
   late TextEditingController _notesController;
+  late TextEditingController _heartRateController;
+  late TextEditingController _bloodPressureSystolicController;
+  late TextEditingController _bloodPressureDiastolicController;
+  late TextEditingController _temperatureController;
 
   final List<Map<String, dynamic>> _availableServices = [
     {
@@ -70,12 +74,12 @@ class _DoctorAppointmentDetailPageState
     },
   ];
 
-  final List<Map<String, dynamic>> _icd10Results = [
-    {'code': 'J02.9', 'name': 'Viêm họng cấp (Acute pharyngitis)'},
-    {'code': 'I10', 'name': 'Tăng huyết áp vô căn (Primary hypertension)'},
-    {'code': 'E11', 'name': 'Tiểu đường type 2 (Type 2 diabetes)'},
-    {'code': 'K29.7', 'name': 'Viêm dạ dày (Gastritis)'},
-    {'code': 'M54.5', 'name': 'Đau lưng thấp (Low back pain)'},
+  final List<String> _diagnosisSuggestions = [
+    'Viêm họng cấp',
+    'Tăng huyết áp vô căn',
+    'Đái tháo đường type 2',
+    'Viêm dạ dày',
+    'Đau thắt lưng',
   ];
 
   @override
@@ -88,6 +92,19 @@ class _DoctorAppointmentDetailPageState
     _diagnosisController = TextEditingController();
     _treatmentController = TextEditingController();
     _notesController = TextEditingController();
+    final vitals = widget.initialData['vitals'] as Map<String, dynamic>?;
+    _heartRateController = TextEditingController(
+      text: _vitalText(vitals, ['heartRate'], fallback: '72'),
+    );
+    _bloodPressureSystolicController = TextEditingController(
+      text: _vitalText(vitals, ['bloodPressureSystolic'], fallback: '120'),
+    );
+    _bloodPressureDiastolicController = TextEditingController(
+      text: _vitalText(vitals, ['bloodPressureDiastolic'], fallback: '80'),
+    );
+    _temperatureController = TextEditingController(
+      text: _vitalText(vitals, ['temperature'], fallback: '36.8'),
+    );
   }
 
   @override
@@ -97,6 +114,10 @@ class _DoctorAppointmentDetailPageState
     _diagnosisController.dispose();
     _treatmentController.dispose();
     _notesController.dispose();
+    _heartRateController.dispose();
+    _bloodPressureSystolicController.dispose();
+    _bloodPressureDiastolicController.dispose();
+    _temperatureController.dispose();
     super.dispose();
   }
 
@@ -169,11 +190,15 @@ class _DoctorAppointmentDetailPageState
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _vitalInfo('Mạch', '72', 'bpm'),
+            _vitalInfo('Mạch', _heartRateController.text, 'bpm'),
             _vDivider(),
-            _vitalInfo('H.Áp', '120/80', 'mmHg'),
+            _vitalInfo(
+              'H.Áp',
+              '${_bloodPressureSystolicController.text}/${_bloodPressureDiastolicController.text}',
+              'mmHg',
+            ),
             _vDivider(),
-            _vitalInfo('T.Độ', '36.8', '°C'),
+            _vitalInfo('T.Độ', _temperatureController.text, '°C'),
           ],
         ),
       ),
@@ -311,7 +336,7 @@ class _DoctorAppointmentDetailPageState
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'AI: Gợi ý phác đồ Viêm họng cấp (J02.9)',
+                    'Gợi ý: nhập triệu chứng, khám thực thể và chẩn đoán theo tên bệnh.',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -338,6 +363,8 @@ class _DoctorAppointmentDetailPageState
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildVitalsEditor(),
+          const SizedBox(height: 16),
           _buildInputField(
             'Khám thực thể / Physical Exam',
             _physicalExamController,
@@ -440,7 +467,7 @@ class _DoctorAppointmentDetailPageState
       ),
       content: Column(
         children: [
-          _buildICD10Finder(),
+          _buildDiagnosisInput(),
           const SizedBox(height: 16),
           _buildInputField(
             'Hướng điều trị',
@@ -506,6 +533,86 @@ class _DoctorAppointmentDetailPageState
     );
   }
 
+  Widget _buildVitalsEditor() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Chỉ số sinh tồn',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF5A6680),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _buildVitalInput('Mạch', _heartRateController, 'bpm'),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildVitalInput(
+                'HA tâm thu',
+                _bloodPressureSystolicController,
+                'mmHg',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _buildVitalInput(
+                'HA tâm trương',
+                _bloodPressureDiastolicController,
+                'mmHg',
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildVitalInput(
+                'Nhiệt độ',
+                _temperatureController,
+                '°C',
+                decimal: true,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVitalInput(
+    String label,
+    TextEditingController controller,
+    String suffix, {
+    bool decimal = false,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: TextInputType.numberWithOptions(decimal: decimal),
+      onChanged: (_) => setState(() {}),
+      decoration: InputDecoration(
+        labelText: label,
+        suffixText: suffix,
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
+      ),
+    );
+  }
+
   Widget _buildInputField(
     String label,
     TextEditingController controller,
@@ -545,12 +652,12 @@ class _DoctorAppointmentDetailPageState
     );
   }
 
-  Widget _buildICD10Finder() {
+  Widget _buildDiagnosisInput() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Chẩn đoán (ICD-10) *',
+          'Chẩn đoán bệnh *',
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
@@ -566,7 +673,7 @@ class _DoctorAppointmentDetailPageState
               color: Color(0xFF0E47B5),
               size: 18,
             ),
-            hintText: 'Tìm mã bệnh...',
+            hintText: 'Nhập tên bệnh hoặc chẩn đoán...',
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
@@ -578,21 +685,18 @@ class _DoctorAppointmentDetailPageState
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
-          children: _icd10Results
-              .take(3)
+          children: _diagnosisSuggestions
               .map(
-                (r) => ActionChip(
+                (name) => ActionChip(
                   label: Text(
-                    r['code']!,
+                    name,
                     style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  onPressed: () => setState(
-                    () => _diagnosisController.text =
-                        "[${r['code']}] ${r['name']}",
-                  ),
+                  onPressed: () =>
+                      setState(() => _diagnosisController.text = name),
                   backgroundColor: Colors.white,
                 ),
               )
@@ -639,14 +743,14 @@ class _DoctorAppointmentDetailPageState
                         setState(() {});
                       },
                       title: Text(
-                        item['name'],
+                        item['name']?.toString() ?? '',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
                       ),
                       subtitle: Text(
-                        '${item['category']} • ${item['price']}',
+                        '${item['category']?.toString() ?? ''} • ${item['price']?.toString() ?? ''}',
                         style: const TextStyle(fontSize: 12),
                       ),
                       activeColor: const Color(0xFF0E47B5),
@@ -683,7 +787,7 @@ class _DoctorAppointmentDetailPageState
     if (_diagnosisController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Vui lòng chọn chẩn đoán ICD-10'),
+          content: Text('Vui lòng nhập chẩn đoán bệnh'),
           backgroundColor: Colors.red,
         ),
       );
@@ -697,6 +801,7 @@ class _DoctorAppointmentDetailPageState
       diagnosis: _diagnosisController.text.trim(),
       treatment: _treatmentController.text.trim(),
       notes: _notesController.text.trim(),
+      vitals: _buildVitalsMap(),
       services: _selectedServices,
     );
 
@@ -711,11 +816,37 @@ class _DoctorAppointmentDetailPageState
             'diagnosis': _diagnosisController.text.trim(),
             'treatment': _treatmentController.text.trim(),
             'notes': _notesController.text.trim(),
+            'vitals': _buildVitalsMap(),
             'services': _selectedServices,
           },
           appointmentId: widget.appointmentId,
         ),
       ),
     );
+  }
+
+  Map<String, dynamic> _buildVitalsMap() {
+    final systolic = _bloodPressureSystolicController.text.trim();
+    final diastolic = _bloodPressureDiastolicController.text.trim();
+    return {
+      'heartRate': int.tryParse(_heartRateController.text.trim()),
+      'bloodPressureSystolic': int.tryParse(systolic),
+      'bloodPressureDiastolic': int.tryParse(diastolic),
+      'bloodPressure': '$systolic/$diastolic',
+      'temperature': double.tryParse(_temperatureController.text.trim()),
+    };
+  }
+
+  static String _vitalText(
+    Map<String, dynamic>? data,
+    List<String> keys, {
+    required String fallback,
+  }) {
+    if (data == null) return fallback;
+    for (final key in keys) {
+      final value = data[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+    return fallback;
   }
 }

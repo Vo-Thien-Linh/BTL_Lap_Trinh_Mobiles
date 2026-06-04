@@ -18,14 +18,16 @@ class AppointmentModel {
   });
 
   factory AppointmentModel.fromJson(Map<String, dynamic> json) {
+    final rawDate = json['appointmentDate'];
+    final parsedDate = DateTime.tryParse(rawDate?.toString() ?? '');
     return AppointmentModel(
-      id: json['id'] as String,
-      doctorName: json['doctorName'] as String,
-      specialization: json['specialization'] as String,
-      appointmentDate: DateTime.parse(json['appointmentDate'] as String),
-      time: json['time'] as String,
-      status: json['status'] as String,
-      doctorImage: json['doctorImage'] as String,
+      id: json['id']?.toString() ?? '',
+      doctorName: json['doctorName']?.toString() ?? '',
+      specialization: json['specialization']?.toString() ?? '',
+      appointmentDate: parsedDate ?? DateTime.now(),
+      time: json['time']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
+      doctorImage: json['doctorImage']?.toString() ?? '',
     );
   }
 

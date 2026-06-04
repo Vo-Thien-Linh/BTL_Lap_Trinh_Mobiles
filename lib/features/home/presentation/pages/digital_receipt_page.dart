@@ -12,7 +12,14 @@ class DigitalReceiptPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4FA),
       appBar: AppBar(
-        title: const Text('BIÊN LAI ĐIỆN TỬ', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.black, fontSize: 16)),
+        title: const Text(
+          'BIÊN LAI ĐIỆN TỬ',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: Colors.black,
+            fontSize: 16,
+          ),
+        ),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -26,7 +33,10 @@ class DigitalReceiptPage extends StatelessWidget {
             icon: const Icon(Icons.share_rounded, color: AppColors.primary),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Đang chuẩn bị bản in/chia sẻ...'), behavior: SnackBarBehavior.floating),
+                const SnackBar(
+                  content: Text('Đang chuẩn bị bản in/chia sẻ...'),
+                  behavior: SnackBarBehavior.floating,
+                ),
               );
             },
           ),
@@ -52,7 +62,11 @@ class DigitalReceiptPage extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(4),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 30, offset: const Offset(0, 15)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 30,
+            offset: const Offset(0, 15),
+          ),
         ],
       ),
       child: Stack(
@@ -66,8 +80,24 @@ class DigitalReceiptPage extends StatelessWidget {
                   children: [
                     _buildHospitalHeader(),
                     const SizedBox(height: 40),
-                    const Text('PHIẾU THU TIỀN', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 2, color: Color(0xFF15233D))),
-                    Text('Số: ${invoice.id.toUpperCase()}', style: const TextStyle(fontSize: 11, color: Color(0xFF8A95AC), fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    const Text(
+                      'PHIẾU THU TIỀN',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2,
+                        color: Color(0xFF15233D),
+                      ),
+                    ),
+                    Text(
+                      'Số: ${invoice.id.toUpperCase()}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF8A95AC),
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                      ),
+                    ),
                     const SizedBox(height: 40),
                     _buildInfoSection(),
                     const SizedBox(height: 32),
@@ -82,11 +112,7 @@ class DigitalReceiptPage extends StatelessWidget {
               ),
             ],
           ),
-          Positioned(
-            right: 40,
-            top: 140,
-            child: _buildPaidStamp(),
-          ),
+          Positioned(right: 40, top: 140, child: _buildPaidStamp()),
         ],
       ),
     );
@@ -94,15 +120,20 @@ class DigitalReceiptPage extends StatelessWidget {
 
   Widget _buildSerratedEdge() {
     return Row(
-      children: List.generate(20, (index) => Expanded(
-        child: Container(
-          height: 10,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF0F4FA),
-            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+      children: List.generate(
+        20,
+        (index) => Expanded(
+          child: Container(
+            height: 10,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0F4FA),
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(20),
+              ),
+            ),
           ),
         ),
-      )),
+      ),
     );
   }
 
@@ -111,16 +142,37 @@ class DigitalReceiptPage extends StatelessWidget {
       children: [
         Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: const Color(0xFF0E47B5), borderRadius: BorderRadius.circular(12)),
-          child: const Icon(Icons.local_hospital_rounded, color: Colors.white, size: 32),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0E47B5),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.local_hospital_rounded,
+            color: Colors.white,
+            size: 32,
+          ),
         ),
         const SizedBox(width: 16),
         const Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('BỆNH VIỆN TAI MŨI HỌNG SÀI GÒN', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF15233D))),
-              Text('Phòng khám Quốc tế Premium', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0E47B5))),
+              Text(
+                'BỆNH VIỆN TAI MŨI HỌNG SÀI GÒN',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13,
+                  color: Color(0xFF15233D),
+                ),
+              ),
+              Text(
+                'Phòng khám Quốc tế Premium',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0E47B5),
+                ),
+              ),
             ],
           ),
         ),
@@ -135,7 +187,10 @@ class DigitalReceiptPage extends StatelessWidget {
         _infoRow('Nội dung', invoice.serviceContent),
         _infoRow('Khoa khám', invoice.departmentName ?? 'Nội Tổng Quát'),
         _infoRow('Bác sĩ sĩ xử lý', invoice.doctorName ?? 'N/A'),
-        _infoRow('Ngày thanh toán', DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())),
+        _infoRow(
+          'Ngày thanh toán',
+          DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now()),
+        ),
       ],
     );
   }
@@ -146,8 +201,27 @@ class DigitalReceiptPage extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 110, child: Text('$label:', style: const TextStyle(fontSize: 12, color: Color(0xFF8A95AC), fontWeight: FontWeight.w600))),
-          Expanded(child: Text(value, style: TextStyle(fontSize: 12, color: const Color(0xFF15233D), fontWeight: isBold ? FontWeight.w900 : FontWeight.w700))),
+          SizedBox(
+            width: 110,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF8A95AC),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 12,
+                color: const Color(0xFF15233D),
+                fontWeight: isBold ? FontWeight.w900 : FontWeight.w700,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -158,19 +232,63 @@ class DigitalReceiptPage extends StatelessWidget {
       children: [
         Container(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-          decoration: const BoxDecoration(color: Color(0xFFF8FAFD), border: Border(top: BorderSide(color: Color(0xFFDDE6F7)), bottom: BorderSide(color: Color(0xFFDDE6F7)))),
+          decoration: const BoxDecoration(
+            color: Color(0xFFF8FAFD),
+            border: Border(
+              top: BorderSide(color: Color(0xFFDDE6F7)),
+              bottom: BorderSide(color: Color(0xFFDDE6F7)),
+            ),
+          ),
           child: const Row(
             children: [
-              Expanded(flex: 3, child: Text('HÀNG MỤC', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF15233D)))),
-              Expanded(child: Text('SL', textAlign: TextAlign.center, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF15233D)))),
-              Expanded(flex: 2, child: Text('THÀNH TIỀN', textAlign: TextAlign.right, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF15233D)))),
+              Expanded(
+                flex: 3,
+                child: Text(
+                  'HÀNG MỤC',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF15233D),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  'SL',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF15233D),
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  'THÀNH TIỀN',
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF15233D),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
         const SizedBox(height: 12),
-        _tableRow('Phí khám chuyên khoa', '1', '350.000'),
-        const SizedBox(height: 8),
-        _tableRow('Dịch vụ đi kèm', '1', '0'),
+        ...invoice.chargeBreakdown.expand(
+          (entry) => [
+            _tableRow(
+              entry.key,
+              '1',
+              NumberFormat('#,###').format(entry.value),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
         const SizedBox(height: 12),
         const Divider(color: Color(0xFFDDE6F7)),
       ],
@@ -182,9 +300,40 @@ class DigitalReceiptPage extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text(item, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF5A6680)))),
-          Expanded(child: Text(qty, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF5A6680)))),
-          Expanded(flex: 2, child: Text('$price đ', textAlign: TextAlign.right, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF15233D)))),
+          Expanded(
+            flex: 3,
+            child: Text(
+              item,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF5A6680),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              qty,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF5A6680),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              '$price đ',
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF15233D),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -196,16 +345,51 @@ class DigitalReceiptPage extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('TỔNG THANH TOÁN', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF15233D))),
-            Text('${NumberFormat('#,###').format(invoice.amount)} đ', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF0E47B5))),
+            const Text(
+              'TỔNG THANH TOÁN',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF15233D),
+              ),
+            ),
+            Text(
+              '${NumberFormat('#,###').format(invoice.amount)} đ',
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF0E47B5),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 8),
         Row(
           children: [
-            const Text('Phương thức:', style: TextStyle(fontSize: 11, color: Color(0xFF8A95AC), fontWeight: FontWeight.w600)),
+            const Text(
+              'Phương thức:',
+              style: TextStyle(
+                fontSize: 11,
+                color: Color(0xFF8A95AC),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(width: 8),
-            Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: const Color(0xFFE8F1FF), borderRadius: BorderRadius.circular(8)), child: const Text('Thanh toán trực tuyến', style: TextStyle(fontSize: 10, color: Color(0xFF0E47B5), fontWeight: FontWeight.w900))),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F1FF),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                'Thanh toán trực tuyến',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Color(0xFF0E47B5),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
           ],
         ),
       ],
@@ -223,8 +407,22 @@ class DigitalReceiptPage extends StatelessWidget {
         ),
         child: Column(
           children: [
-            const Text('ĐÃ THANH TOÁN', style: TextStyle(color: Color(0xFF0E9F6E), fontSize: 22, fontWeight: FontWeight.w900)),
-            Text(DateFormat('dd/MM/yyyy').format(DateTime.now()), style: const TextStyle(color: Color(0xFF0E9F6E), fontSize: 12, fontWeight: FontWeight.w900)),
+            const Text(
+              'ĐÃ THANH TOÁN',
+              style: TextStyle(
+                color: Color(0xFF0E9F6E),
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            Text(
+              DateFormat('dd/MM/yyyy').format(DateTime.now()),
+              style: const TextStyle(
+                color: Color(0xFF0E9F6E),
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
           ],
         ),
       ),
@@ -237,20 +435,44 @@ class DigitalReceiptPage extends StatelessWidget {
       children: [
         const Column(
           children: [
-            Text('NGƯỜI NỘP TIỀN', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF15233D))),
+            Text(
+              'NGƯỜI NỘP TIỀN',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF15233D),
+              ),
+            ),
             SizedBox(height: 40),
-            Text('Đã xác thực chữ ký số', style: TextStyle(fontSize: 9, color: Color(0xFF8A95AC), fontStyle: FontStyle.italic)),
+            Text(
+              'Đã xác thực chữ ký số',
+              style: TextStyle(
+                fontSize: 9,
+                color: Color(0xFF8A95AC),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
           ],
         ),
         Column(
           children: [
-            const Text('THỦ QUỸ BỆNH VIỆN', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF15233D))),
+            const Text(
+              'THỦ QUỸ BỆNH VIỆN',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF15233D),
+              ),
+            ),
             const SizedBox(height: 40),
             Container(
-              width: 100, height: 100,
+              width: 100,
+              height: 100,
               decoration: BoxDecoration(
                 image: const DecorationImage(
-                  image: NetworkImage('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=VERIFIED_RECEIPT_701TSG'),
+                  image: NetworkImage(
+                    'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=VERIFIED_RECEIPT_701TSG',
+                  ),
                   fit: BoxFit.cover,
                 ),
                 borderRadius: BorderRadius.circular(8),
@@ -258,7 +480,14 @@ class DigitalReceiptPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            const Text('Quét để tra cứu', style: TextStyle(fontSize: 8, color: Color(0xFF8A95AC), fontWeight: FontWeight.bold)),
+            const Text(
+              'Quét để tra cứu',
+              style: TextStyle(
+                fontSize: 8,
+                color: Color(0xFF8A95AC),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
       ],
@@ -268,7 +497,10 @@ class DigitalReceiptPage extends StatelessWidget {
   Widget _buildSafetyNote() {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: const Color(0xFFDEF7ED), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFDEF7ED),
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: const Row(
         children: [
           Icon(Icons.shield_rounded, color: Color(0xFF0E9F6E)),
@@ -276,7 +508,12 @@ class DigitalReceiptPage extends StatelessWidget {
           Expanded(
             child: Text(
               'Biên lai này có giá trị xác nhận thanh toán trực tuyến và được bảo mật bởi hệ thống y tế.',
-              style: TextStyle(color: Color(0xFF03543F), fontSize: 11, fontWeight: FontWeight.bold, height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF03543F),
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
           ),
         ],

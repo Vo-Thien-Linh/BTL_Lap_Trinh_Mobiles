@@ -1,11 +1,11 @@
 {
-    "name": "baitaplon",
-    "short_name": "baitaplon",
+    "name": "Bệnh viện LPHV",
+    "short_name": "LPHV",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Ứng dụng đặt lịch khám Bệnh viện LPHV.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

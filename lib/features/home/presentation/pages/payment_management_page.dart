@@ -18,8 +18,20 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
   String _selectedStatus = 'Tất cả trạng thái';
   String _selectedType = 'Tất cả loại';
 
-  final List<String> _statusOptions = ['Tất cả trạng thái', 'Đã thanh toán', 'Chưa thanh toán'];
-  final List<String> _typeOptions = ['Tất cả loại', 'Tiền khám', 'Xét nghiệm', 'Thuốc'];
+  final List<String> _statusOptions = [
+    'Tất cả trạng thái',
+    'Đã thanh toán',
+    'Chờ duyệt',
+    'Chưa thanh toán',
+  ];
+  final List<String> _typeOptions = [
+    'Tất cả loại',
+    'Tiền khám',
+    'Dịch vụ',
+    'Dịch vụ & thuốc',
+    'Xét nghiệm',
+    'Thuốc',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +78,11 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
       ),
       title: const Text(
         'THANH TOÁN & HÓA ĐƠN',
-        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 1.2),
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1.2,
+        ),
       ),
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
@@ -75,7 +91,8 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [AppColors.primary, Color(0xFF3B82F6)],
-                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
               ),
             ),
@@ -84,7 +101,9 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
               child: Container(
                 decoration: const BoxDecoration(
                   image: DecorationImage(
-                    image: NetworkImage('https://www.transparenttextures.com/patterns/white-diamond.png'),
+                    image: NetworkImage(
+                      'https://www.transparenttextures.com/patterns/white-diamond.png',
+                    ),
                     repeat: ImageRepeat.repeat,
                   ),
                 ),
@@ -97,7 +116,8 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
         Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.refresh_rounded, size: 24),
-            onPressed: () => context.read<PaymentBloc>().add(RefreshInvoices(uid)),
+            onPressed: () =>
+                context.read<PaymentBloc>().add(RefreshInvoices(uid)),
           ),
         ),
       ],
@@ -109,12 +129,11 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
       builder: (context, state) {
         double paidTotal = 0;
         double pendingTotal = 0;
-        
+
         for (var inv in state.allInvoices) {
-          if (inv.status == 'paid') {
-            paidTotal += inv.amount;
-          } else {
-            pendingTotal += inv.amount;
+          paidTotal += inv.paidAmount;
+          if (!inv.isEffectivelyPaid) {
+            pendingTotal += inv.remainingAmount;
           }
         }
 
@@ -126,7 +145,11 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(32),
             boxShadow: [
-              BoxShadow(color: AppColors.primary.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 10)),
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.08),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
             ],
           ),
           child: Column(
@@ -135,27 +158,60 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('TỔNG CHI TIÊU Y TẾ', style: TextStyle(color: AppColors.textHint, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  const Text(
+                    'TỔNG CHI TIÊU Y TẾ',
+                    style: TextStyle(
+                      color: AppColors.textHint,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1,
+                    ),
+                  ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)),
-                    child: const Text('THÁNG NÀY', style: TextStyle(color: AppColors.primary, fontSize: 9, fontWeight: FontWeight.w900)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'THÁNG NÀY',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               Text(
                 '${NumberFormat('#,###').format(paidTotal + pendingTotal)} đ',
-                style: const TextStyle(color: AppColors.textBody, fontSize: 28, fontWeight: FontWeight.w900),
+                style: const TextStyle(
+                  color: AppColors.textBody,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
               const SizedBox(height: 24),
               Row(
                 children: [
-                  _buildSummaryItem('Đã thanh toán', paidTotal, AppColors.success),
+                  _buildSummaryItem(
+                    'Đã thanh toán',
+                    paidTotal,
+                    AppColors.success,
+                  ),
                   const SizedBox(width: 24),
                   Container(width: 1, height: 30, color: AppColors.border),
                   const SizedBox(width: 24),
-                  _buildSummaryItem('Chờ xử lý', pendingTotal, AppColors.warning),
+                  _buildSummaryItem(
+                    'Chờ xử lý',
+                    pendingTotal,
+                    AppColors.warning,
+                  ),
                 ],
               ),
             ],
@@ -171,13 +227,31 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
       children: [
         Row(
           children: [
-            Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
             const SizedBox(width: 6),
-            Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w700)),
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 4),
-        Text('${NumberFormat('#,###').format(amount)} đ', style: const TextStyle(color: AppColors.textBody, fontSize: 13, fontWeight: FontWeight.w900)),
+        Text(
+          '${NumberFormat('#,###').format(amount)} đ',
+          style: const TextStyle(
+            color: AppColors.textBody,
+            fontSize: 13,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
       ],
     );
   }
@@ -195,19 +269,37 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: const BoxDecoration(color: AppColors.warning, shape: BoxShape.circle),
-            child: const Icon(Icons.alarm_on_rounded, color: Colors.white, size: 20),
+            decoration: const BoxDecoration(
+              color: AppColors.warning,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.alarm_on_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 16),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Lưu ý thanh toán', style: TextStyle(color: Color(0xFF854D0E), fontWeight: FontWeight.w900, fontSize: 13)),
+                Text(
+                  'Lưu ý thanh toán',
+                  style: TextStyle(
+                    color: Color(0xFF854D0E),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                  ),
+                ),
                 SizedBox(height: 2),
                 Text(
                   'Thanh toán trước 19:30 để giữ lịch khám.',
-                  style: TextStyle(color: Color(0xFFA16207), fontSize: 12, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    color: Color(0xFFA16207),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
@@ -234,7 +326,11 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
     );
   }
 
-  Widget _buildScrollableChips(List<String> options, String current, Function(String) onSelected) {
+  Widget _buildScrollableChips(
+    List<String> options,
+    String current,
+    Function(String) onSelected,
+  ) {
     return SizedBox(
       height: 44,
       child: ListView.builder(
@@ -249,28 +345,51 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
             child: InkWell(
               onTap: () {
                 onSelected(option);
-                context.read<PaymentBloc>().add(FilterInvoices(
-                  status: _selectedStatus == _statusOptions[0] ? null : _selectedStatus,
-                  type: _selectedType == _typeOptions[0] ? null : _selectedType,
-                ));
+                context.read<PaymentBloc>().add(
+                  FilterInvoices(
+                    status: _selectedStatus == _statusOptions[0]
+                        ? null
+                        : _selectedStatus,
+                    type: _selectedType == _typeOptions[0]
+                        ? null
+                        : _selectedType,
+                  ),
+                );
               },
               borderRadius: BorderRadius.circular(16),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected ? AppColors.primary : AppColors.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
-                  boxShadow: isSelected ? [BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))] : null,
+                  border: Border.all(
+                    color: isSelected ? AppColors.primary : AppColors.border,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.2),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
                 ),
                 child: Center(
                   child: Text(
                     option,
                     style: TextStyle(
                       fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
-                      color: isSelected ? Colors.white : AppColors.textSecondary,
+                      fontWeight: isSelected
+                          ? FontWeight.w900
+                          : FontWeight.w700,
+                      color: isSelected
+                          ? Colors.white
+                          : AppColors.textSecondary,
                     ),
                   ),
                 ),
@@ -285,8 +404,11 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
   Widget _buildInvoiceListSliver(String uid) {
     return BlocBuilder<PaymentBloc, PaymentState>(
       builder: (context, state) {
-        if (state.status == PaymentStatus.loading || state.status == PaymentStatus.processing) {
-          return const SliverFillRemaining(child: Center(child: CircularProgressIndicator()));
+        if (state.status == PaymentStatus.loading ||
+            state.status == PaymentStatus.processing) {
+          return const SliverFillRemaining(
+            child: Center(child: CircularProgressIndicator()),
+          );
         }
 
         final invoices = state.filteredInvoices;
@@ -298,16 +420,17 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
         return SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final invoice = invoices[index];
-                return _PremiumInvoiceCard(
-                  invoice: invoice,
-                  onPay: () => Navigator.pushNamed(context, AppRoutes.invoiceDetail, arguments: invoice),
-                );
-              },
-              childCount: invoices.length,
-            ),
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final invoice = invoices[index];
+              return _PremiumInvoiceCard(
+                invoice: invoice,
+                onPay: () => Navigator.pushNamed(
+                  context,
+                  AppRoutes.invoiceDetail,
+                  arguments: invoice,
+                ),
+              );
+            }, childCount: invoices.length),
           ),
         );
       },
@@ -321,13 +444,34 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
         children: [
           Container(
             padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(color: Color(0xFFF1F5F9), shape: BoxShape.circle),
-            child: const Icon(Icons.receipt_long_rounded, size: 64, color: Color(0xFFCBD5E1)),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF1F5F9),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.receipt_long_rounded,
+              size: 64,
+              color: Color(0xFFCBD5E1),
+            ),
           ),
           const SizedBox(height: 24),
-          const Text('Không tìm thấy hóa đơn', style: TextStyle(color: AppColors.textBody, fontSize: 16, fontWeight: FontWeight.w900)),
+          const Text(
+            'Không tìm thấy hóa đơn',
+            style: TextStyle(
+              color: AppColors.textBody,
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
           const SizedBox(height: 8),
-          const Text('Thử thay đổi bộ lọc hoặc làm mới danh sách', style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
+          const Text(
+            'Thử thay đổi bộ lọc hoặc làm mới danh sách',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -342,8 +486,13 @@ class _PremiumInvoiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isPaid = invoice.status == 'paid';
-    final Color statusColor = isPaid ? AppColors.success : AppColors.warning;
+    final bool isPaid = invoice.isEffectivelyPaid;
+    final bool isPending = invoice.status == 'pending';
+    final Color statusColor = isPaid
+        ? AppColors.success
+        : isPending
+        ? const Color(0xFFD97706)
+        : AppColors.warning;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -351,7 +500,11 @@ class _PremiumInvoiceCard extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
-          BoxShadow(color: AppColors.textBody.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 8)),
+          BoxShadow(
+            color: AppColors.textBody.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
         ],
         border: Border.all(color: AppColors.border.withOpacity(0.5)),
       ),
@@ -371,7 +524,11 @@ class _PremiumInvoiceCard extends StatelessWidget {
                       color: statusColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: Icon(_getIconForType(invoice.expenseType), color: statusColor, size: 24),
+                    child: Icon(
+                      _getIconForType(invoice.expenseType),
+                      color: statusColor,
+                      size: 24,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -383,14 +540,34 @@ class _PremiumInvoiceCard extends StatelessWidget {
                           children: [
                             Text(
                               invoice.id.toUpperCase(),
-                              style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 0.5),
+                              style: const TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 11,
+                                letterSpacing: 0.5,
+                              ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: statusColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                               child: Text(
-                                isPaid ? 'ĐÃ TRẢ' : 'CHỜ TRẢ',
-                                style: TextStyle(color: statusColor, fontWeight: FontWeight.w900, fontSize: 9, letterSpacing: 0.5),
+                                isPaid
+                                    ? 'ĐÃ TRẢ'
+                                    : isPending
+                                    ? 'CHỜ DUYỆT'
+                                    : 'CHỜ TRẢ',
+                                style: TextStyle(
+                                  color: statusColor,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 9,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
                             ),
                           ],
@@ -398,14 +575,24 @@ class _PremiumInvoiceCard extends StatelessWidget {
                         const SizedBox(height: 6),
                         Text(
                           invoice.serviceContent,
-                          style: const TextStyle(color: AppColors.textBody, fontWeight: FontWeight.w900, fontSize: 15),
+                          style: const TextStyle(
+                            color: AppColors.textBody,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 15,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          DateFormat('dd/MM/yyyy • HH:mm').format(invoice.createdAt),
-                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600),
+                          DateFormat(
+                            'dd/MM/yyyy • HH:mm',
+                          ).format(invoice.createdAt),
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ],
                     ),
@@ -422,33 +609,100 @@ class _PremiumInvoiceCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('TỔNG THANH TOÁN', style: TextStyle(color: AppColors.textHint, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                      Text(
+                        'TỔNG HÓA ĐƠN: ${NumberFormat('#,###').format(invoice.amount)} đ',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      if (invoice.paidAmount > 0) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'ĐÃ THANH TOÁN: ${NumberFormat('#,###').format(invoice.paidAmount)} đ',
+                          style: const TextStyle(
+                            color: AppColors.success,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 6),
+                      const Text(
+                        'CÒN PHẢI TRẢ',
+                        style: TextStyle(
+                          color: AppColors.textHint,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
                       const SizedBox(height: 2),
                       Text(
-                        '${NumberFormat('#,###').format(invoice.amount)} đ',
-                        style: const TextStyle(color: AppColors.textBody, fontWeight: FontWeight.w900, fontSize: 18),
+                        '${NumberFormat('#,###').format(invoice.remainingAmount)} đ',
+                        style: const TextStyle(
+                          color: AppColors.textBody,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                        ),
                       ),
                     ],
                   ),
-                  isPaid
+                  isPaid || isPending
                       ? Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          decoration: BoxDecoration(color: AppColors.secondary, borderRadius: BorderRadius.circular(14)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.secondary,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                           child: const Row(
                             children: [
-                              Text('Chi tiết', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.textSecondary)),
-                              Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.textSecondary),
+                              Text(
+                                'Chi tiết',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                size: 16,
+                                color: AppColors.textSecondary,
+                              ),
                             ],
                           ),
                         )
                       : Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF3B82F6)]),
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))],
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
                           ),
-                          child: const Text('Thanh toán', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white)),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [AppColors.primary, Color(0xFF3B82F6)],
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withOpacity(0.3),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Text(
+                            'Thanh toán',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                 ],
               ),
@@ -461,10 +715,16 @@ class _PremiumInvoiceCard extends StatelessWidget {
 
   IconData _getIconForType(String type) {
     switch (type) {
-      case 'Tiền khám': return Icons.medical_services_rounded;
-      case 'Xét nghiệm': return Icons.biotech_rounded;
-      case 'Thuốc': return Icons.medication_rounded;
-      default: return Icons.receipt_long_rounded;
+      case 'Tiền khám':
+        return Icons.medical_services_rounded;
+      case 'Xét nghiệm':
+      case 'Dịch vụ':
+      case 'Dịch vụ & thuốc':
+        return Icons.biotech_rounded;
+      case 'Thuốc':
+        return Icons.medication_rounded;
+      default:
+        return Icons.receipt_long_rounded;
     }
   }
 }

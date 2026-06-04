@@ -6,10 +6,13 @@ class PaymentModel {
   final String appointmentId;
   final String patientId;
   final double amount;
-  final String status; // 'paid', 'unpaid'
-  final String method; // 'CASH', 'BANK', 'E-WALLET'
+  final String status; // 'pending', 'paid', 'failed', 'refunded'
+  final String method; // App writes 'bank_transfer'
   final DateTime createdAt;
-  final DateTime? paymentDate;
+  final DateTime? updatedAt;
+  final DateTime? paidAt;
+  final String? confirmedBy;
+  final DateTime? confirmedAt;
 
   PaymentModel({
     required this.id,
@@ -20,7 +23,10 @@ class PaymentModel {
     required this.status,
     required this.method,
     required this.createdAt,
-    this.paymentDate,
+    this.updatedAt,
+    this.paidAt,
+    this.confirmedBy,
+    this.confirmedAt,
   });
 
   factory PaymentModel.fromFirestore(DocumentSnapshot doc) {
@@ -31,10 +37,15 @@ class PaymentModel {
       appointmentId: data['appointmentId'] ?? '',
       patientId: data['patientId'] ?? '',
       amount: (data['amount'] ?? 0.0).toDouble(),
-      status: data['status'] ?? 'unpaid',
-      method: data['method'] ?? 'CASH',
+      status: data['status'] ?? 'pending',
+      method: data['method'] ?? 'bank_transfer',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      paymentDate: (data['paymentDate'] as Timestamp?)?.toDate(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
+      paidAt:
+          (data['paidAt'] as Timestamp?)?.toDate() ??
+          (data['paymentDate'] as Timestamp?)?.toDate(),
+      confirmedBy: data['confirmedBy']?.toString(),
+      confirmedAt: (data['confirmedAt'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -47,7 +58,12 @@ class PaymentModel {
       'status': status,
       'method': method,
       'createdAt': Timestamp.fromDate(createdAt),
-      'paymentDate': paymentDate != null ? Timestamp.fromDate(paymentDate!) : null,
+      'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
+      'paidAt': paidAt != null ? Timestamp.fromDate(paidAt!) : null,
+      'confirmedBy': confirmedBy,
+      'confirmedAt': confirmedAt != null
+          ? Timestamp.fromDate(confirmedAt!)
+          : null,
     };
   }
 }

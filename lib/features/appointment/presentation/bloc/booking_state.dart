@@ -44,7 +44,7 @@ class BookingState extends Equatable {
     this.selectedQueueNumber,
     this.selectedSession,
     this.takenQueueNumbers = const [],
-    this.selectedPaymentMethod = 'CASH',
+    this.selectedPaymentMethod = 'BANK',
     this.symptoms = '',
     this.hasScheduleConflict = false,
     this.conflictMessage,

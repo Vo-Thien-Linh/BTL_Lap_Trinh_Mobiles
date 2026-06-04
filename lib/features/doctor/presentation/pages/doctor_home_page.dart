@@ -389,7 +389,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                 continue; // Bỏ qua nếu không phải lịch hôm nay
               }
 
-              final status = data['status'] as String? ?? 'pending';
+              final status = data['status']?.toString() ?? 'pending';
               if (status == 'pending' ||
                   status == 'scheduled' ||
                   status == 'confirmed') {

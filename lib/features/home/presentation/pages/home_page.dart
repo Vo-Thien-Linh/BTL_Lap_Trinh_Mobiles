@@ -556,7 +556,7 @@ class _HomePageState extends State<HomePage> {
             } else if (uName != null && uName.isNotEmpty) {
               userName = uName;
             }
-            avatarUrl = data['avatarUrl'] as String?;
+            avatarUrl = data['avatarUrl']?.toString();
           }
         } else if (authUser?.displayName != null &&
             authUser!.displayName!.trim().isNotEmpty) {
@@ -849,9 +849,9 @@ class _HomePageState extends State<HomePage> {
               }
 
               final data = nearestDoc.data();
-              final doctorName = (data['doctorName'] ?? 'Bác sĩ') as String;
+              final doctorName = data['doctorName']?.toString() ?? 'Bác sĩ';
               final departmentName =
-                  (data['departmentName'] ?? 'Chuyên khoa') as String;
+                  data['departmentName']?.toString() ?? 'Chuyên khoa';
               final appointmentDate = (data['appointmentDate'] as Timestamp?)
                   ?.toDate();
               final dateText = appointmentDate == null
@@ -859,7 +859,7 @@ class _HomePageState extends State<HomePage> {
                   : '${appointmentDate.day.toString().padLeft(2, '0')}/${appointmentDate.month.toString().padLeft(2, '0')}/${appointmentDate.year}';
               final timeSlot =
                   (data['timeSlot'] ?? data['shift'] ?? 'Đang cập nhật')
-                      as String;
+                      .toString();
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

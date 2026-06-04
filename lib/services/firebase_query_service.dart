@@ -281,24 +281,24 @@ $details
     final schedules = await _firestore
         .collection('DoctorSchedules')
         .where('doctorId', isEqualTo: doctor.id)
-        .where(
-          'scheduleDate',
-          isGreaterThanOrEqualTo: Timestamp.fromDate(start),
-        )
-        .where('scheduleDate', isLessThan: Timestamp.fromDate(end))
         .get();
 
-    if (schedules.docs.isEmpty) {
+    final scheduleDocs = schedules.docs.where((doc) {
+      final date = _toDateTime(doc.data()['scheduleDate']);
+      return date != null && !date.isBefore(start) && date.isBefore(end);
+    }).toList();
+
+    if (scheduleDocs.isEmpty) {
       return 'Dữ liệu hệ thống: ${doctor.name} chưa có lịch làm việc trong 7 ngày tới.';
     }
 
-    final available = schedules.docs.where((doc) {
+    final available = scheduleDocs.where((doc) {
       final data = doc.data();
       return data['isAvailable'] != false &&
           _intValue(data['availableSlots']) > 0;
     }).toList();
 
-    final lines = schedules.docs
+    final lines = scheduleDocs
         .take(12)
         .map((doc) {
           final data = doc.data();
@@ -376,15 +376,14 @@ $lines
       final schedules = await _firestore
           .collection('DoctorSchedules')
           .where('doctorId', isEqualTo: doctor.id)
-          .where(
-            'scheduleDate',
-            isGreaterThanOrEqualTo: Timestamp.fromDate(start),
-          )
-          .where('scheduleDate', isLessThan: Timestamp.fromDate(end))
           .get();
 
       for (final schedule in schedules.docs) {
         final data = schedule.data();
+        final date = _toDateTime(data['scheduleDate']);
+        if (date == null || date.isBefore(start) || !date.isBefore(end)) {
+          continue;
+        }
         if (data['isAvailable'] == false) continue;
         lines.add(
           '- ${doctor.name}, ca ${_text(data['shiftId'])}, còn ${_intValue(data['availableSlots'])}/${_intValue(data['maxSlots'])} chỗ',
@@ -476,21 +475,19 @@ ${lines.join('\n')}
     final start = DateTime(targetDate.year, targetDate.month, targetDate.day);
     final end = start.add(const Duration(days: 1));
 
-    var query = _firestore
+    final query = _firestore
         .collection('DoctorSchedules')
         .where(
           'scheduleDate',
           isGreaterThanOrEqualTo: Timestamp.fromDate(start),
         )
         .where('scheduleDate', isLessThan: Timestamp.fromDate(end));
-    if (doctor != null) {
-      query = query.where('doctorId', isEqualTo: doctor.id);
-    }
 
     final schedules = await query.get();
     final lines = <String>[];
     for (final schedule in schedules.docs) {
       final data = schedule.data();
+      if (doctor != null && _text(data['doctorId']) != doctor.id) continue;
       if (!_isScheduleOpen(data)) continue;
       lines.add(await _scheduleLine(data, doctor: doctor));
     }
@@ -519,22 +516,22 @@ ${lines.join('\n')}
     final start = DateTime(now.year, now.month, now.day);
     final end = start.add(const Duration(days: 56));
 
-    var query = _firestore
+    final query = _firestore
         .collection('DoctorSchedules')
         .where(
           'scheduleDate',
           isGreaterThanOrEqualTo: Timestamp.fromDate(start),
         )
         .where('scheduleDate', isLessThan: Timestamp.fromDate(end));
-    if (doctor != null) {
-      query = query.where('doctorId', isEqualTo: doctor.id);
-    }
 
     final schedules = await query.get();
     final matched =
         schedules.docs.where((doc) {
           final data = doc.data();
           final date = _toDateTime(data['scheduleDate']);
+          if (doctor != null && _text(data['doctorId']) != doctor.id) {
+            return false;
+          }
           return date != null &&
               date.weekday == weekday &&
               _isScheduleOpen(data);

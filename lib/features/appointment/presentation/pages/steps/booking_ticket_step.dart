@@ -119,7 +119,7 @@ class BookingTicketStep extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'HỆ THỐNG Y TẾ MEDCARE',
+                            'BỆNH VIỆN LPHV',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w900,
@@ -127,7 +127,7 @@ class BookingTicketStep extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'Cơ sở: 123 Bế Văn Đàn, TP. HCM',
+                            'Phiếu xác nhận lịch khám',
                             style: TextStyle(
                               fontSize: 10,
                               color: Color(0xFF64748B),
@@ -147,7 +147,7 @@ class BookingTicketStep extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Text(
-                        'MEDCARE',
+                        'LPHV',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w900,
@@ -204,6 +204,9 @@ class BookingTicketStep extends StatelessWidget {
                   'Giới tính:',
                   appointment.patientGender ?? 'Chưa cập nhật',
                 ),
+                if (appointment.insuranceNumber != null &&
+                    appointment.insuranceNumber!.trim().isNotEmpty)
+                  _buildInfoRow('Mã thẻ BHYT:', appointment.insuranceNumber!),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 20),
                   child: DottedLine(),
@@ -211,9 +214,12 @@ class BookingTicketStep extends StatelessWidget {
                 _buildSectionTitle('CHI TIẾT LỊCH HẸN'),
                 const SizedBox(height: 12),
                 _buildInfoRow('Chuyên khoa:', appointment.departmentName),
+                _buildInfoRow('Bác sĩ:', appointment.doctorName),
                 _buildInfoRow(
-                  'Vị trí:',
-                  appointment.roomNumber.isEmpty ? '-' : appointment.roomNumber,
+                  'Phòng:',
+                  appointment.roomNumber.trim().isEmpty
+                      ? '-'
+                      : appointment.roomNumber,
                   valColor: const Color(0xFF2563EB),
                 ),
                 _buildInfoRow(
@@ -244,6 +250,16 @@ class BookingTicketStep extends StatelessWidget {
                   valColor: const Color(0xFFD97706),
                   isBold: true,
                 ),
+                _buildInfoRow(
+                  'Phí khám dự kiến:',
+                  NumberFormat.currency(
+                    locale: 'vi_VN',
+                    symbol: 'đ',
+                    decimalDigits: 0,
+                  ).format(appointment.consultationFee),
+                  isBold: true,
+                  valColor: const Color(0xFFB91C1C),
+                ),
               ],
             ),
           ),
@@ -263,7 +279,7 @@ class BookingTicketStep extends StatelessWidget {
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Bạn nên đến sớm hơn khoảng 30 phút để đảm bảo việc khám diễn ra thuận lợi.',
+                    'Vui lòng có mặt sớm hơn khoảng 30 phút để chuẩn bị thủ tục.',
                     style: TextStyle(
                       fontSize: 12,
                       color: Color(0xFF9A3412),
@@ -354,26 +370,37 @@ class BookingTicketStep extends StatelessWidget {
 
   String _estimatedTimeRange(HospitalAppointment appointment) {
     final defaults = _defaultShiftTime(appointment.shiftId);
-    final startText = appointment.timeSlot.trim().isNotEmpty
+    final realSlot = _isRealTime(appointment.timeSlot)
         ? appointment.timeSlot.trim()
-        : defaults.start;
+        : '';
+    final startText = realSlot.isNotEmpty ? realSlot : defaults.start;
     final start = _timeOnDate(startText);
     final end = _timeOnDate(defaults.end);
-    if (start == null || end == null || !end.isAfter(start)) return startText;
+    final shiftStart = _timeOnDate(defaults.start) ?? start;
+    if (start == null ||
+        end == null ||
+        shiftStart == null ||
+        !end.isAfter(shiftStart)) {
+      return startText;
+    }
 
-    final slotCount = defaults.slotCount;
     final queueNumber = appointment.queueNumber <= 0
         ? 1
         : appointment.queueNumber;
-    final shiftStart = _timeOnDate(defaults.start) ?? start;
-    final slotMinutes = end.difference(shiftStart).inMinutes / slotCount;
-    final slotStart = shiftStart.add(
-      Duration(minutes: ((queueNumber - 1) * slotMinutes).round()),
-    );
-    final slotEnd = shiftStart.add(
-      Duration(minutes: (queueNumber * slotMinutes).round()),
-    );
+    final slotMinutes =
+        end.difference(shiftStart).inMinutes / defaults.slotCount;
+    final slotStart = realSlot.isNotEmpty
+        ? start
+        : shiftStart.add(
+            Duration(minutes: ((queueNumber - 1) * slotMinutes).round()),
+          );
+    final slotEnd = slotStart.add(Duration(minutes: slotMinutes.round()));
     return '${DateFormat('HH:mm').format(slotStart)} - ${DateFormat('HH:mm').format(slotEnd)}';
+  }
+
+  bool _isRealTime(String value) {
+    final trimmed = value.trim();
+    return trimmed.isNotEmpty && trimmed != '00:00' && trimmed != '00:00:00';
   }
 
   ({String start, String end, int slotCount}) _defaultShiftTime(

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -24,7 +25,6 @@ class _LoginFormState extends State<LoginForm> {
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
   final FocusNode _passwordFocusNode = FocusNode();
 
   bool _obscurePassword = true;
@@ -42,7 +42,6 @@ class _LoginFormState extends State<LoginForm> {
     FocusScope.of(context).unfocus();
 
     if (_isLoading) return;
-
     if (!_formKey.currentState!.validate()) {
       _showMessage('Vui lòng kiểm tra lại tài khoản hoặc mật khẩu.');
       return;
@@ -55,19 +54,11 @@ class _LoginFormState extends State<LoginForm> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-
-      final user = FirebaseAuth.instance.currentUser;
+      final firebaseUser = FirebaseAuth.instance.currentUser;
       if (!mounted) return;
 
-      final isVerified =
-          appUser.emailVerified || (user != null && user.emailVerified);
-      if (!isVerified) {
-        _showMessage(
-          'Email chưa được xác thực. Vui lòng kiểm tra hộp thư hoặc gửi lại email xác thực.',
-        );
-        Navigator.pushReplacementNamed(context, AppRoutes.verifyEmail);
-        return;
-      }
+      final canContinue = await _validateLoginAccess(appUser, firebaseUser);
+      if (!mounted || !canContinue) return;
 
       _showMessage('Đăng nhập thành công.', isError: false);
       Navigator.pushReplacementNamed(
@@ -85,6 +76,57 @@ class _LoginFormState extends State<LoginForm> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<bool> _validateLoginAccess(dynamic appUser, User? firebaseUser) async {
+    final role = appUser.role.toString().toLowerCase();
+    final status = appUser.status.toString().toLowerCase();
+
+    if (status != 'active') {
+      await FirebaseAuth.instance.signOut();
+      throw Exception('Tài khoản chưa được kích hoạt hoặc đã bị khóa.');
+    }
+
+    if (role == 'doctor') {
+      final uid = firebaseUser?.uid ?? appUser.uid.toString();
+      final doctorSnapshot = await FirebaseFirestore.instance
+          .collection('Doctors')
+          .where('userId', isEqualTo: uid)
+          .limit(1)
+          .get();
+
+      if (doctorSnapshot.docs.isEmpty) {
+        await FirebaseAuth.instance.signOut();
+        throw Exception('Không tìm thấy hồ sơ bác sĩ được cấp quyền.');
+      }
+
+      final doctorData = doctorSnapshot.docs.first.data();
+      final verificationStatus =
+          doctorData['verificationStatus']?.toString().toLowerCase() ?? '';
+      final isActive = doctorData['isActive'] != false;
+      final isVerified =
+          verificationStatus == 'verified' || verificationStatus == 'approved';
+
+      if (!isActive || !isVerified) {
+        await FirebaseAuth.instance.signOut();
+        throw Exception('Tài khoản bác sĩ chưa được web admin xác minh.');
+      }
+
+      return true;
+    }
+
+    final isVerified =
+        appUser.emailVerified ||
+        (firebaseUser != null && firebaseUser.emailVerified);
+    if (!isVerified) {
+      _showMessage(
+        'Tài khoản chưa được xác thực. Vui lòng kiểm tra hộp thư hoặc mã OTP.',
+      );
+      Navigator.pushReplacementNamed(context, AppRoutes.verifyEmail);
+      return false;
+    }
+
+    return true;
   }
 
   String _resolveHomeRouteByRole(String role) {

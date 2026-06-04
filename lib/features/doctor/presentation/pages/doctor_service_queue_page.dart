@@ -14,7 +14,13 @@ class DoctorServiceQueuePage extends StatefulWidget {
 class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
   String _activeFilter = 'Tất cả';
   final Set<String> _processingItems = <String>{};
-  final List<String> _filters = ['Tất cả', 'Xét nghiệm', 'Siêu âm', 'X-Quang', 'CT Scan'];
+  final List<String> _filters = [
+    'Tất cả',
+    'Xét nghiệm',
+    'Siêu âm',
+    'X-Quang',
+    'CT Scan',
+  ];
 
   final String? _currentUid = FirebaseAuth.instance.currentUser?.uid;
 
@@ -27,7 +33,11 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4FA),
       body: FutureBuilder<QuerySnapshot>(
-        future: FirebaseFirestore.instance.collection('Doctors').where('userId', isEqualTo: _currentUid).limit(1).get(),
+        future: FirebaseFirestore.instance
+            .collection('Doctors')
+            .where('userId', isEqualTo: _currentUid)
+            .limit(1)
+            .get(),
         builder: (context, doctorSnap) {
           if (doctorSnap.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -38,10 +48,15 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
             actualDoctorId = doctorSnap.data!.docs.first.id;
           }
 
+          final doctorIds = <String>{
+            actualDoctorId,
+            if (_currentUid != null) _currentUid!,
+          }.where((id) => id.trim().isNotEmpty).toList();
+
           return StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
-                .collection('ServiceRequests')
-                .where('doctorId', isEqualTo: actualDoctorId)
+                .collection('LabOrders')
+                .where('doctorId', whereIn: doctorIds)
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -49,9 +64,17 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
               }
 
               final allDocs = snapshot.data?.docs ?? [];
-              final List<Map<String, dynamic>> serviceQueue = allDocs.map((doc) {
-                final data = doc.data() as Map<String, dynamic>;
+              final List<Map<String, dynamic>> serviceQueue = allDocs.map((
+                doc,
+              ) {
+                final data = Map<String, dynamic>.from(
+                  doc.data() as Map<String, dynamic>,
+                );
                 data['requestId'] = doc.id;
+                data['serviceItems'] = _serviceItems(data);
+                data['service'] = _serviceSummary(data);
+                data['type'] = _serviceType(data);
+                data['statusLabel'] = _statusLabel(data['status']);
                 return data;
               }).toList();
 
@@ -105,8 +128,12 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
 
   Widget _buildSummaryStats(List<Map<String, dynamic>> queue) {
     final total = queue.length;
-    final waiting = queue.where((q) => q['status'] == 'Chờ thực hiện').length;
-    final done = queue.where((q) => q['status'] == 'Hoàn tất').length;
+    final waiting = queue
+        .where((q) => _statusKey(q['status']) == 'ordered')
+        .length;
+    final done = queue
+        .where((q) => _statusKey(q['status']) == 'completed')
+        .length;
 
     return SliverToBoxAdapter(
       child: Container(
@@ -142,7 +169,11 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
       children: [
         Text(
           val,
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: color),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+            color: color,
+          ),
         ),
         Text(
           label,
@@ -169,12 +200,17 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 margin: const EdgeInsets.only(right: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected ? const Color(0xFF0D9488) : Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isSelected ? Colors.transparent : const Color(0xFFDDE6F7),
+                    color: isSelected
+                        ? Colors.transparent
+                        : const Color(0xFFDDE6F7),
                   ),
                 ),
                 child: Text(
@@ -196,12 +232,15 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
   Widget _buildServiceList(List<Map<String, dynamic>> queue) {
     final filtered = _activeFilter == 'Tất cả'
         ? queue
-        : queue.where((q) => q['type'] == _activeFilter).toList();
+        : queue.where((q) => _matchesFilter(q, _activeFilter)).toList();
 
     if (filtered.isEmpty) {
       return const SliverFillRemaining(
         child: Center(
-          child: Text('Không có dịch vụ nào', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          child: Text(
+            'Không có dịch vụ nào',
+            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+          ),
         ),
       );
     }
@@ -210,7 +249,7 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
-              (context, index) => _buildServiceCard(filtered[index]),
+          (context, index) => _buildServiceCard(filtered[index]),
           childCount: filtered.length,
         ),
       ),
@@ -218,7 +257,8 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
   }
 
   Widget _buildServiceCard(Map<String, dynamic> data) {
-    final status = data['status']?.toString() ?? 'Chờ thực hiện';
+    final status =
+        data['statusLabel']?.toString() ?? _statusLabel(data['status']);
     final type = data['type']?.toString() ?? '';
     final statusColor = _getStatusColor(status);
     final isPriority = data['priority'] == 1;
@@ -251,7 +291,11 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
                         color: statusColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(_getServiceIcon(type), color: statusColor, size: 24),
+                      child: Icon(
+                        _getServiceIcon(type),
+                        color: statusColor,
+                        size: 24,
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -262,7 +306,8 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
                             children: [
                               Flexible(
                                 child: Text(
-                                  data['patientName']?.toString() ?? 'Bệnh nhân',
+                                  data['patientName']?.toString() ??
+                                      'Bệnh nhân',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w900,
@@ -273,7 +318,10 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
                               ),
                               if (isPriority)
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
                                   margin: const EdgeInsets.only(left: 8),
                                   decoration: BoxDecoration(
                                     color: Colors.redAccent.withOpacity(0.1),
@@ -309,7 +357,11 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    const Icon(Icons.person_outline_rounded, size: 14, color: Color(0xFF8A95AC)),
+                    const Icon(
+                      Icons.person_outline_rounded,
+                      size: 14,
+                      color: Color(0xFF8A95AC),
+                    ),
                     const SizedBox(width: 6),
                     const Text(
                       'Chỉ định bởi: ',
@@ -340,7 +392,8 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
                     ),
                   ],
                 ),
-                if (data['notes'] != null && status != 'Hoàn tất') ...[
+                if (data['notes'] != null &&
+                    _statusKey(data['status']) != 'completed') ...[
                   const SizedBox(height: 10),
                   Container(
                     width: double.infinity,
@@ -363,15 +416,16 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
               ],
             ),
           ),
-          if (status != 'Hoàn tất') _buildActionButtons(data),
+          if (_statusKey(data['status']) != 'completed')
+            _buildActionButtons(data),
         ],
       ),
     );
   }
 
   Widget _buildActionButtons(Map<String, dynamic> data) {
-    final status = data['status']?.toString() ?? 'Chờ thực hiện';
-    final isWaiting = status == 'Chờ thực hiện';
+    final status = _statusKey(data['status']);
+    final isWaiting = status == 'ordered';
     final itemKey = _itemKey(data);
     final isProcessing = _processingItems.contains(itemKey);
 
@@ -383,37 +437,49 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
             child: ElevatedButton(
               onPressed: isProcessing ? null : () => _handleServiceAction(data),
               style: ElevatedButton.styleFrom(
-                backgroundColor: isWaiting ? const Color(0xFF0D9488) : const Color(0xFF10B981),
+                backgroundColor: isWaiting
+                    ? const Color(0xFF0D9488)
+                    : const Color(0xFF10B981),
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
               child: isProcessing
                   ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-              )
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
                   : Text(
-                isWaiting ? 'THỰC HIỆN NGAY' : 'TRẢ KẾT QUẢ',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12,
-                  letterSpacing: 0.5,
-                ),
-              ),
+                      isWaiting ? 'THỰC HIỆN NGAY' : 'TRẢ KẾT QUẢ',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
             ),
           ),
           if (!isWaiting) ...[
             const SizedBox(width: 12),
             IconButton(
               onPressed: isProcessing ? null : () {},
-              icon: const Icon(Icons.camera_alt_outlined, color: Color(0xFF0D9488)),
+              icon: const Icon(
+                Icons.camera_alt_outlined,
+                color: Color(0xFF0D9488),
+              ),
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFF3F6FC),
                 padding: const EdgeInsets.all(12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
             ),
           ],
@@ -426,22 +492,78 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
     final itemKey = _itemKey(data);
     if (_processingItems.contains(itemKey)) return;
 
-    final isWaiting = data['status'] == 'Chờ thực hiện';
-    final nextStatus = isWaiting ? 'Đang thực hiện' : 'Hoàn tất';
+    final isWaiting = _statusKey(data['status']) == 'ordered';
+    final nextStatus = isWaiting ? 'in_progress' : 'completed';
+    final nextStatusLabel = _statusLabel(nextStatus);
 
     setState(() {
       _processingItems.add(itemKey);
       data['status'] = nextStatus;
+      data['statusLabel'] = nextStatusLabel;
     });
 
     try {
-      if (nextStatus == 'Hoàn tất') {
+      final requestId = data['requestId']?.toString() ?? '';
+      if (requestId.isEmpty) {
+        throw StateError('Không xác định được phiếu dịch vụ để cập nhật.');
+      }
+
+      final now = FieldValue.serverTimestamp();
+      final appointmentId = data['appointmentId']?.toString() ?? '';
+      final batch = FirebaseFirestore.instance.batch();
+      final orderRef = FirebaseFirestore.instance
+          .collection('LabOrders')
+          .doc(requestId);
+
+      batch.set(orderRef, {
+        'status': nextStatus,
+        if (isWaiting) 'startedAt': now,
+        if (!isWaiting) 'completedAt': now,
+        'updatedAt': now,
+      }, SetOptions(merge: true));
+
+      if (appointmentId.isNotEmpty) {
+        batch.set(
+          FirebaseFirestore.instance
+              .collection('Appointments')
+              .doc(appointmentId),
+          {
+            'labOrderStatus': nextStatus,
+            if (!isWaiting) 'labResultIds': FieldValue.arrayUnion([requestId]),
+            'updatedAt': now,
+          },
+          SetOptions(merge: true),
+        );
+      }
+
+      if (nextStatus == 'completed') {
+        batch.set(
+          FirebaseFirestore.instance.collection('LabResults').doc(requestId),
+          {
+            'labOrderId': requestId,
+            'appointmentId': appointmentId,
+            'medicalRecordId': data['medicalRecordId'],
+            'patientId': data['patientId'],
+            'doctorId': data['doctorId'],
+            'resultItems': _serviceItems(
+              data,
+            ).map((item) => {...item, 'result': 'Đã hoàn tất'}).toList(),
+            'conclusion': 'Đã hoàn tất dịch vụ/xét nghiệm.',
+            'createdAt': now,
+            'updatedAt': now,
+          },
+          SetOptions(merge: true),
+        );
+      }
+
+      await batch.commit();
+
+      if (nextStatus == 'completed') {
         final currentDoctorId = FirebaseAuth.instance.currentUser?.uid ?? '';
         final patientId = data['patientId']?.toString() ?? '';
         final doctorId = (data['doctorId']?.toString().isNotEmpty == true)
             ? data['doctorId'].toString()
             : currentDoctorId;
-        final appointmentId = data['appointmentId']?.toString() ?? '';
 
         if (patientId.isEmpty || doctorId.isEmpty || appointmentId.isEmpty) {
           debugPrint(
@@ -462,7 +584,7 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            nextStatus == 'Hoàn tất'
+            nextStatus == 'completed'
                 ? 'Đã trả kết quả và gửi thông báo.'
                 : 'Đã chuyển sang trạng thái đang thực hiện.',
           ),
@@ -472,7 +594,9 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
       debugPrint('Notification error after service result: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Đã cập nhật trạng thái nhưng gửi thông báo lỗi: $e')),
+        SnackBar(
+          content: Text('Đã cập nhật trạng thái nhưng gửi thông báo lỗi: $e'),
+        ),
       );
     } finally {
       if (mounted) {
@@ -482,18 +606,121 @@ class _DoctorServiceQueuePageState extends State<DoctorServiceQueuePage> {
   }
 
   String _itemKey(Map<String, dynamic> data) {
+    final requestId = data['requestId']?.toString() ?? '';
+    if (requestId.isNotEmpty) return requestId;
     final appointmentId = data['appointmentId']?.toString() ?? '';
     final service = data['service']?.toString() ?? '';
     return '$appointmentId-$service';
   }
 
+  List<Map<String, dynamic>> _serviceItems(Map<String, dynamic> data) {
+    final raw = data['testItems'] ?? data['serviceItems'] ?? data['services'];
+    if (raw is List) {
+      return raw
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
+    return const [];
+  }
+
+  String _serviceSummary(Map<String, dynamic> data) {
+    final items = _serviceItems(data);
+    if (items.isEmpty) {
+      return data['service']?.toString() ??
+          data['serviceName']?.toString() ??
+          'Dịch vụ';
+    }
+
+    final names = items
+        .map(
+          (item) =>
+              item['serviceName'] ??
+              item['service'] ??
+              item['name'] ??
+              item['id'] ??
+              'Dịch vụ',
+        )
+        .map((value) => value.toString())
+        .toList();
+    if (names.length <= 2) return names.join(', ');
+    return '${names.take(2).join(', ')} +${names.length - 2}';
+  }
+
+  String _serviceType(Map<String, dynamic> data) {
+    final explicitType = data['type']?.toString().trim();
+    if (explicitType != null && explicitType.isNotEmpty) return explicitType;
+
+    final items = _serviceItems(data);
+    for (final item in items) {
+      final category = (item['category'] ?? item['type'])?.toString().trim();
+      if (category != null && category.isNotEmpty) return category;
+    }
+    return 'Xét nghiệm';
+  }
+
+  bool _matchesFilter(Map<String, dynamic> data, String filter) {
+    final haystack = [
+      data['type'],
+      data['service'],
+      ..._serviceItems(data).expand(
+        (item) => [
+          item['category'],
+          item['type'],
+          item['name'],
+          item['serviceName'],
+        ],
+      ),
+    ].map((value) => value?.toString().toLowerCase() ?? '').join(' ');
+
+    final normalizedFilter = filter.toLowerCase();
+    if (haystack.contains(normalizedFilter)) return true;
+    if (normalizedFilter.contains('x') && haystack.contains('x')) return true;
+    if (normalizedFilter.contains('ct') && haystack.contains('ct')) return true;
+    return false;
+  }
+
+  String _statusKey(dynamic status) {
+    final value = status?.toString().trim().toLowerCase() ?? '';
+    if (value == 'completed' ||
+        value.contains('hoàn') ||
+        value.contains('xong')) {
+      return 'completed';
+    }
+    if (value == 'in_progress' ||
+        value.contains('đang') ||
+        value.contains('thực hiện')) {
+      return 'in_progress';
+    }
+    return 'ordered';
+  }
+
+  String _statusLabel(dynamic status) {
+    switch (_statusKey(status)) {
+      case 'completed':
+        return 'Hoàn tất';
+      case 'in_progress':
+        return 'Đang thực hiện';
+      case 'ordered':
+      default:
+        return 'Chờ thực hiện';
+    }
+  }
+
   Widget _statusBadge(String status, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Text(
         status.toUpperCase(),
-        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: color),
+        style: TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w900,
+          color: color,
+        ),
       ),
     );
   }

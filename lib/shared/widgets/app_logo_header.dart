@@ -4,11 +4,13 @@ import '../../app/theme/app_colors.dart';
 class AppLogoHeader extends StatelessWidget {
   final String title;
   final String subtitle;
+  final String brandName;
 
   const AppLogoHeader({
     super.key,
     required this.title,
     required this.subtitle,
+    this.brandName = 'Bệnh viện LPHV',
   });
 
   @override
@@ -16,15 +18,11 @@ class AppLogoHeader extends StatelessWidget {
     return Column(
       children: [
         Container(
-          width: 92,
-          height: 92,
+          width: 104,
+          height: 104,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              colors: [AppColors.primary, AppColors.primaryDark],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: Colors.white,
             boxShadow: [
               BoxShadow(
                 color: AppColors.primary.withOpacity(0.35),
@@ -33,17 +31,29 @@ class AppLogoHeader extends StatelessWidget {
               ),
             ],
           ),
-          child: const Icon(
-            Icons.local_hospital_rounded,
-            size: 46,
-            color: Colors.white,
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Image.asset(
+              'assets/images/logo_mark.png',
+              fit: BoxFit.contain,
+            ),
           ),
         ),
         const SizedBox(height: 18),
         Text(
+          brandName,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            color: AppColors.primaryDark,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
           title,
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineMedium,
+          style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 8),
         Text(

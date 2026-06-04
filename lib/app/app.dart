@@ -21,7 +21,7 @@ class HospitalBookingApp extends StatelessWidget {
       builder: (context, _) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          title: 'Hospital Booking App',
+          title: 'Bệnh viện LPHV',
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: settingsController.themeMode,
