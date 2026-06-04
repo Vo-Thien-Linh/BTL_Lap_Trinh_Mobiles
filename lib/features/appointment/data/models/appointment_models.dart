@@ -333,10 +333,12 @@ class HospitalAppointmentModel extends HospitalAppointment {
           _firstText(data, const ['appointmentCode', 'code', 'bookingCode']) ??
           doc.id,
       patientId: data['patientId'] ?? '',
+      patientCode: _firstText(data, const ['patientCode', 'userCode']) ?? '',
       patientDOB: data['patientDOB'] as String?,
       patientGender: data['patientGender'] as String?,
       patientName: data['patientName'] ?? '',
       doctorId: data['doctorId'] ?? '',
+      doctorCode: _firstText(data, const ['doctorCode']) ?? '',
       doctorName: data['doctorName'] ?? '',
       departmentId: data['departmentId'] ?? '',
       departmentName: data['departmentName'] ?? '',
@@ -363,6 +365,7 @@ class HospitalAppointmentModel extends HospitalAppointment {
           .toList(),
       vitals: data['vitals'] as Map<String, dynamic>?,
       status: data['status'] ?? 'pending',
+      paymentStatus: data['paymentStatus']?.toString() ?? '',
       paymentMethod: data['paymentMethod'] ?? 'CASH',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
