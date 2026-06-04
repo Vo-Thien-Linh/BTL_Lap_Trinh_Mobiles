@@ -87,6 +87,48 @@ class Validators {
     return null;
   }
 
+  static String? validateDateOfBirth(String? value) {
+    final input = value?.trim() ?? '';
+
+    if (input.isEmpty) {
+      return 'Vui lòng nhập ngày sinh.';
+    }
+
+    final parsed = parseDateOfBirth(input);
+    if (parsed == null) {
+      return 'Ngày sinh phải đúng định dạng dd/MM/yyyy và là ngày hợp lệ.';
+    }
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    if (parsed.isAfter(today)) {
+      return 'Ngày sinh không được là ngày tương lai.';
+    }
+
+    if (parsed.year < 1900) {
+      return 'Năm sinh phải từ 1900 trở về sau.';
+    }
+
+    return null;
+  }
+
+  static DateTime? parseDateOfBirth(String value) {
+    final match = RegExp(r'^(\d{2})/(\d{2})/(\d{4})$').firstMatch(value.trim());
+    if (match == null) return null;
+
+    final day = int.tryParse(match.group(1)!);
+    final month = int.tryParse(match.group(2)!);
+    final year = int.tryParse(match.group(3)!);
+    if (day == null || month == null || year == null) return null;
+
+    final date = DateTime(year, month, day);
+    if (date.year != year || date.month != month || date.day != day) {
+      return null;
+    }
+
+    return date;
+  }
+
   static String? validatePassword(String? value) {
     final input = value ?? '';
 

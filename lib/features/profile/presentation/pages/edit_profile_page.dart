@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 
 import 'package:dvhcvn/dvhcvn.dart' as dvhcvn;
 import '../../../../data/models/user_model.dart';
+import '../../../health_insurance/utils/health_insurance_validator.dart';
 
 class EditProfilePage extends StatefulWidget {
   final UserModel user;
@@ -262,11 +263,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       return null;
     }
 
-    final trimmed = val.trim();
-    if (trimmed.length != 10 && trimmed.length != 15) {
-      return 'Mã BHYT phải có chính xác 10 hoặc 15 ký tự';
-    }
-    return null;
+    return HealthInsuranceValidator.validate(val);
   }
 
   Future<void> _saveProfile() async {
@@ -284,13 +281,29 @@ class _EditProfilePageState extends State<EditProfilePage> {
     });
 
     try {
+      final healthInsuranceNumber = HealthInsuranceValidator.normalize(
+        _healthInsuranceController.text,
+      );
+      final originalHealthInsuranceNumber = HealthInsuranceValidator.normalize(
+        widget.user.healthInsuranceNumber ?? '',
+      );
+      final healthInsuranceChanged =
+          healthInsuranceNumber != originalHealthInsuranceNumber;
+
       final updatedData = {
         'fullName': _fullNameController.text.trim(),
         'phone': _phoneController.text.trim(),
         'dateOfBirth': _dobController.text.trim(),
         'gender': _selectedGender,
         'cccd': _cccdController.text.trim(),
-        'healthInsuranceNumber': _healthInsuranceController.text.trim(),
+        'healthInsuranceNumber': healthInsuranceNumber,
+        'insuranceNumber': healthInsuranceNumber,
+        if (healthInsuranceChanged)
+          'healthInsuranceStatus': healthInsuranceNumber.isEmpty
+              ? 'unverified'
+              : 'pending',
+        if (healthInsuranceChanged)
+          'healthInsuranceUpdatedAt': FieldValue.serverTimestamp(),
         'address': _buildFullAddress(),
         'email': _emailController.text.trim(),
         if (_avatarUrl != null) 'avatarUrl': _avatarUrl,
@@ -303,6 +316,22 @@ class _EditProfilePageState extends State<EditProfilePage> {
           .doc(widget.user.uid);
 
       batch.set(usersRef, updatedData, SetOptions(merge: true));
+
+      if (healthInsuranceChanged) {
+        final insuranceRef = FirebaseFirestore.instance
+            .collection('health_insurances')
+            .doc(widget.user.uid);
+        batch.set(insuranceRef, {
+          'userId': widget.user.uid,
+          'emailAtSubmit': _emailController.text.trim(),
+          'insuranceNumber': healthInsuranceNumber,
+          'status': healthInsuranceNumber.isEmpty ? 'unverified' : 'pending',
+          'updatedAt': FieldValue.serverTimestamp(),
+          'verifiedAt': null,
+          'verifiedBy': null,
+          'rejectReason': null,
+        }, SetOptions(merge: true));
+      }
 
       await batch.commit();
 
@@ -325,10 +354,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
         );
       }
     } finally {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _isSaving = false;
         });
+      }
     }
   }
 

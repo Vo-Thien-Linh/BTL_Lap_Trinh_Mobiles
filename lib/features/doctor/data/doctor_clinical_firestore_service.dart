@@ -21,6 +21,7 @@ class DoctorClinicalFirestoreService {
     required String diagnosis,
     required String treatment,
     required String notes,
+    required Map<String, dynamic> vitals,
     required List<Map<String, dynamic>> services,
   }) async {
     final appointmentRef = _firestore
@@ -57,6 +58,7 @@ class DoctorClinicalFirestoreService {
       'treatment': treatment,
       'conclusion': treatment,
       'notes': notes,
+      'vitals': vitals,
       'serviceItems': services,
       'status': 'completed',
       'updatedAt': now,
@@ -72,10 +74,12 @@ class DoctorClinicalFirestoreService {
       'status': 'completed',
       'completedAt': now,
       'medicalRecordId': recordRef.id,
+      'symptoms': symptoms,
       'physicalExam': physicalExam,
       'diagnosis': diagnosis,
       'treatment': treatment,
       'notes': notes,
+      'vitals': vitals,
       'services': services,
       'updatedAt': now,
     });
@@ -162,9 +166,24 @@ class DoctorClinicalFirestoreService {
     batch.set(appointmentRef, {
       'patientId': patientId,
       'prescriptionId': prescriptionRef.id,
+      'medicalRecordId': data['medicalRecordId'],
       'prescription': medicines,
       'updatedAt': now,
     }, SetOptions(merge: true));
+
+    final effectiveMedicalRecordId = data['medicalRecordId']?.toString() ?? '';
+    if (effectiveMedicalRecordId.isNotEmpty) {
+      batch.set(
+        _firestore.collection('MedicalRecords').doc(effectiveMedicalRecordId),
+        {
+          'prescriptionId': prescriptionRef.id,
+          'prescription': medicines,
+          'medicines': medicines,
+          'updatedAt': now,
+        },
+        SetOptions(merge: true),
+      );
+    }
     await batch.commit();
     return prescriptionRef.id;
   }

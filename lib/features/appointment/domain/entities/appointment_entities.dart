@@ -97,6 +97,7 @@ class ScheduleEntity extends Equatable {
   final String? roomNumber;
   final int maxSlots;
   final int availableSlots;
+  final int bookedSlots;
   final bool isActive;
 
   const ScheduleEntity({
@@ -109,6 +110,7 @@ class ScheduleEntity extends Equatable {
     this.roomNumber,
     required this.maxSlots,
     required this.availableSlots,
+    this.bookedSlots = 0,
     required this.isActive,
   });
 
@@ -121,16 +123,21 @@ class ScheduleEntity extends Equatable {
     roomId,
     roomNumber,
     maxSlots,
+    availableSlots,
+    bookedSlots,
   ];
 }
 
 class HospitalAppointment extends Equatable {
   final String id;
+  final String appointmentCode;
   final String patientId;
+  final String patientCode;
   final String? patientDOB;
   final String? patientGender;
   final String patientName;
   final String doctorId;
+  final String doctorCode;
   final String doctorName;
   final String departmentId;
   final String departmentName;
@@ -152,16 +159,20 @@ class HospitalAppointment extends Equatable {
   final List<Map<String, dynamic>>? labResults;
   final Map<String, dynamic>? vitals;
   final String status;
+  final String paymentStatus;
   final String paymentMethod;
   final DateTime createdAt;
 
   const HospitalAppointment({
     required this.id,
+    this.appointmentCode = '',
     required this.patientId,
+    this.patientCode = '',
     this.patientDOB,
     this.patientGender,
     required this.patientName,
     required this.doctorId,
+    this.doctorCode = '',
     required this.doctorName,
     required this.departmentId,
     required this.departmentName,
@@ -183,6 +194,7 @@ class HospitalAppointment extends Equatable {
     this.labResults,
     this.vitals,
     required this.status,
+    this.paymentStatus = '',
     required this.paymentMethod,
     required this.createdAt,
   });
@@ -190,8 +202,11 @@ class HospitalAppointment extends Equatable {
   @override
   List<Object?> get props => [
     id,
+    appointmentCode,
     patientId,
+    patientCode,
     doctorId,
+    doctorCode,
     appointmentDate,
     scheduleId,
     queueNumber,

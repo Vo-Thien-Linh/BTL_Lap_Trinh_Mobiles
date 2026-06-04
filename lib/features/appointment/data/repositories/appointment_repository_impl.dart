@@ -37,9 +37,12 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   ) async {
     final model = HospitalAppointmentModel(
       id: appointment.id,
+      appointmentCode: appointment.appointmentCode,
       patientId: appointment.patientId,
+      patientCode: appointment.patientCode,
       patientName: appointment.patientName,
       doctorId: appointment.doctorId,
+      doctorCode: appointment.doctorCode,
       doctorName: appointment.doctorName,
       departmentId: appointment.departmentId,
       departmentName: appointment.departmentName,
@@ -53,6 +56,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       insuranceNumber: appointment.insuranceNumber,
       symptoms: appointment.symptoms,
       status: appointment.status,
+      paymentStatus: appointment.paymentStatus,
       paymentMethod: appointment.paymentMethod,
       createdAt: appointment.createdAt,
     );
@@ -64,6 +68,21 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     String patientId,
   ) async {
     return await remoteDatasource.getPatientAppointments(patientId);
+  }
+
+  @override
+  Future<bool> hasScheduleConflict({
+    required String patientId,
+    required DateTime date,
+    required String shiftId,
+    String? timeSlot,
+  }) async {
+    return await remoteDatasource.hasScheduleConflict(
+      patientId: patientId,
+      date: date,
+      shiftId: shiftId,
+      timeSlot: timeSlot,
+    );
   }
 
   @override

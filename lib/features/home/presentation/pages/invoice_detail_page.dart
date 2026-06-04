@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../appointment/presentation/payment_management_bloc/payment_bloc.dart';
 import '../../../appointment/data/models/invoice_models.dart';
-import '../../../../app/routes/app_routes.dart';
 import '../../../../app/theme/app_colors.dart';
 
 class InvoiceDetailPage extends StatefulWidget {
@@ -27,22 +26,6 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
       'accNum': '1234567890',
       'accName': 'BV ĐA KHOA QUỐC TẾ',
     },
-    {
-      'label': 'Thẻ tín dụng',
-      'icon': Icons.credit_card_rounded,
-      'color': const Color(0xFF8B5CF6),
-      'bank': 'Visa / Mastercard',
-      'accNum': 'N/A',
-      'accName': 'Thanh toán trực tuyến',
-    },
-    {
-      'label': 'Ví điện tử',
-      'icon': Icons.account_balance_wallet_rounded,
-      'color': const Color(0xFF10B981),
-      'bank': 'MoMo / ZaloPay',
-      'accNum': '0987654321',
-      'accName': 'CÔNG TY CP BỆNH VIỆN',
-    },
   ];
 
   void _copyToClipboard(String text, String label) {
@@ -51,7 +34,11 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+            const Icon(
+              Icons.check_circle_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
             const SizedBox(width: 12),
             Text('Đã sao chép $label'),
           ],
@@ -67,7 +54,8 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isPaid = widget.invoice.status == 'paid';
+    final isPaid = widget.invoice.isEffectivelyPaid;
+    final isWaitingApproval = widget.invoice.status == 'pending';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -76,7 +64,11 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textBody, size: 18),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.textBody,
+            size: 18,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -91,12 +83,18 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
       ),
       body: BlocListener<PaymentBloc, PaymentState>(
         listener: (context, state) {
-          if (state.status == PaymentStatus.success && isPaid == false) {
-            Navigator.pushReplacementNamed(
-              context,
-              AppRoutes.paymentSuccess,
-              arguments: widget.invoice,
+          if (state.status == PaymentStatus.success &&
+              !isPaid &&
+              !isWaitingApproval) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Đã gửi xác nhận thanh toán. Vui lòng chờ nhân viên duyệt.',
+                ),
+                backgroundColor: AppColors.success,
+              ),
             );
+            Navigator.pop(context);
           } else if (state.status == PaymentStatus.failure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -115,13 +113,16 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
               const SizedBox(height: 24),
               _buildPriceSection(),
               const SizedBox(height: 24),
-              if (!isPaid) _buildPaymentMethodSection(),
+              if (!isPaid && !isWaitingApproval) _buildPaymentMethodSection(),
+              if (isWaitingApproval) _buildWaitingApprovalSection(),
               const SizedBox(height: 40),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: isPaid ? null : _buildBottomActions(),
+      bottomNavigationBar: isPaid || isWaitingApproval
+          ? null
+          : _buildBottomActions(),
     );
   }
 
@@ -142,19 +143,49 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
       ),
       child: Column(
         children: [
-          _buildInfoRow(Icons.receipt_long_rounded, 'Số hóa đơn', widget.invoice.id, highlight: true),
+          _buildInfoRow(
+            Icons.receipt_long_rounded,
+            'Số hóa đơn',
+            widget.invoice.id,
+            highlight: true,
+          ),
           const Divider(height: 32, color: AppColors.border),
-          _buildInfoRow(Icons.calendar_today_rounded, 'Ngày', DateFormat('dd/MM/yyyy').format(widget.invoice.createdAt)),
-          _buildInfoRow(Icons.category_outlined, 'Loại', widget.invoice.expenseType),
-          _buildInfoRow(Icons.search_rounded, 'Nội dung', widget.invoice.serviceContent),
-          _buildInfoRow(Icons.business_rounded, 'Khoa', widget.invoice.departmentName ?? 'N/A'),
-          _buildInfoRow(Icons.person_outline_rounded, 'Bác sĩ', widget.invoice.doctorName ?? 'N/A'),
+          _buildInfoRow(
+            Icons.calendar_today_rounded,
+            'Ngày',
+            DateFormat('dd/MM/yyyy').format(widget.invoice.createdAt),
+          ),
+          _buildInfoRow(
+            Icons.category_outlined,
+            'Loại',
+            widget.invoice.expenseType,
+          ),
+          _buildInfoRow(
+            Icons.search_rounded,
+            'Nội dung',
+            widget.invoice.serviceContent,
+          ),
+          _buildInfoRow(
+            Icons.business_rounded,
+            'Khoa',
+            widget.invoice.departmentName ?? 'N/A',
+          ),
+          _buildInfoRow(
+            Icons.person_outline_rounded,
+            'Bác sĩ',
+            widget.invoice.doctorName ?? 'N/A',
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value, {bool highlight = false}) {
+  Widget _buildInfoRow(
+    IconData icon,
+    String label,
+    String value, {
+    bool highlight = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -173,7 +204,14 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(color: AppColors.textHint, fontSize: 11, fontWeight: FontWeight.w600)),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppColors.textHint,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 Text(
                   value,
@@ -212,9 +250,37 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
       ),
       child: Column(
         children: [
-          _buildPriceRow('Tổng tiền ban đầu', widget.invoice.totalAmount, Colors.white70),
+          ...widget.invoice.chargeBreakdown.map(
+            (entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildPriceRow(entry.key, entry.value, Colors.white),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Divider(color: Colors.white12),
+          ),
+          _buildPriceRow(
+            'Tổng tiền',
+            widget.invoice.totalAmount,
+            Colors.white70,
+          ),
           const SizedBox(height: 12),
-          _buildPriceRow('Giảm giá / BHYT', widget.invoice.discountAmount, Colors.white70, isNegative: true),
+          _buildPriceRow(
+            'Giảm giá / BHYT',
+            widget.invoice.discountAmount,
+            Colors.white70,
+            isNegative: true,
+          ),
+          if (widget.invoice.paidAmount > 0) ...[
+            const SizedBox(height: 12),
+            _buildPriceRow(
+              'Đã thanh toán',
+              widget.invoice.paidAmount,
+              Colors.white70,
+              isNegative: true,
+            ),
+          ],
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Divider(color: Colors.white12),
@@ -223,11 +289,15 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Thành tiền',
-                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                'Còn phải trả',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               Text(
-                '${NumberFormat('#,###').format(widget.invoice.amount)} đ',
+                '${NumberFormat('#,###').format(widget.invoice.remainingAmount)} đ',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 26,
@@ -241,14 +311,30 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
     );
   }
 
-  Widget _buildPriceRow(String label, double value, Color color, {bool isNegative = false}) {
+  Widget _buildPriceRow(
+    String label,
+    double value,
+    Color color, {
+    bool isNegative = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w500)),
+        Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         Text(
           '${isNegative ? "- " : ""}${NumberFormat('#,###').format(value)} đ',
-          style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w700),
+          style: TextStyle(
+            color: color,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ],
     );
@@ -260,11 +346,44 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
       children: [
         const Text(
           'Chọn phương thức thanh toán',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textBody),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w900,
+            color: AppColors.textBody,
+          ),
         ),
         const SizedBox(height: 16),
-        ..._paymentMethods.map((method) => _buildPaymentMethodCard(method)).toList(),
+        ..._paymentMethods
+            .map((method) => _buildPaymentMethodCard(method))
+            .toList(),
       ],
+    );
+  }
+
+  Widget _buildWaitingApprovalSection() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEFCE8),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFFEF3C7)),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.pending_actions_rounded, color: Color(0xFFD97706)),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Bạn đã xác nhận thanh toán. Hóa đơn đang chờ nhân viên duyệt.',
+              style: TextStyle(
+                color: Color(0xFF92400E),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -276,20 +395,29 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
         decoration: BoxDecoration(
-          color: isSelected ? method['color'].withOpacity(0.05) : AppColors.surface,
+          color: isSelected
+              ? method['color'].withOpacity(0.05)
+              : AppColors.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? method['color'] : AppColors.border,
             width: isSelected ? 2 : 1,
           ),
-          boxShadow: isSelected 
-             ? [BoxShadow(color: method['color'].withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))] 
-             : null,
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: method['color'].withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
         child: Column(
           children: [
             InkWell(
-              onTap: () => setState(() => _selectedPaymentMethod = method['label']),
+              onTap: () =>
+                  setState(() => _selectedPaymentMethod = method['label']),
               borderRadius: BorderRadius.circular(20),
               child: Container(
                 padding: const EdgeInsets.all(20),
@@ -298,12 +426,16 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isSelected ? method['color'] : AppColors.background,
+                        color: isSelected
+                            ? method['color']
+                            : AppColors.background,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Icon(
                         method['icon'],
-                        color: isSelected ? Colors.white : AppColors.textSecondary,
+                        color: isSelected
+                            ? Colors.white
+                            : AppColors.textSecondary,
                         size: 22,
                       ),
                     ),
@@ -313,13 +445,19 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
                         method['label'],
                         style: TextStyle(
                           fontSize: 15,
-                          fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
+                          fontWeight: isSelected
+                              ? FontWeight.w900
+                              : FontWeight.w700,
                           color: AppColors.textBody,
                         ),
                       ),
                     ),
                     if (isSelected)
-                      Icon(Icons.check_circle_rounded, color: method['color'], size: 24),
+                      Icon(
+                        Icons.check_circle_rounded,
+                        color: method['color'],
+                        size: 24,
+                      ),
                   ],
                 ),
               ),
@@ -333,7 +471,7 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
 
   Widget _buildExpandedMethodDetails(Map<String, dynamic> method) {
     final transferContent = 'THANH TOAN HD ${widget.invoice.id}';
-    
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       child: Column(
@@ -357,7 +495,9 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     image: const DecorationImage(
-                      image: NetworkImage('https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=PREMIUM_HOSPITAL_PAYMENT'),
+                      image: NetworkImage(
+                        'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=PREMIUM_HOSPITAL_PAYMENT',
+                      ),
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -365,7 +505,11 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
                 const SizedBox(height: 12),
                 Text(
                   'Quét mã QR để thanh toán nhanh',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
@@ -374,58 +518,85 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
           // Account Info
           _buildCopyableInfoRow('Ngân hàng', method['bank'], copyable: false),
           _buildCopyableInfoRow('Số tài khoản', method['accNum']),
-          _buildCopyableInfoRow('Chủ tài khoản', method['accName'], copyable: false),
+          _buildCopyableInfoRow(
+            'Chủ tài khoản',
+            method['accName'],
+            copyable: false,
+          ),
           _buildCopyableInfoRow('Nội dung', transferContent),
-          
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Đang chuyển hướng sang ứng dụng ${method['label']}...'),
-                        backgroundColor: AppColors.primary,
-                      )
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: method['color'],
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    elevation: 0,
+
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Đang chuyển hướng sang ứng dụng ${method['label']}...',
+                      ),
+                      backgroundColor: AppColors.primary,
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: method['color'],
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Text(
-                    'Mở ứng dụng ${method['label'].split(' ').last}',
-                    style: const TextStyle(fontWeight: FontWeight.w900),
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  elevation: 0,
+                ),
+                child: Text(
+                  'Mở ứng dụng ${method['label'].split(' ').last}',
+                  style: const TextStyle(fontWeight: FontWeight.w900),
                 ),
               ),
             ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildCopyableInfoRow(String label, String value, {bool copyable = true}) {
+  Widget _buildCopyableInfoRow(
+    String label,
+    String value, {
+    bool copyable = true,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
           Row(
             children: [
               Text(
                 value,
-                style: const TextStyle(color: AppColors.textBody, fontWeight: FontWeight.w900, fontSize: 13),
+                style: const TextStyle(
+                  color: AppColors.textBody,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13,
+                ),
               ),
               if (copyable && value != 'N/A')
                 IconButton(
                   onPressed: () => _copyToClipboard(value, label),
-                  icon: const Icon(Icons.copy_rounded, size: 16, color: AppColors.primary),
+                  icon: const Icon(
+                    Icons.copy_rounded,
+                    size: 16,
+                    color: AppColors.primary,
+                  ),
                   padding: const EdgeInsets.only(left: 8),
                   constraints: const BoxConstraints(),
                 ),
@@ -443,7 +614,11 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
         color: AppColors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
         ],
       ),
       child: Row(
@@ -454,11 +629,16 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 side: const BorderSide(color: AppColors.border),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
               child: const Text(
                 'Đóng',
-                style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w900),
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
           ),
@@ -466,22 +646,29 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
           Expanded(
             child: ElevatedButton(
               onPressed: () {
-                context.read<PaymentBloc>().add(ProcessPayment(
-                  invoiceId: widget.invoice.id,
-                  appointmentId: widget.invoice.appointmentId,
-                  patientId: FirebaseAuth.instance.currentUser!.uid,
-                  amount: widget.invoice.amount,
-                  paymentMethod: _selectedPaymentMethod,
-                ));
+                context.read<PaymentBloc>().add(
+                  ProcessPayment(
+                    invoiceId: widget.invoice.id,
+                    appointmentId: widget.invoice.appointmentId,
+                    patientId: FirebaseAuth.instance.currentUser!.uid,
+                    amount: widget.invoice.remainingAmount,
+                    paymentMethod: _selectedPaymentMethod,
+                  ),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
-              child: const Text('XÁC NHẬN THANH TOÁN', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
+              child: const Text(
+                'GỬI XÁC NHẬN',
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
+              ),
             ),
           ),
         ],

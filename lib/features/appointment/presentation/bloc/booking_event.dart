@@ -17,6 +17,30 @@ class SelectDepartment extends BookingEvent {
   List<Object?> get props => [department];
 }
 
+class SelectAppointmentDate extends BookingEvent {
+  final DateTime date;
+  const SelectAppointmentDate(this.date);
+
+  @override
+  List<Object?> get props => [date];
+}
+
+class SelectAppointmentSession extends BookingEvent {
+  final String session;
+  const SelectAppointmentSession(this.session);
+
+  @override
+  List<Object?> get props => [session];
+}
+
+class SelectDoctorForSession extends BookingEvent {
+  final DoctorEntity doctor;
+  const SelectDoctorForSession(this.doctor);
+
+  @override
+  List<Object?> get props => [doctor];
+}
+
 class SelectDoctorAndDate extends BookingEvent {
   final DoctorEntity doctor;
   final DateTime date;

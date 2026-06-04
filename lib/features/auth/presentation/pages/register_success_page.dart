@@ -10,7 +10,6 @@ class RegisterSuccessPage extends StatelessWidget {
 
   Future<void> _openGmail(BuildContext context) async {
     final uri = Uri.parse('https://mail.google.com/');
-
     final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
 
     if (!launched && context.mounted) {
@@ -49,7 +48,7 @@ class RegisterSuccessPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF1A4FA8).withOpacity(0.12),
+                    color: const Color(0xFF1A4FA8).withValues(alpha: 0.12),
                     blurRadius: 30,
                     offset: const Offset(0, 12),
                   ),
@@ -75,7 +74,7 @@ class RegisterSuccessPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   const Text(
-                    'Kiểm tra Gmail để xác nhận',
+                    'Kiểm tra email để xác thực',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 23,
@@ -104,10 +103,10 @@ class RegisterSuccessPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Text(
-                    'Chúng tôi đã gửi email xác nhận. Vui lòng mở Gmail và bấm vào liên kết xác thực trước khi đăng nhập.',
+                  const Text(
+                    'Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       color: Color(0xFF5B6780),
                       height: 1.5,
@@ -122,7 +121,7 @@ class RegisterSuccessPage extends StatelessWidget {
                       border: Border.all(color: const Color(0xFFDFE9FD)),
                     ),
                     child: const Text(
-                      'Nếu chưa thấy mail, hãy kiểm tra Thư rác/Spam hoặc đợi 1-2 phút rồi thử lại.',
+                      'Nếu chưa thấy email, hãy kiểm tra Thư rác/Spam hoặc đợi 1-2 phút rồi thử lại.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 12.5,
@@ -139,7 +138,7 @@ class RegisterSuccessPage extends StatelessWidget {
                       icon: const Icon(Icons.mail_outline_rounded),
                       label: const Text('Mở Gmail'),
                       style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50),
+                        minimumSize: const Size.fromHeight(52),
                         backgroundColor: const Color(0xFF1565C0),
                         foregroundColor: Colors.white,
                         textStyle: const TextStyle(
@@ -155,9 +154,9 @@ class RegisterSuccessPage extends StatelessWidget {
                     child: OutlinedButton.icon(
                       onPressed: () => _goToVerifyEmail(context),
                       icon: const Icon(Icons.verified_outlined),
-                      label: const Text('Tôi đã xác nhận'),
+                      label: const Text('Tôi đã xác thực, kiểm tra lại'),
                       style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50),
+                        minimumSize: const Size.fromHeight(52),
                         textStyle: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,

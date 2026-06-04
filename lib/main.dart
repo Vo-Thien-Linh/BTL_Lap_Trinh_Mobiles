@@ -50,9 +50,16 @@ Future<void> main() async {
             .collection('users')
             .doc(user.uid)
             .get();
-        if (userDoc.exists) {
+        final effectiveUserDoc = userDoc.exists
+            ? userDoc
+            : await FirebaseFirestore.instance
+                  .collection('Users')
+                  .doc(user.uid)
+                  .get();
+        if (effectiveUserDoc.exists) {
           final role =
-              userDoc.data()?['role']?.toString().toLowerCase() ?? 'patient';
+              effectiveUserDoc.data()?['role']?.toString().toLowerCase() ??
+              'patient';
           if (role == 'doctor') {
             initialRoute = AppRoutes.doctorHome;
           } else {

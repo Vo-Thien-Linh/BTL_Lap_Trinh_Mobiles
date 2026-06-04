@@ -95,7 +95,7 @@ class _MedicalRecordDashboardPageState
                           _buildSectionTitle('KHO DỮ LIỆU SỨC KHỎE'),
                           const SizedBox(height: 16),
                           _buildVaultNavigation(context),
-                          const SizedBox(height: 100),
+                          const SizedBox(height: 120),
                         ],
                       ),
                     ),
@@ -364,7 +364,7 @@ class _MedicalRecordDashboardPageState
       crossAxisCount: 2,
       mainAxisSpacing: 16,
       crossAxisSpacing: 16,
-      childAspectRatio: 1.5,
+      childAspectRatio: 1.35,
       children: [
         _buildVitalCard(
           'Nhịp tim',
@@ -653,17 +653,23 @@ class _MedicalRecordDashboardPageState
                 children: [
                   Text(
                     title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: AppColors.textBody,
                       fontWeight: FontWeight.w900,
                       fontSize: 15,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 11,
+                      height: 1.25,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

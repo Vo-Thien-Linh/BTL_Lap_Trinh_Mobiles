@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class DoctorServiceTicketPage extends StatelessWidget {
   final Map<String, dynamic> patientData;
@@ -12,17 +14,27 @@ class DoctorServiceTicketPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // For demo, we show the first service details or a summary
-    final primaryService = services.isNotEmpty ? services[0] : {'name': 'Chưa chọn', 'price': '0đ', 'category': '-'};
-    final totalAmount = services.fold<int>(0, (sum, item) {
-      final priceStr = item['price'].replaceAll('đ', '').replaceAll(',', '');
-      return sum + int.parse(priceStr);
-    });
+    final Map<String, dynamic> primaryService = services.isNotEmpty
+        ? services.first
+        : const <String, dynamic>{};
+    final totalAmount = services.fold<double>(
+      0,
+      (sum, item) => sum + _toDouble(item['amount'] ?? item['price']),
+    );
+    final paidAmount = _toDouble(patientData['paidAmount']);
+    final remainingAmount = (totalAmount - paidAmount).clamp(
+      0,
+      double.infinity,
+    );
+    final isPaid = remainingAmount <= 0 && totalAmount > 0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4FA),
       appBar: AppBar(
-        title: const Text('Phiếu Chỉ Định Dịch Vụ', style: TextStyle(fontWeight: FontWeight.w800)),
+        title: const Text(
+          'Phiếu Chỉ Định Dịch Vụ',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -37,39 +49,47 @@ class DoctorServiceTicketPage extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 20, offset: const Offset(0, 10)),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
                 ],
               ),
               child: Column(
                 children: [
-                  // Branding & Header
                   Padding(
                     padding: const EdgeInsets.all(24),
                     child: Column(
                       children: [
                         const Text(
-                          'Bệnh viện Đa khoa MedCare',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF15233D)),
+                          'Bệnh viện LPHV',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF15233D),
+                          ),
                         ),
-                        const Text(
-                          '123 Đường Số 1, Phường Bến Nghé, Quận 1, TP. HCM',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 11, color: Color(0xFF8A95AC)),
-                        ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 20),
                         const Text(
                           'PHIẾU CHỈ ĐỊNH DỊCH VỤ',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0E47B5), letterSpacing: 1.2),
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF0E47B5),
+                            letterSpacing: 1.2,
+                          ),
                         ),
                         Text(
-                          'Mã phiếu: SR${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}',
-                          style: const TextStyle(fontSize: 12, color: Color(0xFF8A95AC)),
+                          'Mã phiếu: ${_text(['requestId', 'serviceRequestId', 'id'], fallback: 'N/A')}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF8A95AC),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  
-                  // Service Spotlight
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -77,15 +97,34 @@ class DoctorServiceTicketPage extends StatelessWidget {
                     child: Column(
                       children: [
                         Text(
-                          primaryService['name'].toUpperCase(),
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF15233D)),
+                          _serviceName(primaryService).toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF15233D),
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        const Text(
-                          'Phòng Kỹ Thuật Chuyên Khoa - Tầng 2',
-                          style: TextStyle(fontSize: 13, color: Color(0xFF0E9F6E), fontWeight: FontWeight.w600),
+                        Text(
+                          _text([
+                            'roomNumber',
+                            'roomName',
+                          ], fallback: 'Chưa có phòng'),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF0E9F6E),
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         const SizedBox(height: 12),
-                        const Text('STT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF8A95AC))),
+                        const Text(
+                          'STT',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF8A95AC),
+                          ),
+                        ),
                         const SizedBox(height: 4),
                         Container(
                           width: 50,
@@ -93,70 +132,78 @@ class DoctorServiceTicketPage extends StatelessWidget {
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFF0E9F6E), width: 2),
+                            border: Border.all(
+                              color: const Color(0xFF0E9F6E),
+                              width: 2,
+                            ),
                           ),
-                          child: const Text('1', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF0E9F6E))),
+                          child: Text(
+                            _text(['queueNumber'], fallback: '-'),
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF0E9F6E),
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
-
-                  // Patient Grid
                   Padding(
                     padding: const EdgeInsets.all(24),
                     child: Column(
                       children: [
-                        _infoGridRow('Họ tên:', patientData['patientName'].toUpperCase()),
-                        _infoGridRow('Mã người bệnh:', 'BNHY1000'),
-                        _infoGridRow('Ngày sinh:', patientData['dob']),
-                        _infoGridRow('Ngày chỉ định:', '16/04/2026 (19:30)'),
-                        _infoGridRow('Tiền dịch vụ:', '${totalAmount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => "${m[1]},")} đồng', valueColor: const Color(0xFF0E9F6E)),
-                        _infoGridRow('Đối tượng:', 'BHYT'),
-                        _infoGridRow('Chẩn đoán:', 'Đau đầu chưa rõ nguyên nhân'),
-                      ],
-                    ),
-                  ),
-
-                  // Divider
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: Row(
-                      children: List.generate(20, (index) => Expanded(
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 2),
-                          height: 1,
-                          color: Colors.grey[300],
+                        _infoGridRow(
+                          'Họ tên:',
+                          _text([
+                            'patientName',
+                            'fullName',
+                            'name',
+                          ], fallback: 'Bệnh nhân'),
                         ),
-                      )),
-                    ),
-                  ),
-
-                  // Payment Section
-                  Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      children: [
-                        const Text(
-                          'QUÉT MÃ THANH TOÁN NGAY',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF0E47B5)),
+                        _infoGridRow(
+                          'Mã người bệnh:',
+                          _text([
+                            'patientCode',
+                            'patientId',
+                            'userId',
+                          ], fallback: 'N/A'),
                         ),
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey[200]!, width: 2),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Image.network(
-                            'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=PAYMENT_MOCK',
-                            width: 150,
-                            height: 150,
+                        _infoGridRow(
+                          'Ngày sinh:',
+                          _text([
+                            'dateOfBirth',
+                            'dob',
+                          ], fallback: 'Chưa cập nhật'),
+                        ),
+                        _infoGridRow(
+                          'Ngày chỉ định:',
+                          _formatDate(
+                            patientData['createdAt'] ??
+                                patientData['orderedAt'],
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          '${totalAmount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => "${m[1]},")} VND',
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFFD32F2F)),
+                        _infoGridRow(
+                          'Tiền dịch vụ:',
+                          '${_money(totalAmount)} đồng',
+                          valueColor: const Color(0xFF0E9F6E),
+                        ),
+                        if (paidAmount > 0)
+                          _infoGridRow(
+                            'Đã thanh toán:',
+                            '${_money(paidAmount)} đồng',
+                            valueColor: const Color(0xFF0E9F6E),
+                          ),
+                        _infoGridRow(
+                          'Còn phải trả:',
+                          '${_money(remainingAmount)} đồng',
+                          valueColor: isPaid
+                              ? const Color(0xFF0E9F6E)
+                              : const Color(0xFFD32F2F),
+                        ),
+                        _infoGridRow(
+                          'Chẩn đoán:',
+                          _text(['diagnosis'], fallback: 'Chưa có chẩn đoán'),
                         ),
                       ],
                     ),
@@ -173,7 +220,11 @@ class DoctorServiceTicketPage extends StatelessWidget {
     );
   }
 
-  Widget _infoGridRow(String label, String value, {Color valueColor = const Color(0xFF15233D)}) {
+  Widget _infoGridRow(
+    String label,
+    String value, {
+    Color valueColor = const Color(0xFF15233D),
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -181,12 +232,23 @@ class DoctorServiceTicketPage extends StatelessWidget {
         children: [
           SizedBox(
             width: 110,
-            child: Text(label, style: const TextStyle(fontSize: 13, color: Color(0xFF8A95AC), fontWeight: FontWeight.w600)),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF8A95AC),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           Expanded(
             child: Text(
               value,
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: valueColor),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: valueColor,
+              ),
             ),
           ),
         ],
@@ -195,14 +257,8 @@ class DoctorServiceTicketPage extends StatelessWidget {
   }
 
   Widget _buildActionButtons(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: const Color(0xFF0E9F6E).withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8)),
-        ],
-      ),
       child: ElevatedButton(
         onPressed: () {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -214,11 +270,56 @@ class DoctorServiceTicketPage extends StatelessWidget {
           backgroundColor: const Color(0xFF0E9F6E),
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 18),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           elevation: 0,
         ),
-        child: const Text('XÁC NHẬN & IN PHIẾU', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+        child: const Text(
+          'XÁC NHẬN & IN PHIẾU',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.2,
+          ),
+        ),
       ),
     );
+  }
+
+  String _text(List<String> keys, {String fallback = ''}) {
+    for (final key in keys) {
+      final value = patientData[key];
+      if (value != null && value.toString().trim().isNotEmpty) {
+        return value.toString();
+      }
+    }
+    return fallback;
+  }
+
+  String _serviceName(Map<String, dynamic> service) {
+    final value =
+        service['serviceName'] ?? service['service'] ?? service['name'];
+    return value?.toString() ?? 'Chưa chọn dịch vụ';
+  }
+
+  String _formatDate(dynamic value) {
+    if (value is DateTime) return DateFormat('dd/MM/yyyy HH:mm').format(value);
+    if (value is Timestamp) {
+      return DateFormat('dd/MM/yyyy HH:mm').format(value.toDate());
+    }
+    return value?.toString() ??
+        DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now());
+  }
+
+  String _money(num value) => NumberFormat('#,###').format(value);
+
+  double _toDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(
+          value?.toString().replaceAll('đ', '').replaceAll(',', '').trim() ??
+              '',
+        ) ??
+        0.0;
   }
 }

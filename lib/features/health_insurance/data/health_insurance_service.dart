@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../utils/health_insurance_validator.dart';
+import '../../../services/firestore_sequence_service.dart';
 
 class HealthInsuranceInfo {
   const HealthInsuranceInfo({
@@ -24,6 +25,7 @@ class HealthInsuranceInfo {
     switch (status) {
       case 'pending':
         return 'Chờ xác minh';
+      case 'approved':
       case 'verified':
         return 'Đã xác minh';
       case 'rejected':
@@ -105,43 +107,95 @@ class HealthInsuranceService {
     }
 
     final user = _auth.currentUser;
-    final now = FieldValue.serverTimestamp();
-
-    final userUpdate = <String, dynamic>{
-      'healthInsuranceNumber': normalized,
-      'insuranceNumber': normalized,
-      'healthInsuranceStatus': 'pending',
-      'healthInsuranceUpdatedAt': now,
-    };
-
+    final userRef = _firestore.collection('users').doc(uid);
     final insuranceRef = _firestore.collection('health_insurances').doc(uid);
-    final insuranceSnapshot = await insuranceRef.get();
 
-    final insuranceUpdate = <String, dynamic>{
-      'userId': uid,
-      'emailAtSubmit': user?.email,
-      'insuranceNumber': normalized,
-      'status': 'pending',
-      'updatedAt': now,
-      'verifiedAt': null,
-      'verifiedBy': null,
-      'rejectReason': null,
-    };
+    await _firestore.runTransaction((transaction) async {
+      final userSnapshot = await transaction.get(userRef);
+      final insuranceSnapshot = await transaction.get(insuranceRef);
+      final userData = userSnapshot.data() ?? const <String, dynamic>{};
+      final insuranceData =
+          insuranceSnapshot.data() ?? const <String, dynamic>{};
+      final currentStatus = _firstNonEmpty([
+        insuranceData['status'],
+        userData['healthInsuranceStatus'],
+        userData['insuranceStatus'],
+      ]);
+      final currentExpiry = _toDateTime(
+        insuranceData['expiryDate'] ??
+            userData['healthInsuranceExpiryDate'] ??
+            userData['insuranceExpiryDate'],
+      );
+      final hasActiveInsurance = _isActiveInsurance(
+        currentStatus,
+        currentExpiry,
+      );
+      final now = FieldValue.serverTimestamp();
+      final existingCode = _firstNonEmpty([
+        insuranceData['insuranceCode'],
+        userData['insuranceCode'],
+      ]);
+      final insuranceCode = existingCode.isNotEmpty
+          ? existingCode
+          : await FirestoreSequenceService.generateNextCodeInTransaction(
+              transaction: transaction,
+              firestore: _firestore,
+              entityType: 'insurance',
+            );
 
-    if (!insuranceSnapshot.exists) {
-      insuranceUpdate['createdAt'] = now;
-    }
+      final userUpdate = <String, dynamic>{
+        'insuranceCode': insuranceCode,
+        'healthInsuranceUpdatedAt': now,
+        'pendingHealthInsuranceNumber': normalized,
+        'pendingHealthInsuranceSubmittedAt': now,
+        'pendingHealthInsuranceStatus': 'pending',
+        'pendingHealthInsuranceRejectReason': null,
+      };
 
-    final batch = _firestore.batch();
+      if (!hasActiveInsurance) {
+        userUpdate.addAll({
+          'healthInsuranceNumber': normalized,
+          'insuranceNumber': normalized,
+          'healthInsuranceStatus': 'pending',
+          'insuranceStatus': 'pending',
+        });
+      } else {
+        userUpdate.addAll({
+          'previousApprovedHealthInsuranceNumber': _firstNonEmpty([
+            userData['healthInsuranceNumber'],
+            insuranceData['insuranceNumber'],
+          ]),
+          'previousApprovedHealthInsuranceExpiryDate': currentExpiry == null
+              ? null
+              : Timestamp.fromDate(currentExpiry),
+          'previousApprovedHealthInsuranceStatus': currentStatus,
+        });
+      }
 
-    batch.set(
-      _firestore.collection('users').doc(uid),
-      userUpdate,
-      SetOptions(merge: true),
-    );
-    batch.set(insuranceRef, insuranceUpdate, SetOptions(merge: true));
+      final insuranceUpdate = <String, dynamic>{
+        'insuranceCode': insuranceCode,
+        'userId': uid,
+        'emailAtSubmit': user?.email,
+        'pendingInsuranceNumber': normalized,
+        'pendingHealthInsuranceNumber': normalized,
+        'pendingHealthInsuranceStatus': 'pending',
+        'status': hasActiveInsurance ? currentStatus : 'pending',
+        'updatedAt': now,
+        'verifiedAt': insuranceData['verifiedAt'],
+        'verifiedBy': insuranceData['verifiedBy'],
+        'rejectReason': null,
+      };
 
-    await batch.commit();
+      if (!hasActiveInsurance) {
+        insuranceUpdate['insuranceNumber'] = normalized;
+      }
+      if (!insuranceSnapshot.exists) {
+        insuranceUpdate['createdAt'] = now;
+      }
+
+      transaction.set(userRef, userUpdate, SetOptions(merge: true));
+      transaction.set(insuranceRef, insuranceUpdate, SetOptions(merge: true));
+    });
   }
 
   Future<DocumentSnapshot<Map<String, dynamic>>?> _getUserSnapshot(
@@ -170,5 +224,23 @@ class HealthInsuranceService {
     if (value is Timestamp) return value.toDate();
     if (value is DateTime) return value;
     return DateTime.tryParse(value.toString());
+  }
+
+  static bool _isActiveInsurance(String status, DateTime? expiryDate) {
+    final normalized = status.trim().toLowerCase();
+    final statusActive =
+        normalized == 'active' ||
+        normalized == 'approved' ||
+        normalized == 'verified';
+    if (!statusActive) return false;
+    if (expiryDate == null) return true;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return !DateTime(
+      expiryDate.year,
+      expiryDate.month,
+      expiryDate.day,
+    ).isBefore(today);
   }
 }

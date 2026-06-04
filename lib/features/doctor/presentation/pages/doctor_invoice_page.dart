@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../app/routes/app_routes.dart';
+import '../../../payment/data/services/billing_calculation_service.dart';
 import '../../data/doctor_clinical_firestore_service.dart';
 
 class DoctorInvoicePage extends StatefulWidget {
@@ -26,6 +27,149 @@ class _DoctorInvoicePageState extends State<DoctorInvoicePage> {
   final DoctorClinicalFirestoreService _clinicalService =
       DoctorClinicalFirestoreService();
   bool _isConfirming = false;
+  String? _draftPrescriptionId;
+  Map<String, dynamic> _appointmentData = const <String, dynamic>{};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAppointmentData();
+    _savePrescriptionDraft();
+  }
+
+  Future<void> _savePrescriptionDraft() async {
+    if (widget.appointmentId == null ||
+        widget.appointmentId!.isEmpty ||
+        widget.selectedMeds.isEmpty) {
+      return;
+    }
+
+    try {
+      final prescriptionId = await _clinicalService.savePrescription(
+        appointmentId: widget.appointmentId!,
+        patientData: _effectivePatientData,
+        medicines: widget.selectedMeds,
+        medicalRecordId: _effectivePatientData['medicalRecordId']?.toString(),
+        notes: _effectivePatientData['notes']?.toString() ?? '',
+      );
+      if (!mounted) return;
+      setState(() => _draftPrescriptionId = prescriptionId);
+    } catch (e) {
+      debugPrint('Không lưu được bản nháp toa thuốc: $e');
+    }
+  }
+
+  Future<void> _loadAppointmentData() async {
+    if (widget.appointmentId == null || widget.appointmentId!.isEmpty) return;
+    final snapshot = await FirebaseFirestore.instance
+        .collection('Appointments')
+        .doc(widget.appointmentId)
+        .get();
+    if (!mounted) return;
+    setState(() {
+      _appointmentData = snapshot.data() ?? const <String, dynamic>{};
+    });
+  }
+
+  Map<String, dynamic> get _effectivePatientData => <String, dynamic>{
+    ..._appointmentData,
+    ...(widget.patientData ?? const <String, dynamic>{}),
+  };
+
+  double get _examFee {
+    final data = _effectivePatientData;
+    final fee = data['consultationFee'] ?? data['examFee'] ?? 350000;
+    if (fee is num) return fee.toDouble();
+    return double.tryParse(fee.toString()) ?? 350000;
+  }
+
+  double get _medicineTotal {
+    var total = 0.0;
+    for (final med in widget.selectedMeds) {
+      final price = _toMoneyValue(med['price']);
+      final quantity = _toQuantity(med['quantity']);
+      total += price * quantity;
+    }
+    return total;
+  }
+
+  List<Map<String, dynamic>> get _selectedServices {
+    final raw =
+        _effectivePatientData['services'] ??
+        _effectivePatientData['serviceItems'] ??
+        _effectivePatientData['testItems'];
+    if (raw is List) {
+      return raw
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
+    return const <Map<String, dynamic>>[];
+  }
+
+  double get _serviceTotal {
+    var total = 0.0;
+    for (final service in _selectedServices) {
+      total += _toMoneyValue(
+        service['amount'] ?? service['price'] ?? service['fee'],
+      );
+    }
+    return total;
+  }
+
+  double get _effectiveTotalPrice => _examFee + _medicineTotal + _serviceTotal;
+
+  String _dataText(List<String> keys, {String fallback = ''}) {
+    final data = _effectivePatientData;
+    for (final key in keys) {
+      final value = data[key];
+      if (value != null && value.toString().trim().isNotEmpty) {
+        return value.toString();
+      }
+    }
+    return fallback;
+  }
+
+  String get _doctorSignatureLabel {
+    final doctorName = _dataText(['doctorName'], fallback: 'Bác sĩ').trim();
+    final parts = doctorName.split(RegExp(r'\s+'));
+    return parts.isNotEmpty ? parts.last : doctorName;
+  }
+
+  String _invoiceContentText() {
+    final parts = <String>['phí khám'];
+    if (_selectedServices.isNotEmpty) parts.add('dịch vụ');
+    if (widget.selectedMeds.isNotEmpty) parts.add('thuốc');
+    return 'Thanh toán ${parts.join(' & ')}';
+  }
+
+  String _invoiceExpenseType() {
+    if (_selectedServices.isNotEmpty && widget.selectedMeds.isNotEmpty) {
+      return 'Dịch vụ & thuốc';
+    }
+    if (_selectedServices.isNotEmpty) return 'Dịch vụ';
+    if (widget.selectedMeds.isNotEmpty) return 'Thuốc';
+    return 'Tiền khám';
+  }
+
+  double _toMoneyValue(dynamic value) {
+    if (value is num) return value.toDouble();
+    final normalized =
+        value
+            ?.toString()
+            .replaceAll('đ', '')
+            .replaceAll('Ä‘', '')
+            .replaceAll(',', '')
+            .replaceAll('.', '')
+            .trim() ??
+        '';
+    return double.tryParse(normalized) ?? 0.0;
+  }
+
+  double _toQuantity(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0.0;
+  }
 
   String _numberToWords(int number) {
     if (number == 0) return 'Không đồng';
@@ -61,11 +205,12 @@ class _DoctorInvoicePageState extends State<DoctorInvoicePage> {
       if (patientId.isEmpty) {
         throw Exception('Không xác định được bệnh nhân để lưu đơn thuốc.');
       }
-      String? prescriptionId;
+      String? prescriptionId = _draftPrescriptionId;
 
       if (widget.appointmentId != null &&
           widget.appointmentId!.isNotEmpty &&
-          widget.selectedMeds.isNotEmpty) {
+          widget.selectedMeds.isNotEmpty &&
+          prescriptionId == null) {
         prescriptionId = await _clinicalService.savePrescription(
           appointmentId: widget.appointmentId!,
           patientData: effectivePatientData,
@@ -74,53 +219,80 @@ class _DoctorInvoicePageState extends State<DoctorInvoicePage> {
         );
       }
 
+      final billing = await BillingCalculationService(
+        firestore: FirebaseFirestore.instance,
+      ).calculate(patientId: patientId, originalAmount: _effectiveTotalPrice);
+
+      final invoiceData = {
+        'appointmentId': widget.appointmentId,
+        'patientId': patientId,
+        'doctorId': uid,
+        'doctorName': effectivePatientData['doctorName'] ?? 'Bác sĩ',
+        'departmentName': effectivePatientData['departmentName'] ?? '',
+        'patientName':
+            effectivePatientData['patientName'] ??
+            effectivePatientData['fullName'] ??
+            effectivePatientData['name'] ??
+            'Bệnh nhân',
+        'meds': widget.selectedMeds,
+        'serviceItems': _selectedServices,
+        'examFee': _examFee,
+        'serviceTotal': _serviceTotal,
+        'medicineTotal': _medicineTotal,
+        ...billing.toFirestoreFields(),
+        'serviceContent': _invoiceContentText(),
+        '_legacyServiceContentUnused': widget.selectedMeds.isNotEmpty
+            ? 'Thanh toán phí khám & thuốc'
+            : 'Thanh toán phí khám bệnh',
+        'expenseType': widget.selectedMeds.isNotEmpty ? 'Thuốc' : 'Tiền khám',
+        'status': 'unpaid',
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+      invoiceData
+        ..remove('_legacyServiceContentUnused')
+        ..['expenseType'] = _invoiceExpenseType();
+      if (prescriptionId != null) {
+        invoiceData['prescriptionId'] = prescriptionId;
+      }
+
       final invoiceRef = await FirebaseFirestore.instance
           .collection('Invoices')
-          .add({
-            'appointmentId': widget.appointmentId,
-            if (prescriptionId != null) 'prescriptionId': prescriptionId,
-            'patientId': patientId,
-            'doctorId': uid,
-            'doctorName': effectivePatientData['doctorName'] ?? 'Bác sĩ',
-            'departmentName': effectivePatientData['departmentName'] ?? '',
-            'patientName':
-                effectivePatientData['patientName'] ??
-                effectivePatientData['fullName'] ??
-                effectivePatientData['name'] ??
-                'Bệnh nhân',
-            'meds': widget.selectedMeds,
-            'totalAmount': widget.totalPrice,
-            'amount': widget.totalPrice,
-            'discountAmount': 0.0,
-            'serviceContent': widget.selectedMeds.isNotEmpty
-                ? 'Thanh toán phí khám & thuốc'
-                : 'Thanh toán phí khám bệnh',
-            'expenseType': widget.selectedMeds.isNotEmpty
-                ? 'Thuốc'
-                : 'Tiền khám',
-            'status': 'unpaid',
-            'createdAt': FieldValue.serverTimestamp(),
-          });
+          .add(invoiceData);
 
       if (widget.appointmentId != null && widget.appointmentId!.isNotEmpty) {
+        final appointmentUpdate = {
+          'patientId': patientId,
+          'status': 'waiting_payment',
+          'paymentStatus': 'unpaid',
+          'lastInvoiceId': invoiceRef.id,
+          'lastInvoiceAmount': billing.finalAmount,
+          'invoiceAmount': billing.finalAmount,
+          'invoiceOriginalAmount': _effectiveTotalPrice,
+          'discountAmount': billing.discountAmount,
+          'examFee': _examFee,
+          'serviceTotal': _serviceTotal,
+          'medicineTotal': _medicineTotal,
+          'serviceItems': _selectedServices,
+          'services': _selectedServices,
+          'prescription': widget.selectedMeds,
+          'diagnosis': effectivePatientData['diagnosis'] ?? '',
+          'updatedAt': FieldValue.serverTimestamp(),
+        };
+        if (prescriptionId != null) {
+          appointmentUpdate['prescriptionId'] = prescriptionId;
+        }
+
         await FirebaseFirestore.instance
             .collection('Appointments')
             .doc(widget.appointmentId)
-            .set({
-              'patientId': patientId,
-              'status': 'waiting_payment',
-              'lastInvoiceId': invoiceRef.id,
-              if (prescriptionId != null) 'prescriptionId': prescriptionId,
-              'prescription': widget.selectedMeds,
-              'diagnosis': effectivePatientData['diagnosis'] ?? '',
-              'updatedAt': FieldValue.serverTimestamp(),
-            }, SetOptions(merge: true));
+            .set(appointmentUpdate, SetOptions(merge: true));
       }
 
       await FirebaseFirestore.instance.collection('Notifications').add({
         'title': 'Yêu cầu thanh toán mới',
         'content':
-            'Bác sĩ đã hoàn tất khám. Vui lòng thanh toán hóa đơn trị giá ${_formatMoney(widget.totalPrice.toInt())}đ.',
+            'Bác sĩ đã hoàn tất khám. Vui lòng thanh toán hóa đơn trị giá ${_formatMoney(billing.finalAmount.toInt())}đ.',
         'type': 'payment',
         'timestamp': FieldValue.serverTimestamp(),
         'isRead': false,
@@ -246,7 +418,7 @@ class _DoctorInvoicePageState extends State<DoctorInvoicePage> {
                     ),
                   ),
                   Text(
-                    'Mã BN: ${widget.patientData?['id'] ?? '701TSG.18030062'}',
+                    'Mã BN: ${_dataText(['patientCode', 'patientId', 'userId', 'uid', 'id'], fallback: 'N/A')}',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey[600],
@@ -336,20 +508,23 @@ class _DoctorInvoicePageState extends State<DoctorInvoicePage> {
   }
 
   Widget _buildPatientInfo() {
-    final data = widget.patientData ?? {};
+    final data = _effectivePatientData;
+    final ageOrDob = data['age'] != null
+        ? '${data['age']} tuổi'
+        : _dataText(['dateOfBirth', 'dob'], fallback: 'Chưa có ngày sinh');
+    final gender = _dataText(['gender'], fallback: 'Chưa có giới tính');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _infoRow(
           'Khách hàng',
-          data['patientName'] ?? data['name'] ?? 'ĐỖ THỊ PHÚC',
+          _dataText(['patientName', 'fullName', 'name'], fallback: 'Bệnh nhân'),
         ),
-        _infoRow(
-          'Thông tin',
-          '${data['age'] ?? '56'} tuổi | ${data['gender'] ?? 'Nữ'}',
-        ),
-        _infoRow('Địa chỉ', data['address'] ?? 'TP. Hồ Chí Minh'),
-        _infoRow('Bác sĩ', 'BS. VŨ TRƯỜNG PHI'),
+        _infoRow('Thông tin', '$ageOrDob | $gender'),
+        _infoRow('Địa chỉ', _dataText(['address'], fallback: 'Chưa cập nhật')),
+        _infoRow('Bác sĩ', _dataText(['doctorName'], fallback: 'Bác sĩ')),
+        if (_dataText(['departmentName']).isNotEmpty)
+          _infoRow('Khoa', _dataText(['departmentName'])),
       ],
     );
   }
@@ -393,8 +568,12 @@ class _DoctorInvoicePageState extends State<DoctorInvoicePage> {
           children: [
             _buildTableHeader(),
             _buildExamRow(),
+            ..._selectedServices.asMap().entries.map(
+              (e) => _buildServiceRow(e.key + 2, e.value),
+            ),
             ...widget.selectedMeds.asMap().entries.map(
-              (e) => _buildMedRow(e.key + 2, e.value),
+              (e) =>
+                  _buildMedRow(e.key + _selectedServices.length + 2, e.value),
             ),
           ],
         ),
@@ -437,39 +616,47 @@ class _DoctorInvoicePageState extends State<DoctorInvoicePage> {
 
   TableRow _buildExamRow() {
     const style = TextStyle(fontSize: 10, fontWeight: FontWeight.w500);
-    return const TableRow(
+    final formattedFee = _formatMoney(_examFee.toInt());
+    return TableRow(
       children: [
-        Padding(
+        const Padding(
           padding: EdgeInsets.all(6),
           child: Text('1', style: style, textAlign: TextAlign.center),
         ),
-        Padding(
+        const Padding(
           padding: EdgeInsets.all(6),
           child: Text('Phí khám bệnh chuyên khoa', style: style),
         ),
-        Padding(
+        const Padding(
           padding: EdgeInsets.all(6),
           child: Text('1', style: style, textAlign: TextAlign.center),
         ),
-        Padding(
+        const Padding(
           padding: EdgeInsets.all(6),
           child: Text('Lần', style: style, textAlign: TextAlign.center),
         ),
         Padding(
-          padding: EdgeInsets.all(6),
-          child: Text('350.000', style: style, textAlign: TextAlign.right),
+          padding: const EdgeInsets.all(6),
+          child: Text(formattedFee, style: style, textAlign: TextAlign.right),
         ),
         Padding(
-          padding: EdgeInsets.all(6),
-          child: Text('350.000', style: style, textAlign: TextAlign.right),
+          padding: const EdgeInsets.all(6),
+          child: Text(formattedFee, style: style, textAlign: TextAlign.right),
         ),
       ],
     );
   }
 
-  TableRow _buildMedRow(int index, Map<String, dynamic> med) {
+  TableRow _buildServiceRow(int index, Map<String, dynamic> service) {
     const style = TextStyle(fontSize: 10, fontWeight: FontWeight.w500);
-    final amount = (med['price'] ?? 0) * (med['quantity'] ?? 0);
+    final name =
+        service['serviceName'] ??
+        service['service'] ??
+        service['name'] ??
+        'Dịch vụ';
+    final price = _toMoneyValue(
+      service['amount'] ?? service['price'] ?? service['fee'],
+    );
     return TableRow(
       children: [
         Padding(
@@ -478,7 +665,52 @@ class _DoctorInvoicePageState extends State<DoctorInvoicePage> {
         ),
         Padding(
           padding: const EdgeInsets.all(6),
-          child: Text(med['name'], style: style),
+          child: Text(name.toString(), style: style),
+        ),
+        const Padding(
+          padding: EdgeInsets.all(6),
+          child: Text('1', style: style, textAlign: TextAlign.center),
+        ),
+        const Padding(
+          padding: EdgeInsets.all(6),
+          child: Text('Lần', style: style, textAlign: TextAlign.center),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(6),
+          child: Text(
+            _formatMoney(price.toInt()),
+            style: style,
+            textAlign: TextAlign.right,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(6),
+          child: Text(
+            _formatMoney(price.toInt()),
+            style: style,
+            textAlign: TextAlign.right,
+          ),
+        ),
+      ],
+    );
+  }
+
+  TableRow _buildMedRow(int index, Map<String, dynamic> med) {
+    const style = TextStyle(fontSize: 10, fontWeight: FontWeight.w500);
+    final price = _toMoneyValue(med['price']);
+    final quantity = _toQuantity(med['quantity']);
+    final amount = price * quantity;
+    final name = med['name']?.toString() ?? '';
+    final unit = med['unit']?.toString() ?? 'Viên';
+    return TableRow(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(6),
+          child: Text('$index', style: style, textAlign: TextAlign.center),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(6),
+          child: Text(name, style: style),
         ),
         Padding(
           padding: const EdgeInsets.all(6),
@@ -490,16 +722,12 @@ class _DoctorInvoicePageState extends State<DoctorInvoicePage> {
         ),
         Padding(
           padding: const EdgeInsets.all(6),
-          child: Text(
-            med['unit'] ?? 'Viên',
-            style: style,
-            textAlign: TextAlign.center,
-          ),
+          child: Text(unit, style: style, textAlign: TextAlign.center),
         ),
         Padding(
           padding: const EdgeInsets.all(6),
           child: Text(
-            _formatMoney(med['price']),
+            _formatMoney(price.toInt()),
             style: style,
             textAlign: TextAlign.right,
           ),
@@ -507,7 +735,7 @@ class _DoctorInvoicePageState extends State<DoctorInvoicePage> {
         Padding(
           padding: const EdgeInsets.all(6),
           child: Text(
-            _formatMoney(amount),
+            _formatMoney(amount.toInt()),
             style: style,
             textAlign: TextAlign.right,
           ),
@@ -517,13 +745,14 @@ class _DoctorInvoicePageState extends State<DoctorInvoicePage> {
   }
 
   Widget _buildPaymentSummary() {
+    final total = _effectiveTotalPrice.toInt();
     return Column(
       children: [
-        _summaryRow('Tổng chi phí', _formatMoney(widget.totalPrice.toInt())),
+        _summaryRow('Tổng chi phí', _formatMoney(total)),
         const Divider(),
         _summaryRow(
           'Số tiền phải thanh toán',
-          _formatMoney(widget.totalPrice.toInt()),
+          _formatMoney(total),
           isBold: true,
         ),
         const SizedBox(height: 12),
@@ -536,7 +765,7 @@ class _DoctorInvoicePageState extends State<DoctorInvoicePage> {
             ),
             Expanded(
               child: Text(
-                _numberToWords(widget.totalPrice.toInt()),
+                _numberToWords(total),
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
@@ -604,17 +833,17 @@ class _DoctorInvoicePageState extends State<DoctorInvoicePage> {
               style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 10),
-            const Text(
-              'Phi',
-              style: TextStyle(
+            Text(
+              _doctorSignatureLabel,
+              style: const TextStyle(
                 fontFamily: 'Cursive',
                 fontSize: 24,
                 color: Color(0xFF0E47B5),
               ),
             ),
-            const Text(
-              'BS. VŨ TRƯỜNG PHI',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+            Text(
+              _dataText(['doctorName'], fallback: 'Bác sĩ'),
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
             ),
           ],
         ),

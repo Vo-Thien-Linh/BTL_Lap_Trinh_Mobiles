@@ -361,6 +361,13 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
   }
 
   Widget _buildMedRow(Map<String, dynamic> med) {
+    String textValue(String key, [String fallback = '']) {
+      final value = med[key];
+      if (value == null) return fallback;
+      final text = value.toString().trim();
+      return text.isEmpty ? fallback : text;
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -384,7 +391,7 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  med['name'] ?? 'Thuốc',
+                  textValue('name', 'Thuốc'),
                   style: const TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 14,
@@ -393,7 +400,7 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${med['dosage'] ?? ""} • ${med['usage'] ?? ""}',
+                  '${textValue('dosage')} • ${textValue('usage')}',
                   style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
@@ -405,7 +412,7 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
           ),
           const SizedBox(width: 12),
           Text(
-            med['quantity'] ?? "",
+            textValue('quantity'),
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 12,
@@ -426,7 +433,7 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
         crossAxisCount: 2,
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
-        childAspectRatio: 0.85,
+        childAspectRatio: 0.78,
       ),
       itemCount: 4,
       itemBuilder: (context, index) {
@@ -509,6 +516,8 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
                   children: [
                     Text(
                       mockTitles[index % mockTitles.length],
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 13,

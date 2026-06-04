@@ -10,6 +10,7 @@ class UserModel {
   final String phone;
   final String fullName;
   final String cccd;
+  final String? patientCode;
   final AppRole role;
   final UserStatus status;
   final bool emailVerified;
@@ -35,6 +36,7 @@ class UserModel {
     required this.phone,
     required this.fullName,
     required this.cccd,
+    this.patientCode,
     required this.role,
     required this.status,
     required this.emailVerified,
@@ -63,6 +65,7 @@ class UserModel {
       phone: '',
       fullName: '',
       cccd: '',
+      patientCode: null,
       role: AppRole.patient,
       status: UserStatus.active,
       emailVerified: false,
@@ -79,6 +82,7 @@ class UserModel {
     String? phone,
     String? fullName,
     String? cccd,
+    String? patientCode,
     AppRole? role,
     UserStatus? status,
     bool? emailVerified,
@@ -104,6 +108,7 @@ class UserModel {
       phone: phone ?? this.phone,
       fullName: fullName ?? this.fullName,
       cccd: cccd ?? this.cccd,
+      patientCode: patientCode ?? this.patientCode,
       role: role ?? this.role,
       status: status ?? this.status,
       emailVerified: emailVerified ?? this.emailVerified,
@@ -133,6 +138,7 @@ class UserModel {
       'phone': phone,
       'fullName': fullName,
       'cccd': cccd,
+      'patientCode': patientCode,
       'role': role.value,
       'status': status.value,
       'emailVerified': emailVerified,
@@ -161,20 +167,25 @@ class UserModel {
       phone: map['phone'] ?? '',
       fullName: map['fullName'] ?? '',
       cccd: map['cccd'] ?? '',
+      patientCode: map['patientCode'] as String?,
       role: AppRoleX.fromString(map['role'] ?? 'patient'),
       status: UserStatusX.fromString(map['status'] ?? 'active'),
       emailVerified: map['emailVerified'] ?? false,
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      dateOfBirth: map['dateOfBirth'] as String?,
+      dateOfBirth: _dateToString(map['dateOfBirth']),
       gender: map['gender'] as String?,
       healthInsuranceNumber: map['healthInsuranceNumber'] as String?,
       bloodType: map['bloodType'] as String?,
       address: map['address'] as String?,
       emergencyPhone: map['emergencyPhone'] as String?,
       avatarUrl: map['avatarUrl'] as String?,
-      allergies: map['allergies'] != null ? List<String>.from(map['allergies']) : null,
-      chronicConditions: map['chronicConditions'] != null ? List<String>.from(map['chronicConditions']) : null,
+      allergies: map['allergies'] != null
+          ? List<String>.from(map['allergies'])
+          : null,
+      chronicConditions: map['chronicConditions'] != null
+          ? List<String>.from(map['chronicConditions'])
+          : null,
       weight: (map['weight'] as num?)?.toDouble(),
       height: (map['height'] as num?)?.toDouble(),
       membership: map['membership'] as String?,
@@ -183,10 +194,23 @@ class UserModel {
 
   factory UserModel.fromDocument(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>? ?? {};
-    return UserModel.fromMap({
-      ...data,
-      'uid': doc.id,
-    });
+    return UserModel.fromMap({...data, 'uid': doc.id});
+  }
+
+  static String? _dateToString(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) {
+      final date = value.toDate();
+      return _formatDateOnly(date);
+    }
+    if (value is DateTime) return _formatDateOnly(value);
+    return value.toString();
+  }
+
+  static String _formatDateOnly(DateTime value) {
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    return '${value.year}-$month-$day';
   }
 
   AppUserEntity toEntity() {
@@ -197,6 +221,7 @@ class UserModel {
       phone: phone,
       fullName: fullName,
       cccd: cccd,
+      patientCode: patientCode,
       role: role.value,
       status: status.value,
       emailVerified: emailVerified,
@@ -210,4 +235,4 @@ class UserModel {
       avatarUrl: avatarUrl,
     );
   }
-}
+}

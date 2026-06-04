@@ -7,9 +7,7 @@ class RegisterPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tạo tài khoản'),
-      ),
+      appBar: AppBar(title: const Text('Tạo tài khoản')),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(

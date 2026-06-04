@@ -20,7 +20,7 @@
         android:maxSdkVersion="32" />
 
     <application
-        android:label="baitaplon"
+        android:label="Bệnh viện LPHV"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'doctor_invoice_page.dart';
+import '../../data/doctor_clinical_firestore_service.dart';
 
 class DoctorPrescriptionBuilderPage extends StatefulWidget {
   final Map<String, dynamic>? patientData;
@@ -20,6 +21,8 @@ class DoctorPrescriptionBuilderPage extends StatefulWidget {
 
 class _DoctorPrescriptionBuilderPageState
     extends State<DoctorPrescriptionBuilderPage> {
+  final DoctorClinicalFirestoreService _clinicalService =
+      DoctorClinicalFirestoreService();
   final TextEditingController _searchController = TextEditingController();
   final List<Map<String, dynamic>> _templates = [
     {
@@ -42,52 +45,8 @@ class _DoctorPrescriptionBuilderPageState
     },
   ];
 
-  final List<Map<String, dynamic>> _defaultDrugCatalog = [
-    {
-      'name': 'Amoxicillin',
-      'unit': 'Viên',
-      'strength': '500mg',
-      'category': 'Kháng sinh',
-      'price': 1500,
-    },
-    {
-      'name': 'Paracetamol',
-      'unit': 'Viên',
-      'strength': '500mg',
-      'category': 'Giảm đau',
-      'price': 500,
-    },
-    {
-      'name': 'Ibuprofen',
-      'unit': 'Viên',
-      'strength': '400mg',
-      'category': 'Kháng viêm',
-      'price': 1200,
-    },
-    {
-      'name': 'Omeprazole',
-      'unit': 'Viên',
-      'strength': '20mg',
-      'category': 'Dạ dày',
-      'price': 2500,
-    },
-    {
-      'name': 'Amlodipine',
-      'unit': 'Viên',
-      'strength': '5mg',
-      'category': 'Huyết áp',
-      'price': 3000,
-    },
-    {
-      'name': 'Metformin',
-      'unit': 'Viên',
-      'strength': '850mg',
-      'category': 'Tiểu đường',
-      'price': 2000,
-    },
-  ];
-
   final List<Map<String, dynamic>> _selectedMeds = [];
+  bool _isSavingPrescription = false;
   String _activeCategory = 'Tất cả';
 
   Map<String, dynamic>? _selectedPatientData;
@@ -111,7 +70,9 @@ class _DoctorPrescriptionBuilderPageState
   double get _totalPrice {
     double total = 350000; // Starting with Exam fee as in the sample image
     for (var med in _selectedMeds) {
-      total += (med['quantity'] ?? 0) * (med['price'] ?? 0);
+      final quantity = int.tryParse(med['quantity']?.toString() ?? '') ?? 0;
+      final price = double.tryParse(med['price']?.toString() ?? '') ?? 0;
+      total += quantity * price;
     }
     return total;
   }
@@ -140,6 +101,98 @@ class _DoctorPrescriptionBuilderPageState
   Map<String, dynamic>? get _effectivePatientData => _selectedPatientData;
 
   String? get _effectiveAppointmentId => _selectedAppointmentId;
+
+  Map<String, dynamic> _normalizeMedicine(
+    Map<String, dynamic> data,
+    String docId,
+  ) {
+    final medicineCode = (data['medicineCode'] ?? docId).toString();
+    final group = (data['group'] ?? data['category'] ?? 'Khác').toString();
+    final unitPrice =
+        int.tryParse((data['unitPrice'] ?? data['price'] ?? 0).toString()) ?? 0;
+    final stockQuantity =
+        int.tryParse(
+          (data['quantity'] ?? data['stockQuantity'] ?? 0).toString(),
+        ) ??
+        0;
+
+    return {
+      ...data,
+      'id': docId,
+      'medicineId': docId,
+      'medicineCode': medicineCode,
+      'name': data['name']?.toString() ?? '',
+      'group': group,
+      'category': group,
+      'strength': data['strength']?.toString() ?? '',
+      'unit': data['unit']?.toString() ?? 'Viên',
+      'unitPrice': unitPrice,
+      'price': unitPrice,
+      'quantity': stockQuantity,
+      'stockQuantity': stockQuantity,
+      'note': data['note']?.toString(),
+    };
+  }
+
+  String _generateMedicineCode() {
+    return 'TH${DateTime.now().millisecondsSinceEpoch}';
+  }
+
+  Future<void> _confirmPrescriptionAndOpenInvoice() async {
+    if (!_hasPatientContext) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không thể kê đơn vì chưa xác định bệnh nhân.'),
+        ),
+      );
+      return;
+    }
+
+    final appointmentId = _effectiveAppointmentId;
+    if (appointmentId == null || appointmentId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không thể lưu toa thuốc vì chưa xác định lịch hẹn.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSavingPrescription = true);
+    try {
+      final patientData = _effectivePatientData ?? const <String, dynamic>{};
+      await _clinicalService.savePrescription(
+        appointmentId: appointmentId,
+        patientData: patientData,
+        medicines: _selectedMeds,
+        medicalRecordId: patientData['medicalRecordId']?.toString(),
+        notes: patientData['notes']?.toString() ?? '',
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã lưu toa thuốc cho bệnh nhân.')),
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DoctorInvoicePage(
+            selectedMeds: _selectedMeds,
+            totalPrice: _totalPrice,
+            patientData: _effectivePatientData,
+            appointmentId: _effectiveAppointmentId,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Không lưu được toa thuốc: $e')));
+    } finally {
+      if (mounted) setState(() => _isSavingPrescription = false);
+    }
+  }
 
   void _showAddMedicineModal(Map<String, dynamic> med) {
     showModalBottomSheet(
@@ -210,18 +263,52 @@ class _DoctorPrescriptionBuilderPageState
   ) async {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     final doctorId = await _resolveCurrentDoctorId();
+    final medicineCode =
+        (medicine['medicineCode']?.toString().trim().isNotEmpty ?? false)
+        ? medicine['medicineCode'].toString().trim()
+        : _generateMedicineCode();
+    final group = (medicine['group'] ?? medicine['category'] ?? 'Khác')
+        .toString()
+        .trim();
+    final unitPrice =
+        int.tryParse(
+          (medicine['unitPrice'] ?? medicine['price'] ?? 0).toString(),
+        ) ??
+        0;
+    final quantity =
+        int.tryParse(
+          (medicine['quantity'] ?? medicine['stockQuantity'] ?? 0).toString(),
+        ) ??
+        0;
     final payload = {
-      ...medicine,
+      'medicineCode': medicineCode,
+      'name': medicine['name']?.toString().trim() ?? '',
+      'group': group.isEmpty ? 'Khác' : group,
+      'category': group.isEmpty ? 'Khác' : group,
+      'strength': medicine['strength']?.toString().trim() ?? '',
+      'unit': medicine['unit']?.toString().trim().isEmpty ?? true
+          ? 'Viên'
+          : medicine['unit'].toString().trim(),
+      'unitPrice': unitPrice,
+      'price': unitPrice,
+      'quantity': quantity,
+      'stockQuantity': quantity,
+      'lowStockThreshold':
+          int.tryParse((medicine['lowStockThreshold'] ?? 100).toString()) ??
+          100,
+      'note': medicine['note'],
       'doctorId': doctorId,
       'createdByUserId': currentUserId,
+      'createdByRole': 'doctor',
       'isActive': true,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
-    final doc = await FirebaseFirestore.instance
+    await FirebaseFirestore.instance
         .collection('Medicines')
-        .add(payload);
-    return {...medicine, 'medicineId': doc.id, 'id': doc.id};
+        .doc(medicineCode)
+        .set(payload, SetOptions(merge: true));
+    return _normalizeMedicine(payload, medicineCode);
   }
 
   Future<String?> _resolveCurrentDoctorId() async {
@@ -237,35 +324,12 @@ class _DoctorPrescriptionBuilderPageState
   }
 
   void _applyTemplate(Map<String, dynamic> template) {
-    // Mock: Adding 3 predefined meds
-    setState(() {
-      _selectedMeds.addAll([
-        {
-          'name': 'Paracetamol',
-          'strength': '500mg',
-          'unit': 'Viên',
-          'quantity': 10,
-          'morning': 1,
-          'noon': 1,
-          'evening': 1,
-          'timing': 'Sau ăn',
-          'duration': 3,
-        },
-        {
-          'name': 'Amoxicillin',
-          'strength': '500mg',
-          'unit': 'Viên',
-          'quantity': 14,
-          'morning': 1,
-          'noon': 0,
-          'evening': 1,
-          'timing': 'Sau ăn',
-          'duration': 7,
-        },
-      ]);
-    });
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Đã áp dụng phác đồ ${template['title']}')),
+      SnackBar(
+        content: Text(
+          'Phác đồ ${template['title']} chưa liên kết thuốc từ Firebase. Vui lòng chọn thuốc trong danh mục.',
+        ),
+      ),
     );
   }
 
@@ -672,12 +736,9 @@ class _DoctorPrescriptionBuilderPageState
           builder: (context, snapshot) {
             final firebaseMeds = (snapshot.data?.docs ?? const []).map((doc) {
               final data = doc.data() as Map<String, dynamic>;
-              return {...data, 'medicineId': doc.id, 'id': doc.id};
+              return _normalizeMedicine(data, doc.id);
             }).toList();
-            final filteredMeds = _filterMedicines([
-              ..._defaultDrugCatalog,
-              ...firebaseMeds,
-            ]);
+            final filteredMeds = _filterMedicines(firebaseMeds);
 
             if (snapshot.connectionState == ConnectionState.waiting &&
                 filteredMeds.isEmpty) {
@@ -803,6 +864,9 @@ class _DoctorPrescriptionBuilderPageState
         ),
         ..._selectedMeds.asMap().entries.map((entry) {
           final med = entry.value;
+          final price = int.tryParse(med['price']?.toString() ?? '') ?? 0;
+          final quantity = int.tryParse(med['quantity']?.toString() ?? '') ?? 0;
+          final amount = price * quantity;
           return Container(
             margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             decoration: BoxDecoration(
@@ -831,7 +895,7 @@ class _DoctorPrescriptionBuilderPageState
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  med['name'],
+                                  med['name']?.toString() ?? '',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w900,
                                     fontSize: 16,
@@ -869,7 +933,7 @@ class _DoctorPrescriptionBuilderPageState
                               ],
                             ),
                             Text(
-                              '${med['strength']} | ${med['price']}đ x ${med['quantity']} = ${((med['price'] ?? 0) * (med['quantity'] ?? 0))}đ',
+                              '${med['strength']?.toString() ?? ''} | ${price}đ x $quantity = ${amount}đ',
                               style: const TextStyle(
                                 fontSize: 13,
                                 color: Color(0xFF5A6680),
@@ -893,7 +957,7 @@ class _DoctorPrescriptionBuilderPageState
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
-                                    med['timing'],
+                                    med['timing']?.toString() ?? '',
                                     style: const TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w800,
@@ -917,7 +981,8 @@ class _DoctorPrescriptionBuilderPageState
     );
   }
 
-  Widget _dosageItem(String label, int val) {
+  Widget _dosageItem(String label, Object? rawValue) {
+    final val = int.tryParse(rawValue?.toString() ?? '') ?? 0;
     return Container(
       margin: const EdgeInsets.only(right: 8),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
