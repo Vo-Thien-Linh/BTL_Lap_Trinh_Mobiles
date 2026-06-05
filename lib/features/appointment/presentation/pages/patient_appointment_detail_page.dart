@@ -35,13 +35,13 @@ class PatientAppointmentDetailPage extends StatelessWidget {
             .get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError ||
               !snapshot.hasData ||
               !snapshot.data!.exists) {
-            return const Center(
+            return Center(
               child: Text(
                 'Không tìm thấy thông tin lịch hẹn',
                 style: TextStyle(color: AppColors.textSecondary),
@@ -58,18 +58,18 @@ class PatientAppointmentDetailPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildStatusBanner(appointment.status),
-                const SizedBox(height: 16),
+                _buildStatusBanner(appointment.effectiveStatus),
+                SizedBox(height: 16),
                 _buildDoctorInfo(appointment),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 _buildTimeLocationCard(appointment),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 _buildPatientInfoCard(appointment),
-                const SizedBox(height: 24),
-                if (appointment.status == 'scheduled' ||
-                    appointment.status == 'pending' ||
-                    appointment.status == 'confirmed' ||
-                    appointment.status == 'cancel_requested')
+                SizedBox(height: 24),
+                if (appointment.effectiveStatus == 'scheduled' ||
+                    appointment.effectiveStatus == 'pending' ||
+                    appointment.effectiveStatus == 'confirmed' ||
+                    appointment.effectiveStatus == 'cancel_requested')
                   ElevatedButton(
                     onPressed: () {
                       Navigator.pop(context);
@@ -85,7 +85,7 @@ class PatientAppointmentDetailPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'QUẢN LÝ LỊCH HẸN',
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
@@ -93,7 +93,7 @@ class PatientAppointmentDetailPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                if (appointment.status == 'completed')
+                if (appointment.effectiveStatus == 'completed')
                   ElevatedButton(
                     onPressed: () {
                       Navigator.pushNamed(
@@ -211,7 +211,7 @@ class PatientAppointmentDetailPage extends StatelessWidget {
 
   Widget _buildDoctorInfo(HospitalAppointmentModel appointment) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -219,7 +219,7 @@ class PatientAppointmentDetailPage extends StatelessWidget {
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -232,7 +232,7 @@ class PatientAppointmentDetailPage extends StatelessWidget {
               color: AppColors.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.person_rounded,
               color: AppColors.primary,
               size: 32,
@@ -245,16 +245,16 @@ class PatientAppointmentDetailPage extends StatelessWidget {
               children: [
                 Text(
                   appointment.doctorName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 18,
                     color: Color(0xFF15233D),
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   appointment.departmentName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                     color: AppColors.primary,

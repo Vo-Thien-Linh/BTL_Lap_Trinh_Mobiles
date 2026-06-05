@@ -511,7 +511,7 @@ class _RegisterFormState extends State<RegisterForm> {
                       });
                     },
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
+                padding: EdgeInsets.symmetric(vertical: 4),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -531,13 +531,13 @@ class _RegisterFormState extends State<RegisterForm> {
                     Expanded(
                       child: RichText(
                         text: TextSpan(
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             color: AppColors.textBody,
                             height: 1.45,
                           ),
                           children: [
-                            const TextSpan(text: 'Tôi đã đọc và đồng ý với '),
+                            TextSpan(text: 'Tôi đã đọc và đồng ý với '),
                             WidgetSpan(
                               alignment: PlaceholderAlignment.middle,
                               child: InkWell(
@@ -547,7 +547,7 @@ class _RegisterFormState extends State<RegisterForm> {
                                     AppRoutes.termsOfUse,
                                   );
                                 },
-                                child: const Text(
+                                child: Text(
                                   'Điều khoản sử dụng',
                                   style: TextStyle(
                                     color: AppColors.primary,
@@ -557,7 +557,7 @@ class _RegisterFormState extends State<RegisterForm> {
                                 ),
                               ),
                             ),
-                            const TextSpan(text: ' và '),
+                            TextSpan(text: ' và '),
                             WidgetSpan(
                               alignment: PlaceholderAlignment.middle,
                               child: InkWell(
@@ -567,7 +567,7 @@ class _RegisterFormState extends State<RegisterForm> {
                                     AppRoutes.privacyPolicy,
                                   );
                                 },
-                                child: const Text(
+                                child: Text(
                                   'Chính sách bảo mật',
                                   style: TextStyle(
                                     color: AppColors.primary,
@@ -577,7 +577,7 @@ class _RegisterFormState extends State<RegisterForm> {
                                 ),
                               ),
                             ),
-                            const TextSpan(text: ' của ứng dụng.'),
+                            TextSpan(text: ' của ứng dụng.'),
                           ],
                         ),
                       ),
@@ -587,12 +587,12 @@ class _RegisterFormState extends State<RegisterForm> {
               ),
             ),
             if (_policyError != null) ...[
-              const SizedBox(height: 6),
+              SizedBox(height: 6),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
                   _policyError!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.error,
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,

@@ -89,10 +89,10 @@ class _ExaminationResultDetailPageState
       foregroundColor: Colors.white,
       expandedHeight: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+        icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18),
         onPressed: () => Navigator.pop(context),
       ),
-      title: const Text(
+      title: Text(
         'PHIẾU KẾT QUẢ KHÁM BỆNH',
         style: TextStyle(
           fontSize: 14,
@@ -102,7 +102,7 @@ class _ExaminationResultDetailPageState
       ),
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [AppColors.primary, Color(0xFF3B82F6)],
               begin: Alignment.topLeft,
@@ -114,7 +114,7 @@ class _ExaminationResultDetailPageState
       actions: [
         IconButton(
           onPressed: () => _handleShare(context),
-          icon: const Icon(Icons.share_rounded, size: 20),
+          icon: Icon(Icons.share_rounded, size: 20),
           tooltip: 'Chia sẻ kết quả khám',
         ),
       ],
@@ -124,7 +124,7 @@ class _ExaminationResultDetailPageState
   Widget _buildHospitalBrandHeader() {
     return SliverToBoxAdapter(
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [AppColors.primary, Color(0xFF3B82F6)],
             begin: Alignment.topCenter,
@@ -156,7 +156,7 @@ class _ExaminationResultDetailPageState
                         ),
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.local_hospital_rounded,
                       color: AppColors.primary,
                       size: 30,
@@ -199,7 +199,7 @@ class _ExaminationResultDetailPageState
                 children: [
                   _buildBrandInfo(
                     'ID PHIẾU KHÁM',
-                    '#${widget.appointment.id.toUpperCase().substring(0, 8)}',
+                    '#${_shortId(widget.appointment.id)}',
                   ),
                   _buildBrandInfo(
                     'NGÀY THỰC HIỆN',
@@ -245,11 +245,11 @@ class _ExaminationResultDetailPageState
   // --- TAB: OVERVIEW ---
   Widget _buildOverviewTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       child: Column(
         children: [
           _buildSummaryBanner(),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           _buildInfoSection(
             title: 'CHẨN ĐOÁN LÂM SÀNG',
             icon: Icons.assignment_rounded,
@@ -261,13 +261,13 @@ class _ExaminationResultDetailPageState
                   widget.appointment.diagnosis ?? 'Đang cập nhật...',
                   isHighlight: true,
                 ),
-                const Divider(height: 32, color: AppColors.border),
+                Divider(height: 32, color: AppColors.border),
                 _buildField(
                   'Triệu chứng ghi nhận:',
                   widget.appointment.symptoms,
                 ),
                 if (widget.appointment.physicalExam != null) ...[
-                  const Divider(height: 32, color: AppColors.border),
+                  Divider(height: 32, color: AppColors.border),
                   _buildField(
                     'Kết quả khám thực thể:',
                     widget.appointment.physicalExam!,
@@ -276,9 +276,9 @@ class _ExaminationResultDetailPageState
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           _buildAdviceSection(),
-          const SizedBox(height: 40),
+          SizedBox(height: 40),
         ],
       ),
     );
@@ -287,7 +287,7 @@ class _ExaminationResultDetailPageState
   Widget _buildSummaryBanner() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.circular(24),
@@ -336,8 +336,10 @@ class _ExaminationResultDetailPageState
 
   // --- TAB: VITALS ---
   Widget _buildVitalsTab() {
+    final vitals = widget.appointment.vitals ?? const <String, dynamic>{};
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       child: Column(
         children: [
           _buildInfoSection(
@@ -345,7 +347,7 @@ class _ExaminationResultDetailPageState
             icon: Icons.monitor_heart_rounded,
             child: GridView.count(
               shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
+              physics: NeverScrollableScrollPhysics(),
               crossAxisCount: 2,
               mainAxisSpacing: 16,
               crossAxisSpacing: 16,
@@ -353,28 +355,37 @@ class _ExaminationResultDetailPageState
               children: [
                 _buildVitalCard(
                   'Huyết áp',
-                  '120/80',
+                  _firstText(vitals, const [
+                    'bloodPressure',
+                    'pressure',
+                  ], fallback: '--/--'),
                   'mmHg',
                   AppColors.error,
                   Icons.speed_rounded,
                 ),
                 _buildVitalCard(
                   'Nhịp tim',
-                  '75',
+                  _firstText(vitals, const [
+                    'heartRate',
+                    'pulse',
+                  ], fallback: '--'),
                   'bpm',
-                  const Color(0xFFF97316),
+                  Color(0xFFF97316),
                   Icons.favorite_rounded,
                 ),
                 _buildVitalCard(
                   'Nhiệt độ',
-                  '36.6',
+                  _firstText(vitals, const [
+                    'temperature',
+                    'temp',
+                  ], fallback: '--'),
                   '°C',
                   AppColors.primary,
                   Icons.thermostat_rounded,
                 ),
                 _buildVitalCard(
                   'BMI',
-                  '22.5',
+                  _firstText(vitals, const ['bmi'], fallback: '--'),
                   'Normal',
                   AppColors.success,
                   Icons.fitness_center_rounded,
@@ -382,27 +393,27 @@ class _ExaminationResultDetailPageState
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           _buildInfoSection(
             title: 'BIỂU ĐỒ DIỄN BIẾN HUYẾT ÁP',
             icon: Icons.trending_up_rounded,
             child: Container(
               height: 220,
-              padding: const EdgeInsets.only(top: 24, right: 16, bottom: 8),
+              padding: EdgeInsets.only(top: 24, right: 16, bottom: 8),
               child: LineChart(
                 LineChartData(
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
                     getDrawingHorizontalLine: (value) =>
-                        const FlLine(color: AppColors.border, strokeWidth: 1),
+                        FlLine(color: AppColors.border, strokeWidth: 1),
                   ),
                   titlesData: FlTitlesData(
                     show: true,
-                    rightTitles: const AxisTitles(
+                    rightTitles: AxisTitles(
                       sideTitles: SideTitles(showTitles: false),
                     ),
-                    topTitles: const AxisTitles(
+                    topTitles: AxisTitles(
                       sideTitles: SideTitles(showTitles: false),
                     ),
                     bottomTitles: AxisTitles(
@@ -410,7 +421,7 @@ class _ExaminationResultDetailPageState
                         showTitles: true,
                         getTitlesWidget: (value, meta) => Text(
                           'T${value.toInt() + 1}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textHint,
                             fontSize: 10,
                           ),
@@ -421,7 +432,7 @@ class _ExaminationResultDetailPageState
                   borderData: FlBorderData(show: false),
                   lineBarsData: [
                     LineChartBarData(
-                      spots: const [
+                      spots: [
                         FlSpot(0, 110),
                         FlSpot(1, 115),
                         FlSpot(2, 120),
@@ -432,7 +443,7 @@ class _ExaminationResultDetailPageState
                       color: AppColors.primary,
                       barWidth: 4,
                       isStrokeCapRound: true,
-                      dotData: const FlDotData(show: true),
+                      dotData: FlDotData(show: true),
                       belowBarData: BarAreaData(
                         show: true,
                         gradient: LinearGradient(
@@ -493,16 +504,16 @@ class _ExaminationResultDetailPageState
     ];
 
     return ListView.separated(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       itemCount: labData.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 16),
+      separatorBuilder: (_, __) => SizedBox(height: 16),
       itemBuilder: (context, index) {
         final item = labData[index];
         final statusText = item['status']?.toString() ?? '';
         final bool isWarning = statusText != 'Bình thường';
 
         return Container(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(24),
@@ -510,7 +521,7 @@ class _ExaminationResultDetailPageState
               BoxShadow(
                 color: AppColors.textBody.withOpacity(0.02),
                 blurRadius: 10,
-                offset: const Offset(0, 4),
+                offset: Offset(0, 4),
               ),
             ],
             border: Border.all(color: AppColors.border.withOpacity(0.5)),
@@ -522,7 +533,7 @@ class _ExaminationResultDetailPageState
                 children: [
                   Text(
                     item['name']?.toString() ?? '',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 15,
                       color: AppColors.textBody,
@@ -531,7 +542,7 @@ class _ExaminationResultDetailPageState
                   _buildStatusBadge(statusText, isWarning),
                 ],
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               Row(
                 children: [
                   _buildLabInfoItem(
@@ -561,7 +572,7 @@ class _ExaminationResultDetailPageState
 
   Widget _buildStatusBadge(String text, bool isWarning) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: isWarning
             ? AppColors.warning.withOpacity(0.12)
@@ -591,14 +602,14 @@ class _ExaminationResultDetailPageState
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w900,
               color: AppColors.textHint,
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Row(
             children: [
               Text(
@@ -612,7 +623,7 @@ class _ExaminationResultDetailPageState
                 ),
               ),
               if (trend != null) ...[
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 _buildTrendIcon(trend),
               ],
             ],
@@ -624,18 +635,18 @@ class _ExaminationResultDetailPageState
 
   Widget _buildTrendIcon(String trend) {
     if (trend == 'up')
-      return const Icon(
+      return Icon(
         Icons.trending_up_rounded,
         size: 14,
         color: AppColors.warning,
       );
     if (trend == 'down')
-      return const Icon(
+      return Icon(
         Icons.trending_down_rounded,
         size: 14,
         color: AppColors.success,
       );
-    return const Icon(
+    return Icon(
       Icons.trending_flat_rounded,
       size: 14,
       color: AppColors.primary,
@@ -650,13 +661,13 @@ class _ExaminationResultDetailPageState
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.not_interested_rounded,
               size: 64,
               color: AppColors.border,
             ),
-            const SizedBox(height: 16),
-            const Text(
+            SizedBox(height: 16),
+            Text(
               'Không có đơn thuốc cho lần khám này.',
               style: TextStyle(
                 color: AppColors.textHint,
@@ -669,10 +680,10 @@ class _ExaminationResultDetailPageState
     }
 
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       children: [
         ...prescriptions.map((item) => _buildPrescriptionTicket(item)).toList(),
-        const SizedBox(height: 24),
+        SizedBox(height: 24),
         _buildPrescriptionFooter(),
       ],
     );
@@ -680,7 +691,7 @@ class _ExaminationResultDetailPageState
 
   Widget _buildPrescriptionFooter() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.secondary,
         borderRadius: BorderRadius.circular(24),
@@ -694,13 +705,13 @@ class _ExaminationResultDetailPageState
               children: [
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.verified_user_rounded,
                       color: AppColors.success,
                       size: 16,
                     ),
-                    const SizedBox(width: 8),
-                    const Text(
+                    SizedBox(width: 8),
+                    Text(
                       'BÁC SĨ CHẨN ĐOÁN',
                       style: TextStyle(
                         fontSize: 10,
@@ -711,17 +722,17 @@ class _ExaminationResultDetailPageState
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   widget.appointment.doctorName.toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w900,
                     color: AppColors.textBody,
                   ),
                 ),
-                const SizedBox(height: 4),
-                const Text(
+                SizedBox(height: 4),
+                Text(
                   'Hệ Thống Y Tế Thông Minh v4.0',
                   style: TextStyle(
                     fontSize: 10,
@@ -729,17 +740,14 @@ class _ExaminationResultDetailPageState
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: AppColors.success.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
@@ -747,7 +755,7 @@ class _ExaminationResultDetailPageState
                         color: AppColors.success,
                         size: 14,
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Text(
                         'ĐÃ KÝ SỐ (VERIFIED)',
                         style: TextStyle(
@@ -763,13 +771,13 @@ class _ExaminationResultDetailPageState
             ),
           ),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.border),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.qr_code_2_rounded,
               size: 64,
               color: AppColors.textBody,
@@ -789,7 +797,7 @@ class _ExaminationResultDetailPageState
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
@@ -797,7 +805,7 @@ class _ExaminationResultDetailPageState
           BoxShadow(
             color: AppColors.textBody.withOpacity(0.03),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
         border: Border.all(color: AppColors.border.withOpacity(0.5)),
@@ -816,37 +824,37 @@ class _ExaminationResultDetailPageState
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: AppColors.primaryLight,
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.medication_rounded,
                       color: AppColors.primary,
                       size: 28,
                     ),
                   ),
-                  const SizedBox(width: 20),
+                  SizedBox(width: 20),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           itemText('name', 'Tên thuốc'),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: 16,
                             color: AppColors.textBody,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(
+                          padding: EdgeInsets.symmetric(
                             horizontal: 8,
                             vertical: 4,
                           ),
@@ -856,7 +864,7 @@ class _ExaminationResultDetailPageState
                           ),
                           child: Text(
                             itemText('dosage', 'Ngày 2 lần'),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: AppColors.textSecondary,
@@ -884,7 +892,7 @@ class _ExaminationResultDetailPageState
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(28),
@@ -892,7 +900,7 @@ class _ExaminationResultDetailPageState
           BoxShadow(
             color: AppColors.textBody.withOpacity(0.02),
             blurRadius: 15,
-            offset: const Offset(0, 5),
+            offset: Offset(0, 5),
           ),
         ],
         border: Border.all(color: AppColors.border.withOpacity(0.5)),
@@ -903,17 +911,17 @@ class _ExaminationResultDetailPageState
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: AppColors.primaryLight,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, color: AppColors.primary, size: 16),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
                   color: AppColors.textSecondary,
@@ -922,7 +930,7 @@ class _ExaminationResultDetailPageState
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           child,
         ],
       ),
@@ -935,14 +943,14 @@ class _ExaminationResultDetailPageState
       children: [
         Text(
           label.toUpperCase(),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 9,
             fontWeight: FontWeight.w900,
             color: AppColors.textHint,
             letterSpacing: 0.5,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Text(
           value,
           style: TextStyle(
@@ -964,7 +972,7 @@ class _ExaminationResultDetailPageState
     IconData icon,
   ) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
@@ -995,22 +1003,22 @@ class _ExaminationResultDetailPageState
               Icon(icon, color: color.withOpacity(0.6), size: 14),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           RichText(
             text: TextSpan(
               children: [
                 TextSpan(
                   text: value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
                     color: AppColors.textBody,
                   ),
                 ),
-                const WidgetSpan(child: SizedBox(width: 4)),
+                WidgetSpan(child: SizedBox(width: 4)),
                 TextSpan(
                   text: unit,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textHint,
@@ -1027,9 +1035,9 @@ class _ExaminationResultDetailPageState
   Widget _buildAdviceSection() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           colors: [AppColors.primaryLight, Colors.white],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -1040,7 +1048,7 @@ class _ExaminationResultDetailPageState
           BoxShadow(
             color: AppColors.primary.withOpacity(0.05),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -1049,13 +1057,13 @@ class _ExaminationResultDetailPageState
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.tips_and_updates_rounded,
                 color: AppColors.primary,
                 size: 18,
               ),
-              const SizedBox(width: 10),
-              const Text(
+              SizedBox(width: 10),
+              Text(
                 'HƯỚNG DẪN ĐIỀU TRỊ',
                 style: TextStyle(
                   fontSize: 11,
@@ -1063,14 +1071,14 @@ class _ExaminationResultDetailPageState
                   color: AppColors.primary,
                 ),
               ),
-              const Spacer(),
+              Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
+                child: Text(
                   'BÁC SĨ DẶN',
                   style: TextStyle(
                     color: Colors.white,
@@ -1081,11 +1089,11 @@ class _ExaminationResultDetailPageState
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             widget.appointment.treatment ??
                 'Vui lòng tuân thủ liều lượng thuốc và nghỉ ngơi hợp lý.',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
               color: AppColors.textBody,
@@ -1099,7 +1107,7 @@ class _ExaminationResultDetailPageState
 
   Widget _buildBottomAction() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      padding: EdgeInsets.fromLTRB(24, 16, 24, 32),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
@@ -1107,7 +1115,7 @@ class _ExaminationResultDetailPageState
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 20,
-            offset: const Offset(0, -5),
+            offset: Offset(0, -5),
           ),
         ],
       ),
@@ -1116,8 +1124,8 @@ class _ExaminationResultDetailPageState
           Expanded(
             child: ElevatedButton.icon(
               onPressed: () {},
-              icon: const Icon(Icons.picture_as_pdf_rounded, size: 20),
-              label: const Text(
+              icon: Icon(Icons.picture_as_pdf_rounded, size: 20),
+              label: Text(
                 'XUẤT BỆNH ÁN KỸ THUẬT SỐ',
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
@@ -1145,9 +1153,7 @@ class _ExaminationResultDetailPageState
       final buffer = StringBuffer();
       buffer.writeln('📋 PHIẾU KẾT QUẢ KHÁM BỆNH - MEDCARE');
       buffer.writeln('-----------------------------------');
-      buffer.writeln(
-        'Mã phiếu: EXAM-${widget.appointment.id.substring(0, 8).toUpperCase()}',
-      );
+      buffer.writeln('Mã phiếu: EXAM-${_shortId(widget.appointment.id)}');
       buffer.writeln('Bệnh nhân: ${widget.appointment.patientName}');
       buffer.writeln('Bác sĩ: ${widget.appointment.doctorName}');
       buffer.writeln('Khoa: ${widget.appointment.departmentName}');
@@ -1185,6 +1191,25 @@ class _ExaminationResultDetailPageState
       }
     }
   }
+
+  String _shortId(String value) {
+    final cleaned = value.trim();
+    if (cleaned.isEmpty) return 'N/A';
+    final end = cleaned.length < 8 ? cleaned.length : 8;
+    return cleaned.substring(0, end).toUpperCase();
+  }
+
+  String _firstText(
+    Map<String, dynamic> data,
+    List<String> keys, {
+    required String fallback,
+  }) {
+    for (final key in keys) {
+      final value = data[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+    return fallback;
+  }
 }
 
 class _SliverTabDelegate extends SliverPersistentHeaderDelegate {
@@ -1203,7 +1228,7 @@ class _SliverTabDelegate extends SliverPersistentHeaderDelegate {
     bool overlapsContent,
   ) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: AppColors.border)),
       ),

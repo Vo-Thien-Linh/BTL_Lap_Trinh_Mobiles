@@ -26,7 +26,7 @@ class PaymentMethodCard extends StatelessWidget {
       onTap: enabled ? onTap : null,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: enabled ? AppColors.surface : AppColors.secondary,
           borderRadius: BorderRadius.circular(8),
@@ -43,7 +43,7 @@ class PaymentMethodCard extends StatelessWidget {
               ),
               child: Icon(icon, color: enabled ? color : AppColors.textHint),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,10 +56,10 @@ class PaymentMethodCard extends StatelessWidget {
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,
                       height: 1.35,

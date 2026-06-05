@@ -6,7 +6,7 @@ import 'package:share_plus/share_plus.dart';
 
 class PrescriptionDetailPage extends StatelessWidget {
   final HospitalAppointment appointment;
-  const PrescriptionDetailPage({super.key, required this.appointment});
+  PrescriptionDetailPage({super.key, required this.appointment});
 
   static String _medText(
     Map<String, dynamic> med,
@@ -30,12 +30,12 @@ class PrescriptionDetailPage extends StatelessWidget {
           _buildSliverAppBar(context),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildMainHeaderCard(),
-                  const SizedBox(height: 32),
+                  SizedBox(height: 32),
                   Row(
                     children: [
                       Container(
@@ -46,8 +46,8 @@ class PrescriptionDetailPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      const Text(
+                      SizedBox(width: 8),
+                      Text(
                         'DANH SÁCH THUỐC KÊ ĐƠN',
                         style: TextStyle(
                           fontSize: 12,
@@ -62,9 +62,9 @@ class PrescriptionDetailPage extends StatelessWidget {
                   ...prescriptions
                       .map((med) => _buildMedicationCard(med))
                       .toList(),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   _buildDoctorAdviceSection(),
-                  const SizedBox(height: 120), // Space for FAB
+                  SizedBox(height: 120), // Space for FAB
                 ],
               ),
             ),
@@ -85,10 +85,10 @@ class PrescriptionDetailPage extends StatelessWidget {
       expandedHeight: 140,
       centerTitle: true,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+        icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18),
         onPressed: () => Navigator.pop(context),
       ),
-      title: const Text(
+      title: Text(
         'CHI TIẾT ĐƠN THUỐC',
         style: TextStyle(
           fontSize: 15,
@@ -101,7 +101,7 @@ class PrescriptionDetailPage extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [AppColors.primary, Color(0xFF3B82F6)],
                   begin: Alignment.topLeft,
@@ -128,7 +128,7 @@ class PrescriptionDetailPage extends StatelessWidget {
       actions: [
         IconButton(
           onPressed: () => _handleShare(context),
-          icon: const Icon(Icons.share_rounded, size: 20),
+          icon: Icon(Icons.share_rounded, size: 20),
           tooltip: 'Chia sẻ đơn thuốc',
         ),
       ],
@@ -137,7 +137,7 @@ class PrescriptionDetailPage extends StatelessWidget {
 
   Widget _buildMainHeaderCard() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(32),
@@ -145,7 +145,7 @@ class PrescriptionDetailPage extends StatelessWidget {
           BoxShadow(
             color: AppColors.primary.withOpacity(0.06),
             blurRadius: 20,
-            offset: const Offset(0, 10),
+            offset: Offset(0, 10),
           ),
         ],
       ),
@@ -160,18 +160,18 @@ class PrescriptionDetailPage extends StatelessWidget {
                   color: AppColors.primaryLight,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.receipt_long_rounded,
                   color: AppColors.primary,
                   size: 30,
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'MÃ SỐ ĐƠN THUỐC',
                       style: TextStyle(
                         color: AppColors.textHint,
@@ -180,10 +180,10 @@ class PrescriptionDetailPage extends StatelessWidget {
                         letterSpacing: 1,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: 2),
                     Text(
                       'PRES-${appointment.id.substring(0, 8).toUpperCase()}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
                         color: AppColors.textBody,
@@ -194,13 +194,13 @@ class PrescriptionDetailPage extends StatelessWidget {
               ),
               Column(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.verified_rounded,
                     color: AppColors.success,
                     size: 24,
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
+                  SizedBox(height: 4),
+                  Text(
                     'VERIFIED',
                     style: TextStyle(
                       color: AppColors.success,
@@ -212,7 +212,7 @@ class PrescriptionDetailPage extends StatelessWidget {
               ),
             ],
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Divider(height: 1, color: AppColors.border),
           ),
@@ -231,7 +231,7 @@ class PrescriptionDetailPage extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           _buildHeaderInfoItem(
             'Chuyên khoa',
             appointment.departmentName,
@@ -246,30 +246,30 @@ class PrescriptionDetailPage extends StatelessWidget {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(6),
+          padding: EdgeInsets.all(6),
           decoration: BoxDecoration(
             color: AppColors.background,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, size: 14, color: AppColors.primary),
         ),
-        const SizedBox(width: 10),
+        SizedBox(width: 10),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label.toUpperCase(),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 9,
                 color: AppColors.textHint,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 0.5,
               ),
             ),
-            const SizedBox(height: 2),
+            SizedBox(height: 2),
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textBody,
@@ -283,7 +283,7 @@ class PrescriptionDetailPage extends StatelessWidget {
 
   Widget _buildMedicationCard(Map<String, dynamic> med) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(28),
@@ -291,7 +291,7 @@ class PrescriptionDetailPage extends StatelessWidget {
           BoxShadow(
             color: AppColors.textBody.withOpacity(0.02),
             blurRadius: 15,
-            offset: const Offset(0, 5),
+            offset: Offset(0, 5),
           ),
         ],
         border: Border.all(color: AppColors.border.withOpacity(0.5)),
@@ -299,29 +299,29 @@ class PrescriptionDetailPage extends StatelessWidget {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(20),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildMedicationIcon(_medText(med, 'name')),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         _medText(med, 'name', fallback: 'Tên thuốc'),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 16,
                           color: AppColors.textBody,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(
+                            padding: EdgeInsets.symmetric(
                               horizontal: 8,
                               vertical: 4,
                             ),
@@ -331,23 +331,23 @@ class PrescriptionDetailPage extends StatelessWidget {
                             ),
                             child: Text(
                               'SL: ${_medText(med, 'quantity', fallback: '01')}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w900,
                                 fontSize: 10,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          const Icon(
+                          SizedBox(width: 8),
+                          Icon(
                             Icons.access_time_filled_rounded,
                             size: 14,
                             color: AppColors.textHint,
                           ),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Text(
                             _medText(med, 'usage', fallback: 'Sau ăn'),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,
                               fontWeight: FontWeight.w600,
@@ -362,23 +362,23 @@ class PrescriptionDetailPage extends StatelessWidget {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            decoration: const BoxDecoration(
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: BoxDecoration(
               color: AppColors.secondary,
               borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
             ),
             child: Row(
               children: [
                 _buildScheduleBadge(Icons.wb_sunny_rounded, 'SÁNG', true),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 _buildScheduleBadge(Icons.wb_twilight_rounded, 'TRƯA', false),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 _buildScheduleBadge(Icons.nightlight_round, 'TỐI', true),
-                const Spacer(),
+                Spacer(),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Text(
+                    Text(
                       'LIỀU DÙNG',
                       style: TextStyle(
                         fontSize: 9,
@@ -387,10 +387,10 @@ class PrescriptionDetailPage extends StatelessWidget {
                         letterSpacing: 0.5,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: 2),
                     Text(
                       _medText(med, 'dosage', fallback: '1 viên/lần'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 13,
                         color: AppColors.textBody,
@@ -429,7 +429,7 @@ class PrescriptionDetailPage extends StatelessWidget {
 
   Widget _buildScheduleBadge(IconData icon, String label, bool isActive) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: isActive ? AppColors.surface : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
@@ -445,7 +445,7 @@ class PrescriptionDetailPage extends StatelessWidget {
             color: isActive ? Colors.orange : AppColors.textHint,
             size: 14,
           ),
-          const SizedBox(width: 6),
+          SizedBox(width: 6),
           Text(
             label,
             style: TextStyle(
@@ -462,7 +462,7 @@ class PrescriptionDetailPage extends StatelessWidget {
   Widget _buildDoctorAdviceSection() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.circular(32),
@@ -561,7 +561,7 @@ class PrescriptionDetailPage extends StatelessWidget {
 
   Widget _buildSmartReminderButton(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: EdgeInsets.symmetric(horizontal: 24),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
@@ -569,14 +569,14 @@ class PrescriptionDetailPage extends StatelessWidget {
             BoxShadow(
               color: AppColors.primary.withOpacity(0.3),
               blurRadius: 20,
-              offset: const Offset(0, 10),
+              offset: Offset(0, 10),
             ),
           ],
         ),
         child: ElevatedButton.icon(
           onPressed: () => _showReminderSetup(context),
-          icon: const Icon(Icons.notifications_active_rounded, size: 22),
-          label: const Text(
+          icon: Icon(Icons.notifications_active_rounded, size: 22),
+          label: Text(
             'NHẮC LỊCH UỐNG THUỐC',
             style: TextStyle(
               fontWeight: FontWeight.w900,
@@ -606,11 +606,11 @@ class PrescriptionDetailPage extends StatelessWidget {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) => Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -618,18 +618,18 @@ class PrescriptionDetailPage extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: AppColors.primaryLight,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.alarm_add_rounded,
                     color: AppColors.primary,
                   ),
                 ),
-                const SizedBox(width: 16),
-                const Expanded(
+                SizedBox(width: 16),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -662,7 +662,7 @@ class PrescriptionDetailPage extends StatelessWidget {
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: prescriptions.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
+                separatorBuilder: (_, __) => SizedBox(height: 16),
                 itemBuilder: (context, index) {
                   final med = prescriptions[index];
                   final dosage = _medText(med, 'dosage');
@@ -671,7 +671,7 @@ class PrescriptionDetailPage extends StatelessWidget {
                   final isEvening = dosage.contains('Tối');
 
                   return Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: AppColors.background,
                       borderRadius: BorderRadius.circular(20),
@@ -687,16 +687,16 @@ class PrescriptionDetailPage extends StatelessWidget {
                             children: [
                               Text(
                                 _medText(med, 'name', fallback: 'Tên thuốc'),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 14,
                                   color: AppColors.textBody,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Text(
                                 _medText(med, 'dosage', fallback: '1 viên/lần'),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
                                   color: AppColors.textHint,
                                   fontWeight: FontWeight.w600,
@@ -730,14 +730,14 @@ class PrescriptionDetailPage extends StatelessWidget {
                 },
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       content: Text('✅ Đã kích hoạt lịch nhắc nhở uống thuốc!'),
                       behavior: SnackBarBehavior.floating,
                       backgroundColor: AppColors.primary,

@@ -126,20 +126,18 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Người liên hệ khẩn cấp'),
+        title: Text('Người liên hệ khẩn cấp'),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: AppColors.textBody,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            )
+          ? Center(child: CircularProgressIndicator(color: AppColors.primary))
           : SafeArea(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
@@ -170,7 +168,7 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
             blurRadius: 14,
-            offset: const Offset(0, 8),
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -186,14 +184,14 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
                   color: AppColors.error.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.contact_emergency_rounded,
                   color: AppColors.error,
                   size: 30,
                 ),
               ),
-              const SizedBox(width: 14),
-              const Expanded(
+              SizedBox(width: 14),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -218,21 +216,21 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
           if (hasPhone) ...[
             Text(
               _currentPhone!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.8,
                 color: AppColors.textBody,
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
           ],
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: (hasPhone ? AppColors.success : AppColors.error)
                   .withOpacity(0.1),
@@ -264,7 +262,7 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -275,13 +273,13 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
           children: [
             Text(
               hasPhone ? 'Cập nhật số điện thoại' : 'Thiết lập số điện thoại',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textBody,
               ),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
             TextFormField(
               controller: _controller,
               keyboardType: TextInputType.phone,
@@ -291,25 +289,22 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
               decoration: InputDecoration(
                 labelText: 'Số điện thoại khẩn cấp',
                 hintText: 'Ví dụ: 0912345678',
-                prefixIcon: const Icon(Icons.phone_outlined),
+                prefixIcon: Icon(Icons.phone_outlined),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: AppColors.border),
+                  borderSide: BorderSide(color: AppColors.border),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(
-                    color: AppColors.primary,
-                    width: 1.5,
-                  ),
+                  borderSide: BorderSide(color: AppColors.primary, width: 1.5),
                 ),
               ),
               validator: _validatePhone,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -349,7 +344,7 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
 
   Widget _buildNoteCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.error.withOpacity(0.06),
         borderRadius: BorderRadius.circular(16),
@@ -358,13 +353,9 @@ class _EmergencyContactPageState extends State<EmergencyContactPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.info_outline_rounded,
-            color: AppColors.error,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
+          Icon(Icons.info_outline_rounded, color: AppColors.error, size: 20),
+          SizedBox(width: 12),
+          Expanded(
             child: Text(
               'Lưu ý: Số điện thoại khẩn cấp sẽ hiển thị trên ID Y tế (Medical ID) của bạn để nhân viên cứu hộ có thể liên lạc ngay lập tức trong trường hợp khẩn cấp mà không cần mở khóa thiết bị.',
               style: TextStyle(

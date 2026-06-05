@@ -12,7 +12,7 @@ class DigitalReceiptPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4FA),
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'BIÊN LAI ĐIỆN TỬ',
           style: TextStyle(
             fontWeight: FontWeight.w900,
@@ -25,12 +25,12 @@ class DigitalReceiptPage extends StatelessWidget {
         elevation: 0,
         foregroundColor: Colors.black,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
+          icon: Icon(Icons.close_rounded),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.share_rounded, color: AppColors.primary),
+            icon: Icon(Icons.share_rounded, color: AppColors.primary),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(

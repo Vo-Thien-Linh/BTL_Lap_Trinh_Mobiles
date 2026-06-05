@@ -37,7 +37,7 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      return const Scaffold(body: Center(child: Text('Vui lòng đăng nhập')));
+      return Scaffold(body: Center(child: Text('Vui lòng đăng nhập')));
     }
 
     return BlocProvider(
@@ -57,7 +57,7 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
               ),
             ),
             _buildInvoiceListSliver(user.uid),
-            const SliverToBoxAdapter(child: SizedBox(height: 40)),
+            SliverToBoxAdapter(child: SizedBox(height: 40)),
           ],
         ),
       ),
@@ -73,10 +73,10 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
       centerTitle: true,
       expandedHeight: 120,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+        icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18),
         onPressed: () => Navigator.pop(context),
       ),
-      title: const Text(
+      title: Text(
         'THANH TOÁN & HÓA ĐƠN',
         style: TextStyle(
           fontSize: 15,
@@ -88,7 +88,7 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
         background: Stack(
           children: [
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [AppColors.primary, Color(0xFF3B82F6)],
                   begin: Alignment.topLeft,
@@ -139,8 +139,8 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
 
         return Container(
           width: double.infinity,
-          margin: const EdgeInsets.all(20),
-          padding: const EdgeInsets.all(24),
+          margin: EdgeInsets.all(20),
+          padding: EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(32),
@@ -148,7 +148,7 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
               BoxShadow(
                 color: AppColors.primary.withOpacity(0.08),
                 blurRadius: 20,
-                offset: const Offset(0, 10),
+                offset: Offset(0, 10),
               ),
             ],
           ),
@@ -158,7 +158,7 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'TỔNG CHI TIÊU Y TẾ',
                     style: TextStyle(
                       color: AppColors.textHint,
@@ -168,15 +168,12 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppColors.primaryLight,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text(
+                    child: Text(
                       'THÁNG NÀY',
                       style: TextStyle(
                         color: AppColors.primary,
@@ -187,16 +184,16 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Text(
                 '${NumberFormat('#,###').format(paidTotal + pendingTotal)} đ',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textBody,
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               Row(
                 children: [
                   _buildSummaryItem(
@@ -204,9 +201,9 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
                     paidTotal,
                     AppColors.success,
                   ),
-                  const SizedBox(width: 24),
+                  SizedBox(width: 24),
                   Container(width: 1, height: 30, color: AppColors.border),
-                  const SizedBox(width: 24),
+                  SizedBox(width: 24),
                   _buildSummaryItem(
                     'Chờ xử lý',
                     pendingTotal,
@@ -232,10 +229,10 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
               height: 6,
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
@@ -243,10 +240,10 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(
           '${NumberFormat('#,###').format(amount)} đ',
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textBody,
             fontSize: 13,
             fontWeight: FontWeight.w900,
@@ -258,18 +255,18 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
 
   Widget _buildReminderBanner() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.all(20),
+      margin: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEFCE8),
+        color: Color(0xFFFEFCE8),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFFEF9C3)),
+        border: Border.all(color: Color(0xFFFEF9C3)),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
-            decoration: const BoxDecoration(
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(
               color: AppColors.warning,
               shape: BoxShape.circle,
             ),
@@ -358,11 +355,8 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
               },
               borderRadius: BorderRadius.circular(16),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 8,
-                ),
+                duration: Duration(milliseconds: 200),
+                padding: EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                 decoration: BoxDecoration(
                   color: isSelected ? AppColors.primary : AppColors.surface,
                   borderRadius: BorderRadius.circular(16),
@@ -374,7 +368,7 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
                           BoxShadow(
                             color: AppColors.primary.withOpacity(0.2),
                             blurRadius: 10,
-                            offset: const Offset(0, 4),
+                            offset: Offset(0, 4),
                           ),
                         ]
                       : null,
@@ -443,19 +437,19 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
+            padding: EdgeInsets.all(24),
+            decoration: BoxDecoration(
               color: Color(0xFFF1F5F9),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.receipt_long_rounded,
               size: 64,
               color: Color(0xFFCBD5E1),
             ),
           ),
-          const SizedBox(height: 24),
-          const Text(
+          SizedBox(height: 24),
+          Text(
             'Không tìm thấy hóa đơn',
             style: TextStyle(
               color: AppColors.textBody,
@@ -463,8 +457,8 @@ class _PaymentManagementPageState extends State<PaymentManagementPage> {
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: 8),
+          Text(
             'Thử thay đổi bộ lọc hoặc làm mới danh sách',
             style: TextStyle(
               color: AppColors.textSecondary,
@@ -482,7 +476,7 @@ class _PremiumInvoiceCard extends StatelessWidget {
   final InvoiceModel invoice;
   final VoidCallback onPay;
 
-  const _PremiumInvoiceCard({required this.invoice, required this.onPay});
+  _PremiumInvoiceCard({required this.invoice, required this.onPay});
 
   @override
   Widget build(BuildContext context) {
@@ -491,11 +485,11 @@ class _PremiumInvoiceCard extends StatelessWidget {
     final Color statusColor = isPaid
         ? AppColors.success
         : isPending
-        ? const Color(0xFFD97706)
+        ? Color(0xFFD97706)
         : AppColors.warning;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
+      margin: EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(28),
@@ -503,7 +497,7 @@ class _PremiumInvoiceCard extends StatelessWidget {
           BoxShadow(
             color: AppColors.textBody.withOpacity(0.04),
             blurRadius: 15,
-            offset: const Offset(0, 8),
+            offset: Offset(0, 8),
           ),
         ],
         border: Border.all(color: AppColors.border.withOpacity(0.5)),
@@ -530,7 +524,7 @@ class _PremiumInvoiceCard extends StatelessWidget {
                       size: 24,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -540,7 +534,7 @@ class _PremiumInvoiceCard extends StatelessWidget {
                           children: [
                             Text(
                               invoice.id.toUpperCase(),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w900,
                                 fontSize: 11,
@@ -572,10 +566,10 @@ class _PremiumInvoiceCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         Text(
                           invoice.serviceContent,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textBody,
                             fontWeight: FontWeight.w900,
                             fontSize: 15,
@@ -583,12 +577,12 @@ class _PremiumInvoiceCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           DateFormat(
                             'dd/MM/yyyy • HH:mm',
                           ).format(invoice.createdAt),
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -600,9 +594,9 @@ class _PremiumInvoiceCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Divider(height: 1, color: AppColors.border),
+            Divider(height: 1, color: AppColors.border),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -611,25 +605,25 @@ class _PremiumInvoiceCard extends StatelessWidget {
                     children: [
                       Text(
                         'TỔNG HÓA ĐƠN: ${NumberFormat('#,###').format(invoice.amount)} đ',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                       if (invoice.paidAmount > 0) ...[
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           'ĐÃ THANH TOÁN: ${NumberFormat('#,###').format(invoice.paidAmount)} đ',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.success,
                             fontSize: 10,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
                       ],
-                      const SizedBox(height: 6),
-                      const Text(
+                      SizedBox(height: 6),
+                      Text(
                         'CÒN PHẢI TRẢ',
                         style: TextStyle(
                           color: AppColors.textHint,
@@ -638,10 +632,10 @@ class _PremiumInvoiceCard extends StatelessWidget {
                           letterSpacing: 0.5,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         '${NumberFormat('#,###').format(invoice.remainingAmount)} đ',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textBody,
                           fontWeight: FontWeight.w900,
                           fontSize: 18,
@@ -651,7 +645,7 @@ class _PremiumInvoiceCard extends StatelessWidget {
                   ),
                   isPaid || isPending
                       ? Container(
-                          padding: const EdgeInsets.symmetric(
+                          padding: EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 10,
                           ),
@@ -659,7 +653,7 @@ class _PremiumInvoiceCard extends StatelessWidget {
                             color: AppColors.secondary,
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: const Row(
+                          child: Row(
                             children: [
                               Text(
                                 'Chi tiết',
@@ -678,12 +672,12 @@ class _PremiumInvoiceCard extends StatelessWidget {
                           ),
                         )
                       : Container(
-                          padding: const EdgeInsets.symmetric(
+                          padding: EdgeInsets.symmetric(
                             horizontal: 20,
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
+                            gradient: LinearGradient(
                               colors: [AppColors.primary, Color(0xFF3B82F6)],
                             ),
                             borderRadius: BorderRadius.circular(14),

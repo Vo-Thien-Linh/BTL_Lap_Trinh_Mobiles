@@ -60,7 +60,7 @@ class _ExaminationHistoryPageState extends State<ExaminationHistoryPage> {
         _selectedFilter = 'Tất cả';
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Đã cập nhật dòng thời gian y tế mới nhất'),
           behavior: SnackBarBehavior.floating,
           duration: Duration(seconds: 1),
@@ -76,7 +76,7 @@ class _ExaminationHistoryPageState extends State<ExaminationHistoryPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'DÒNG THỜI GIAN Y TẾ',
           style: TextStyle(
             fontSize: 14,
@@ -91,7 +91,7 @@ class _ExaminationHistoryPageState extends State<ExaminationHistoryPage> {
         leading: widget.isSubPage
             ? null
             : IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back_ios_new_rounded,
                   size: 18,
                   color: AppColors.textBody,
@@ -100,7 +100,7 @@ class _ExaminationHistoryPageState extends State<ExaminationHistoryPage> {
               ),
         actions: [
           _isLoading
-              ? const Center(
+              ? Center(
                   child: Padding(
                     padding: EdgeInsets.only(right: 16),
                     child: SizedBox(
@@ -115,10 +115,7 @@ class _ExaminationHistoryPageState extends State<ExaminationHistoryPage> {
                 )
               : IconButton(
                   onPressed: _handleRefresh,
-                  icon: const Icon(
-                    Icons.refresh_rounded,
-                    color: AppColors.textBody,
-                  ),
+                  icon: Icon(Icons.refresh_rounded, color: AppColors.textBody),
                 ),
         ],
       ),
@@ -149,16 +146,20 @@ class _ExaminationHistoryPageState extends State<ExaminationHistoryPage> {
                 .where('patientId', isEqualTo: uid)
                 .snapshots(),
       builder: (context, snapshot) {
-        int totalVisits = snapshot.hasData ? snapshot.data!.docs.length : 0;
-        int completed = snapshot.hasData
-            ? snapshot.data!.docs
-                  .where((d) => d.get('status') == 'completed')
-                  .length
-            : 0;
+        final docs = snapshot.data?.docs ?? const <QueryDocumentSnapshot>[];
+        int totalVisits = docs.length;
+        int completed = docs
+            .where(
+              (d) =>
+                  ((d.data() as Map<String, dynamic>)['status']?.toString() ??
+                      '') ==
+                  'completed',
+            )
+            .length;
 
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          margin: const EdgeInsets.all(20),
+          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          margin: EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(24),
@@ -166,7 +167,7 @@ class _ExaminationHistoryPageState extends State<ExaminationHistoryPage> {
               BoxShadow(
                 color: AppColors.primary.withOpacity(0.06),
                 blurRadius: 20,
-                offset: const Offset(0, 10),
+                offset: Offset(0, 10),
               ),
             ],
           ),
@@ -195,20 +196,20 @@ class _ExaminationHistoryPageState extends State<ExaminationHistoryPage> {
     return Column(
       children: [
         Icon(icon, color: AppColors.primary, size: 24),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textBody,
             fontSize: 24,
             fontWeight: FontWeight.w900,
             height: 1,
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(
           label.toUpperCase(),
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 10,
             fontWeight: FontWeight.w800,
@@ -223,18 +224,18 @@ class _ExaminationHistoryPageState extends State<ExaminationHistoryPage> {
     return SizedBox(
       height: 44,
       child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: EdgeInsets.symmetric(horizontal: 20),
         scrollDirection: Axis.horizontal,
         itemCount: _filters.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, __) => SizedBox(width: 8),
         itemBuilder: (context, index) {
           final f = _filters[index];
           final isSelected = _selectedFilter == f;
           return InkWell(
             onTap: () => setState(() => _selectedFilter = f),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              duration: Duration(milliseconds: 200),
+              padding: EdgeInsets.symmetric(horizontal: 16),
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: isSelected ? AppColors.primary : AppColors.surface,
@@ -284,13 +285,15 @@ class _ExaminationHistoryPageState extends State<ExaminationHistoryPage> {
             'Vắng mặt': ['no_show', 'absent'],
             'Đã hủy': ['cancelled'],
           };
-          final statuses = mapping[_selectedFilter] ?? const <String>[];
-          list = list.where((a) => statuses.contains(a.status)).toList();
+          final statuses = mapping[_selectedFilter] ?? <String>[];
+          list = list
+              .where((a) => statuses.contains(a.effectiveStatus))
+              .toList();
         }
         list.sort((a, b) => b.appointmentDate.compareTo(a.appointmentDate));
 
         if (list.isEmpty)
-          return const Center(
+          return Center(
             child: Text(
               'Không có dữ liệu',
               style: TextStyle(color: AppColors.textHint),
@@ -298,7 +301,7 @@ class _ExaminationHistoryPageState extends State<ExaminationHistoryPage> {
           );
 
         return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 100),
+          padding: EdgeInsets.fromLTRB(16, 24, 16, 100),
           itemCount: list.length,
           itemBuilder: (context, index) {
             return Stack(
@@ -317,7 +320,7 @@ class _ExaminationHistoryPageState extends State<ExaminationHistoryPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Timeline Indicator
-                      _buildTimelineIndicator(list[index].status),
+                      _buildTimelineIndicator(list[index].effectiveStatus),
                       const SizedBox(width: 16),
                       Expanded(
                         child: _PremiumTimelineCard(appointment: list[index]),
@@ -440,13 +443,13 @@ class _ExaminationHistoryPageState extends State<ExaminationHistoryPage> {
 
 class _PremiumTimelineCard extends StatelessWidget {
   final HospitalAppointmentModel appointment;
-  const _PremiumTimelineCard({required this.appointment});
+  _PremiumTimelineCard({required this.appointment});
 
   @override
   Widget build(BuildContext context) {
     bool isCompleted = appointment.status == 'completed';
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
@@ -455,7 +458,7 @@ class _PremiumTimelineCard extends StatelessWidget {
           BoxShadow(
             color: AppColors.textBody.withOpacity(0.04),
             blurRadius: 12,
-            offset: const Offset(0, 6),
+            offset: Offset(0, 6),
           ),
         ],
       ),
@@ -469,7 +472,7 @@ class _PremiumTimelineCard extends StatelessWidget {
                 DateFormat(
                   'dd MMM, yyyy',
                 ).format(appointment.appointmentDate).toUpperCase(),
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w900,
                   fontSize: 10,
@@ -479,10 +482,10 @@ class _PremiumTimelineCard extends StatelessWidget {
               _buildPaymentBadge(),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             appointment.doctorName,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textBody,
               fontSize: 16,
               fontWeight: FontWeight.w900,
@@ -490,17 +493,14 @@ class _PremiumTimelineCard extends StatelessWidget {
           ),
           Text(
             appointment.departmentName,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 16),
-          if (isCompleted) ...[
-            _buildDiagnosisSnippet(),
-            const SizedBox(height: 16),
-          ],
+          SizedBox(height: 16),
+          if (isCompleted) ...[_buildDiagnosisSnippet(), SizedBox(height: 16)],
           _buildCardActions(context),
         ],
       ),
@@ -509,22 +509,18 @@ class _PremiumTimelineCard extends StatelessWidget {
 
   Widget _buildPaymentBadge() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: AppColors.success.withOpacity(0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.payments_rounded,
-            color: AppColors.success,
-            size: 10,
-          ),
-          const SizedBox(width: 4),
+          Icon(Icons.payments_rounded, color: AppColors.success, size: 10),
+          SizedBox(width: 4),
           Text(
             '${NumberFormat.currency(locale: "vi_VN", symbol: "đ").format(appointment.consultationFee)}',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.success,
               fontSize: 9,
               fontWeight: FontWeight.w900,
@@ -538,7 +534,7 @@ class _PremiumTimelineCard extends StatelessWidget {
   Widget _buildDiagnosisSnippet() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.secondary,
         borderRadius: BorderRadius.circular(12),
@@ -546,7 +542,7 @@ class _PremiumTimelineCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'CHẨN ĐOÁN',
             style: TextStyle(
               color: AppColors.textHint,
@@ -555,10 +551,10 @@ class _PremiumTimelineCard extends StatelessWidget {
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             appointment.diagnosis ?? "Đã có bệnh án chi tiết",
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textBody,
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -610,7 +606,7 @@ class _PremiumTimelineCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: AppColors.primaryLight.withOpacity(0.5),
           borderRadius: BorderRadius.circular(12),
@@ -619,10 +615,10 @@ class _PremiumTimelineCard extends StatelessWidget {
         child: Row(
           children: [
             Icon(icon, color: AppColors.primary, size: 14),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.primary,
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
@@ -660,8 +656,8 @@ class _PremiumTimelineCard extends StatelessWidget {
               // Header Biên lai
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: const BoxDecoration(
+                padding: EdgeInsets.all(24),
+                decoration: BoxDecoration(
                   color: AppColors.primary,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(24),
@@ -686,7 +682,7 @@ class _PremiumTimelineCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Mã HD: INV-${appointment.id.substring(0, 8).toUpperCase()}',
+                      'Mã HD: INV-${_shortId(appointment.id)}',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.8),
                         fontSize: 10,
@@ -716,13 +712,13 @@ class _PremiumTimelineCard extends StatelessWidget {
                       ).format(appointment.appointmentDate),
                     ),
                     _buildInvoiceRow('Khoa', appointment.departmentName),
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: Divider(height: 1),
                     ),
 
                     // Chi tiết phí
-                    const Text(
+                    Text(
                       'CHI TIẾT DỊCH VỤ',
                       style: TextStyle(
                         fontSize: 10,
@@ -738,7 +734,7 @@ class _PremiumTimelineCard extends StatelessWidget {
                     if (medicineFee > 0)
                       _buildFeeItem('Phí thuốc kê đơn', medicineFee),
 
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: DashedDivider(),
                     ),
@@ -747,7 +743,7 @@ class _PremiumTimelineCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'TỔNG THANH TOÁN',
                           style: TextStyle(
                             fontSize: 14,
@@ -760,7 +756,7 @@ class _PremiumTimelineCard extends StatelessWidget {
                             locale: 'vi_VN',
                             symbol: 'đ',
                           ).format(totalFee),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
                             color: AppColors.primary,
@@ -768,12 +764,12 @@ class _PremiumTimelineCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
 
                     // Status Badge
                     Center(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding: EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 8,
                         ),
@@ -784,7 +780,7 @@ class _PremiumTimelineCard extends StatelessWidget {
                           ),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Text(
+                        child: Text(
                           'ĐÃ THANH TOÁN',
                           style: TextStyle(
                             color: AppColors.success,
@@ -795,7 +791,7 @@ class _PremiumTimelineCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
 
                     SizedBox(
                       width: double.infinity,
@@ -828,13 +824,13 @@ class _PremiumTimelineCard extends StatelessWidget {
 
   Widget _buildInvoiceRow(String label, String value, {bool isBold = false}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(bottom: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textHint,
               fontSize: 12,
               fontWeight: FontWeight.w500,
@@ -855,13 +851,13 @@ class _PremiumTimelineCard extends StatelessWidget {
 
   Widget _buildFeeItem(String label, double amount) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(bottom: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textBody,
               fontSize: 12,
               fontWeight: FontWeight.w500,
@@ -869,7 +865,7 @@ class _PremiumTimelineCard extends StatelessWidget {
           ),
           Text(
             NumberFormat.currency(locale: 'vi_VN', symbol: 'đ').format(amount),
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textBody,
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -879,23 +875,30 @@ class _PremiumTimelineCard extends StatelessWidget {
       ),
     );
   }
+
+  String _shortId(String value) {
+    final cleaned = value.trim();
+    if (cleaned.isEmpty) return 'N/A';
+    final end = cleaned.length < 8 ? cleaned.length : 8;
+    return cleaned.substring(0, end).toUpperCase();
+  }
 }
 
 class DashedDivider extends StatelessWidget {
-  const DashedDivider({super.key});
+  DashedDivider({super.key});
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         final boxWidth = constraints.constrainWidth();
-        const dashWidth = 4.0;
+        final dashWidth = 4.0;
         final dashCount = (boxWidth / (2 * dashWidth)).floor();
         return Flex(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           direction: Axis.horizontal,
           children: List.generate(dashCount, (_) {
-            return const SizedBox(
+            return SizedBox(
               width: dashWidth,
               height: 1,
               child: DecoratedBox(

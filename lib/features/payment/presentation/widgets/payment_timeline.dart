@@ -26,7 +26,7 @@ class PaymentTimeline extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Trạng thái',
           style: TextStyle(
             color: AppColors.textBody,
@@ -49,29 +49,29 @@ class _TimelineEvent {
 }
 
 class _TimelineRow extends StatelessWidget {
-  const _TimelineRow({required this.event});
+  _TimelineRow({required this.event});
 
   final _TimelineEvent event;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
           Container(
             width: 10,
             height: 10,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.primary,
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Text(
               event.title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textBody,
                 fontWeight: FontWeight.w700,
               ),
@@ -79,10 +79,7 @@ class _TimelineRow extends StatelessWidget {
           ),
           Text(
             DateFormat('dd/MM/yyyy HH:mm').format(event.time),
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-            ),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
           ),
         ],
       ),

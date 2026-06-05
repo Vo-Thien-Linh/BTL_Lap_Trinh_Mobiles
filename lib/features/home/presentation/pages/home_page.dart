@@ -442,14 +442,14 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Đăng xuất'),
-          content: const Text(
+          title: Text('Đăng xuất'),
+          content: Text(
             'Bạn có chắc chắn muốn đăng xuất khỏi tài khoản này không?',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Hủy'),
+              child: Text('Hủy'),
             ),
             FilledButton.icon(
               onPressed: () => Navigator.pop(dialogContext, true),
@@ -601,7 +601,7 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
+                  Text(
                     'Chào mừng,',
                     style: TextStyle(
                       color: Color(0xFF222638),
@@ -609,12 +609,12 @@ class _HomePageState extends State<HomePage> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     userName,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.primary,
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
@@ -633,7 +633,7 @@ class _HomePageState extends State<HomePage> {
                         .where('recipientRole', isEqualTo: 'patient')
                         .where('isRead', isEqualTo: false)
                         .snapshots()
-                  : const Stream.empty(),
+                  : Stream.empty(),
               builder: (context, snapshot) {
                 final unreadCount = snapshot.hasData
                     ? snapshot.data!.docs.length
@@ -1154,7 +1154,7 @@ class _HomePageState extends State<HomePage> {
                 if (!mounted || departments.isEmpty) return;
                 _showDepartmentsSheet(departments);
               },
-              child: const Text(
+              child: Text(
                 'Xem thêm',
                 style: TextStyle(
                   color: AppColors.primary,
@@ -1437,7 +1437,7 @@ class _HomePageState extends State<HomePage> {
                                     )
                                     .where('isRead', isEqualTo: false)
                                     .snapshots()
-                              : const Stream.empty(),
+                              : Stream.empty(),
                           builder: (context, snapshot) {
                             final count = snapshot.hasData
                                 ? snapshot.data!.docs.length
@@ -1469,7 +1469,7 @@ class _HomePageState extends State<HomePage> {
                                           .uid,
                                     )
                                     .snapshots()
-                              : const Stream.empty(),
+                              : Stream.empty(),
                           builder: (context, snapshot) {
                             final activeCount = snapshot.hasData
                                 ? snapshot.data!.docs.where((doc) {

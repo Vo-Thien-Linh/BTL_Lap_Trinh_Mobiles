@@ -5,7 +5,7 @@ import '../../../../data/models/user_model.dart';
 import '../../../../app/theme/app_colors.dart';
 
 class MedicalEmergencyIdPage extends StatelessWidget {
-  const MedicalEmergencyIdPage({super.key});
+  MedicalEmergencyIdPage({super.key});
 
   Stream<DocumentSnapshot> _getUserStream(String uid) async* {
     final lowerRef = FirebaseFirestore.instance.collection('users').doc(uid);
@@ -52,11 +52,11 @@ class MedicalEmergencyIdPage extends StatelessWidget {
                 _buildSafetyWarning(),
                 const SizedBox(height: 32),
                 _buildIdentitiferCard(user),
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
                 _buildDetailedInfo(user),
-                const SizedBox(height: 40),
+                SizedBox(height: 40),
                 _buildEmergencyContact(user),
-                const SizedBox(height: 40),
+                SizedBox(height: 40),
                 _buildBackInstructions(context),
               ],
             ),
@@ -68,16 +68,16 @@ class MedicalEmergencyIdPage extends StatelessWidget {
 
   Widget _buildSafetyWarning() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.error.withOpacity(0.05),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.error.withOpacity(0.2)),
       ),
-      child: const Row(
+      child: Row(
         children: [
           Icon(Icons.info_outline_rounded, color: AppColors.error, size: 20),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Text(
               'THÔNG TIN NÀY GIÚP NHÂN VIÊN Y TẾ CỨU HỘ TRONG TÌNH HUỐNG KHẨN CẤP.',
@@ -96,7 +96,7 @@ class MedicalEmergencyIdPage extends StatelessWidget {
   Widget _buildIdentitiferCard(UserModel user) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(32),
@@ -104,7 +104,7 @@ class MedicalEmergencyIdPage extends StatelessWidget {
           BoxShadow(
             color: AppColors.textBody.withOpacity(0.05),
             blurRadius: 30,
-            offset: const Offset(0, 15),
+            offset: Offset(0, 15),
           ),
         ],
       ),
@@ -112,38 +112,38 @@ class MedicalEmergencyIdPage extends StatelessWidget {
         children: [
           Text(
             user.fullName == '' ? "NGƯỜI DÙNG" : user.fullName.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textBody,
               fontSize: 24,
               fontWeight: FontWeight.w900,
               letterSpacing: 1,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             'DOB: ${user.dateOfBirth ?? "---"}',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: 32),
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: AppColors.background,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: AppColors.border),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.qr_code_2_rounded,
               size: 180,
               color: AppColors.textBody,
             ),
           ),
-          const SizedBox(height: 32),
-          const Text(
+          SizedBox(height: 32),
+          Text(
             'ID Y TẾ CHUẨN QUỐC TẾ',
             style: TextStyle(
               color: AppColors.textHint,
@@ -185,7 +185,7 @@ class MedicalEmergencyIdPage extends StatelessWidget {
 
   Widget _buildInfoRow(String label, String value, {Color? color}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
+      padding: EdgeInsets.only(bottom: 24),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -193,7 +193,7 @@ class MedicalEmergencyIdPage extends StatelessWidget {
             flex: 3,
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textHint,
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
@@ -220,7 +220,7 @@ class MedicalEmergencyIdPage extends StatelessWidget {
   Widget _buildEmergencyContact(UserModel user) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
@@ -229,14 +229,14 @@ class MedicalEmergencyIdPage extends StatelessWidget {
           BoxShadow(
             color: AppColors.textBody.withOpacity(0.02),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'LIÊN HỆ KHẨN CẤP',
             style: TextStyle(
               color: AppColors.textHint,
@@ -249,22 +249,22 @@ class MedicalEmergencyIdPage extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: Colors.green.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.phone_in_talk_rounded,
                   color: Colors.green,
                   size: 24,
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'NGƯỜI THÂN (Vợ/Chồng/Con)',
                     style: TextStyle(
                       color: AppColors.textBody,
@@ -274,7 +274,7 @@ class MedicalEmergencyIdPage extends StatelessWidget {
                   ),
                   Text(
                     user.emergencyPhone ?? '09x-xxxx-xxx',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -292,7 +292,7 @@ class MedicalEmergencyIdPage extends StatelessWidget {
   Widget _buildBackInstructions(BuildContext context) {
     return InkWell(
       onTap: () => Navigator.pop(context),
-      child: const Text(
+      child: Text(
         'NHẤN ĐỂ QUAY LẠI HỒ SƠ CHÍNH',
         style: TextStyle(
           color: AppColors.textHint,

@@ -159,6 +159,7 @@ class HospitalAppointment extends Equatable {
   final List<Map<String, dynamic>>? labResults;
   final Map<String, dynamic>? vitals;
   final String status;
+  final String cancelRequestStatus;
   final String paymentStatus;
   final String paymentMethod;
   final DateTime createdAt;
@@ -194,10 +195,17 @@ class HospitalAppointment extends Equatable {
     this.labResults,
     this.vitals,
     required this.status,
+    this.cancelRequestStatus = '',
     this.paymentStatus = '',
     required this.paymentMethod,
     required this.createdAt,
   });
+
+  bool get hasPendingCancelRequest =>
+      cancelRequestStatus.trim().toLowerCase() == 'pending';
+
+  String get effectiveStatus =>
+      hasPendingCancelRequest ? 'cancel_requested' : status;
 
   @override
   List<Object?> get props => [
@@ -211,5 +219,7 @@ class HospitalAppointment extends Equatable {
     scheduleId,
     queueNumber,
     queueOrder,
+    status,
+    cancelRequestStatus,
   ];
 }

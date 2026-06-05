@@ -10,7 +10,8 @@ class PremiumLoginRequired extends StatelessWidget {
   const PremiumLoginRequired({
     super.key,
     this.title = 'CHƯA ĐĂNG NHẬP',
-    this.description = 'Vui lòng đăng nhập để sử dụng tính năng này và bảo mật thông tin y tế của bạn.',
+    this.description =
+        'Vui lòng đăng nhập để sử dụng tính năng này và bảo mật thông tin y tế của bạn.',
     this.icon = Icons.lock_person_rounded,
   });
 
@@ -18,26 +19,22 @@ class PremiumLoginRequired extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(40),
+        padding: EdgeInsets.all(40),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(32),
+              padding: EdgeInsets.all(32),
               decoration: BoxDecoration(
                 color: AppColors.primaryLight.withOpacity(0.3),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                size: 80,
-                color: AppColors.primary,
-              ),
+              child: Icon(icon, size: 80, color: AppColors.primary),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w900,
                 color: AppColors.textBody,
@@ -45,17 +42,17 @@ class PremiumLoginRequired extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text(
               description,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 color: AppColors.textSecondary,
                 height: 1.6,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 48),
+            SizedBox(height: 48),
             SizedBox(
               width: double.infinity,
               height: 56,
@@ -75,7 +72,7 @@ class PremiumLoginRequired extends StatelessWidget {
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
+                child: Text(
                   'ĐĂNG NHẬP NGAY',
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
@@ -84,12 +81,12 @@ class PremiumLoginRequired extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             TextButton(
               onPressed: () {
-                 Navigator.pushNamed(context, AppRoutes.register);
+                Navigator.pushNamed(context, AppRoutes.register);
               },
-              child: const Text(
+              child: Text(
                 'Chưa có tài khoản? Đăng ký',
                 style: TextStyle(
                   color: AppColors.primary,

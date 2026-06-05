@@ -28,7 +28,7 @@ class _BookingSummaryStepState extends State<BookingSummaryStep> {
     return BlocBuilder<BookingBloc, BookingState>(
       builder: (context, state) {
         return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: EdgeInsets.symmetric(horizontal: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -37,9 +37,9 @@ class _BookingSummaryStepState extends State<BookingSummaryStep> {
                   IconButton(
                     onPressed: () =>
                         context.read<BookingBloc>().add(StepBack()),
-                    icon: const Icon(Icons.arrow_back_ios_rounded, size: 18),
+                    icon: Icon(Icons.arrow_back_ios_rounded, size: 18),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Xác nhận đặt lịch',
                       maxLines: 2,
@@ -52,10 +52,10 @@ class _BookingSummaryStepState extends State<BookingSummaryStep> {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               _buildSummaryCard(state),
-              const SizedBox(height: 20),
-              const Text(
+              SizedBox(height: 20),
+              Text(
                 'Triệu chứng / Lý do khám',
                 style: TextStyle(
                   fontSize: 15,
@@ -63,7 +63,7 @@ class _BookingSummaryStepState extends State<BookingSummaryStep> {
                   color: AppColors.text,
                 ),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               TextField(
                 controller: _symptomsController,
                 maxLines: 3,
@@ -71,19 +71,16 @@ class _BookingSummaryStepState extends State<BookingSummaryStep> {
                     context.read<BookingBloc>().add(UpdateSymptoms(val)),
                 decoration: InputDecoration(
                   hintText: 'Mô tả ngắn gọn tình trạng sức khỏe của bạn...',
-                  hintStyle: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.hint,
-                  ),
+                  hintStyle: TextStyle(fontSize: 14, color: AppColors.hint),
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: AppColors.border),
+                    borderSide: BorderSide(color: AppColors.border),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: AppColors.border),
+                    borderSide: BorderSide(color: AppColors.border),
                   ),
                 ),
               ),
@@ -179,7 +176,7 @@ class _BookingSummaryStepState extends State<BookingSummaryStep> {
             'Thời gian khám dự kiến',
             estimatedTime,
           ),
-          const Divider(height: 24),
+          Divider(height: 24),
           _buildSummaryRow(
             Icons.payments_outlined,
             'Chi phí khám dự kiến',
@@ -194,28 +191,28 @@ class _BookingSummaryStepState extends State<BookingSummaryStep> {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: AppColors.secondary,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: AppColors.primaryDark, size: 20),
         ),
-        const SizedBox(width: 14),
+        SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                style: const TextStyle(fontSize: 12, color: AppColors.hint),
+                style: TextStyle(fontSize: 12, color: AppColors.hint),
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: 2),
               Text(
                 value,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: AppColors.text,
@@ -261,7 +258,7 @@ class _BookingSummaryStepState extends State<BookingSummaryStep> {
   Widget _buildConflictPanel(String message) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
@@ -270,12 +267,12 @@ class _BookingSummaryStepState extends State<BookingSummaryStep> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.error_outline_rounded, color: AppColors.error),
-          const SizedBox(width: 10),
+          Icon(Icons.error_outline_rounded, color: AppColors.error),
+          SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.error,
                 fontSize: 13,
                 fontWeight: FontWeight.w700,

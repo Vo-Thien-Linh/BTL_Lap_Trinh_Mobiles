@@ -1,32 +1,44 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Primary Healthcare Blue
-  static const Color primary = Color(0xFF2563EB); // Royal Medical Blue
-  static const Color primaryLight = Color(0xFFDBEAFE);
-  static const Color primaryDark = Color(0xFF1E40AF);
+  static bool _isDark = false;
 
-  // Backgrounds & Surfaces
-  static const Color background = Color(0xFFF8FAFC); // Clean Slate 50
-  static const Color surface = Color(0xFFFFFFFF); // Standard White
-  static const Color secondary = Color(0xFFF1F5F9); // Lighter Surface
+  static void configure({required Brightness brightness}) {
+    _isDark = brightness == Brightness.dark;
+  }
 
-  // Clinical Accents
-  static const Color success = Color(0xFF10B981); // Emerald/Mint
-  static const Color warning = Color(0xFFF59E0B); // Amber
-  static const Color error = Color(0xFFEF4444); // Emergency Red
-  
-  // Neutral Text
-  static const Color textBody = Color(0xFF1E293B); // Slate 800
-  static const Color textSecondary = Color(0xFF64748B); // Slate 500
-  static const Color textHint = Color(0xFF94A3B8); // Slate 400
+  static Color get primary =>
+      _isDark ? const Color(0xFF67B0FF) : const Color(0xFF2563EB);
+  static Color get primaryLight =>
+      _isDark ? const Color(0xFF1E3A5F) : const Color(0xFFDBEAFE);
+  static Color get primaryDark =>
+      _isDark ? const Color(0xFF8FC7FF) : const Color(0xFF1E40AF);
+  static Color get indicator =>
+      _isDark ? const Color(0xFF67B0FF) : const Color(0xFF3B82F6);
 
-  // UI Elements
-  static const Color border = Color(0xFFE2E8F0);
-  static const Color indicator = Color(0xFF3B82F6);
+  static Color get background =>
+      _isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+  static Color get surface =>
+      _isDark ? const Color(0xFF172235) : const Color(0xFFFFFFFF);
+  static Color get secondary =>
+      _isDark ? const Color(0xFF111B2B) : const Color(0xFFF1F5F9);
 
-  // Backward Compatibility Aliases
-  static const Color white = Color(0xFFFFFFFF); 
-  static const Color text = Color(0xFF1E293B); 
-  static const Color hint = Color(0xFF94A3B8);
+  static const Color success = Color(0xFF10B981);
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color error = Color(0xFFEF4444);
+
+  static Color get textBody =>
+      _isDark ? const Color(0xFFE7ECF7) : const Color(0xFF1E293B);
+  static Color get textSecondary =>
+      _isDark ? const Color(0xFFB7C5DA) : const Color(0xFF64748B);
+  static Color get textHint =>
+      _isDark ? const Color(0xFF8EA1BE) : const Color(0xFF94A3B8);
+
+  static Color get border =>
+      _isDark ? const Color(0xFF26344A) : const Color(0xFFE2E8F0);
+
+  static Color get white =>
+      _isDark ? const Color(0xFF172235) : const Color(0xFFFFFFFF);
+  static Color get text => textBody;
+  static Color get hint => textHint;
 }

@@ -8,7 +8,7 @@ import '../../../../app/theme/app_colors.dart';
 
 class MedicalVaultCategoryPage extends StatefulWidget {
   final String category;
-  const MedicalVaultCategoryPage({super.key, required this.category});
+  MedicalVaultCategoryPage({super.key, required this.category});
 
   @override
   State<MedicalVaultCategoryPage> createState() =>
@@ -25,7 +25,7 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
       appBar: AppBar(
         title: Text(
           widget.category.toUpperCase(),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w900,
             letterSpacing: 1.2,
@@ -37,7 +37,7 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
         foregroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -47,18 +47,18 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Đang cập nhật danh mục ${widget.category}...'),
-                  duration: const Duration(seconds: 1),
+                  duration: Duration(seconds: 1),
                   backgroundColor: AppColors.primary,
                 ),
               );
             },
-            icon: const Icon(Icons.refresh_rounded),
+            icon: Icon(Icons.refresh_rounded),
             tooltip: 'Làm mới',
           ),
         ],
         flexibleSpace: FlexibleSpaceBar(
           background: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [AppColors.primary, Color(0xFF3B82F6)],
                 begin: Alignment.topLeft,
@@ -113,19 +113,19 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
+            padding: EdgeInsets.all(24),
+            decoration: BoxDecoration(
               color: Color(0xFFF1F5F9),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.folder_open_rounded,
               size: 64,
               color: AppColors.textHint,
             ),
           ),
-          const SizedBox(height: 24),
-          const Text(
+          SizedBox(height: 24),
+          Text(
             'Chưa có dữ liệu cho mục này',
             style: TextStyle(
               color: AppColors.textBody,
@@ -133,7 +133,7 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
               fontSize: 16,
             ),
           ),
-          const Text(
+          Text(
             'Dữ liệu sẽ hiển thị sau khi hoàn tất khám bệnh',
             style: TextStyle(
               color: AppColors.textSecondary,
@@ -164,7 +164,7 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
     if (allLabs.isEmpty) return _buildEmptyState();
 
     return ListView.builder(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       itemCount: allLabs.length,
       itemBuilder: (context, index) {
         final lab = allLabs[index];
@@ -177,8 +177,8 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
             status.toString().toLowerCase().contains('thấp');
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(20),
+          margin: EdgeInsets.only(bottom: 16),
+          padding: EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(24),
@@ -186,7 +186,7 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
               BoxShadow(
                 color: AppColors.textBody.withOpacity(0.02),
                 blurRadius: 10,
-                offset: const Offset(0, 4),
+                offset: Offset(0, 4),
               ),
             ],
             border: Border.all(color: AppColors.border.withOpacity(0.5)),
@@ -210,23 +210,23 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
                   size: 24,
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       lab['name'] ?? 'Xét nghiệm',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 14,
                         color: AppColors.textBody,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: 2),
                     Text(
                       '$dateStr • ${lab['dept']}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         color: AppColors.textSecondary,
                         fontWeight: FontWeight.w600,
@@ -271,14 +271,14 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
     if (prescApps.isEmpty) return _buildEmptyState();
 
     return ListView.builder(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       itemCount: prescApps.length,
       itemBuilder: (context, index) {
         final app = prescApps[index];
         final meds = app.prescription!;
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 20),
+          margin: EdgeInsets.only(bottom: 20),
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(24),
@@ -286,7 +286,7 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
               BoxShadow(
                 color: AppColors.textBody.withOpacity(0.04),
                 blurRadius: 12,
-                offset: const Offset(0, 6),
+                offset: Offset(0, 6),
               ),
             ],
             border: Border.all(color: AppColors.border.withOpacity(0.5)),
@@ -294,8 +294,8 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
           child: Column(
             children: [
               Container(
-                padding: const EdgeInsets.all(20),
-                decoration: const BoxDecoration(
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
                   color: AppColors.primary,
                   gradient: LinearGradient(
                     colors: [AppColors.primary, Color(0xFF3B82F6)],
@@ -369,39 +369,39 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: EdgeInsets.only(bottom: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: AppColors.success.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.medication_outlined,
               color: AppColors.success,
               size: 20,
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   textValue('name', 'Thuốc'),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 14,
                     color: AppColors.textBody,
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(
                   '${textValue('dosage')} • ${textValue('usage')}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w500,
@@ -410,10 +410,10 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Text(
             textValue('quantity'),
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 12,
               color: AppColors.primary,
@@ -464,7 +464,7 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
               BoxShadow(
                 color: AppColors.textBody.withOpacity(0.05),
                 blurRadius: 10,
-                offset: const Offset(0, 4),
+                offset: Offset(0, 4),
               ),
             ],
             border: Border.all(color: AppColors.border.withOpacity(0.5)),
@@ -510,7 +510,7 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -518,16 +518,16 @@ class _MedicalVaultCategoryPageState extends State<MedicalVaultCategoryPage> {
                       mockTitles[index % mockTitles.length],
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 13,
                         color: AppColors.textBody,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
                       mockDates[index % mockDates.length],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         color: AppColors.textSecondary,
                         fontWeight: FontWeight.w600,

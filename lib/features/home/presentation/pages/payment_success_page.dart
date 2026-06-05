@@ -6,7 +6,7 @@ import '../../../../app/routes/app_routes.dart';
 
 class PaymentSuccessPage extends StatelessWidget {
   final InvoiceModel invoice;
-  const PaymentSuccessPage({super.key, required this.invoice});
+  PaymentSuccessPage({super.key, required this.invoice});
 
   @override
   Widget build(BuildContext context) {
@@ -17,11 +17,11 @@ class PaymentSuccessPage extends StatelessWidget {
           children: [
             const Spacer(),
             _buildCelebrationHeader(),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
             _buildReceiptCard(),
-            const Spacer(),
+            Spacer(),
             _buildActionButtons(context),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
           ],
         ),
       ),
@@ -38,7 +38,7 @@ class PaymentSuccessPage extends StatelessWidget {
             color: AppColors.success.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: const Center(
+          child: Center(
             child: Icon(
               Icons.check_circle_rounded,
               color: AppColors.success,
@@ -46,8 +46,8 @@ class PaymentSuccessPage extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 24),
-        const Text(
+        SizedBox(height: 24),
+        Text(
           'THANH TOÁN THÀNH CÔNG',
           style: TextStyle(
             fontSize: 18,
@@ -56,8 +56,8 @@ class PaymentSuccessPage extends StatelessWidget {
             letterSpacing: 1.2,
           ),
         ),
-        const SizedBox(height: 12),
-        const Text(
+        SizedBox(height: 12),
+        Text(
           'Hóa đơn đã được xác thực và xử lý trực tuyến',
           style: TextStyle(
             fontSize: 13,
@@ -71,8 +71,8 @@ class PaymentSuccessPage extends StatelessWidget {
 
   Widget _buildReceiptCard() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.all(32),
+      margin: EdgeInsets.symmetric(horizontal: 24),
+      padding: EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(32),
@@ -80,7 +80,7 @@ class PaymentSuccessPage extends StatelessWidget {
           BoxShadow(
             color: AppColors.textBody.withOpacity(0.04),
             blurRadius: 20,
-            offset: const Offset(0, 10),
+            offset: Offset(0, 10),
           ),
         ],
         border: Border.all(color: AppColors.border.withOpacity(0.5)),
@@ -92,7 +92,7 @@ class PaymentSuccessPage extends StatelessWidget {
             '#${invoice.id.toUpperCase()}',
             isHighlight: true,
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 20),
             child: Divider(height: 1, color: AppColors.border),
           ),
@@ -104,19 +104,19 @@ class PaymentSuccessPage extends StatelessWidget {
             'Ngày thanh toán',
             DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now()),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           _buildReceiptRow('Phương thức', 'Ví điện tử / Thẻ'),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           ...invoice.chargeBreakdown.map(
             (entry) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: EdgeInsets.only(bottom: 8),
               child: _buildReceiptRow(
                 entry.key,
                 '${NumberFormat('#,###').format(entry.value)} đ',
               ),
             ),
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 20),
             child: Divider(height: 1, color: AppColors.border),
           ),
@@ -126,15 +126,15 @@ class PaymentSuccessPage extends StatelessWidget {
             isHighlight: true,
             largeValue: true,
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: 32),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppColors.background,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.border),
             ),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
@@ -171,7 +171,7 @@ class PaymentSuccessPage extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             color: AppColors.textSecondary,
             fontWeight: FontWeight.w600,
@@ -204,8 +204,8 @@ class PaymentSuccessPage extends StatelessWidget {
                 arguments: invoice,
               );
             },
-            icon: const Icon(Icons.receipt_long_rounded, size: 20),
-            label: const Text(
+            icon: Icon(Icons.receipt_long_rounded, size: 20),
+            label: Text(
               'XEM & IN BIÊN LAI',
               style: TextStyle(
                 fontWeight: FontWeight.w900,
@@ -216,18 +216,18 @@ class PaymentSuccessPage extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 60),
+              minimumSize: Size(double.infinity, 60),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
               elevation: 0,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           TextButton(
             onPressed: () =>
                 Navigator.of(context).popUntil((route) => route.isFirst),
-            child: const Text(
+            child: Text(
               'TRỞ VỀ TRANG CHỦ',
               style: TextStyle(
                 fontWeight: FontWeight.w900,

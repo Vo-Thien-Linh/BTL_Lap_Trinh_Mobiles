@@ -70,7 +70,7 @@ class _BookingFlowViewState extends State<BookingFlowView> {
         if (_pageController.hasClients) {
           _pageController.animateToPage(
             state.currentStep,
-            duration: const Duration(milliseconds: 400),
+            duration: Duration(milliseconds: 400),
             curve: Curves.easeInOutCubic,
           );
         }
@@ -92,10 +92,10 @@ class _BookingFlowViewState extends State<BookingFlowView> {
           elevation: 0,
           leading: IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.close_rounded, color: AppColors.text),
+            icon: Icon(Icons.close_rounded, color: AppColors.text),
           ),
           centerTitle: true,
-          title: const Text(
+          title: Text(
             'ĐẶT LỊCH KHÁM',
             style: TextStyle(
               fontSize: 16,
@@ -133,10 +133,10 @@ class _BookingFlowViewState extends State<BookingFlowView> {
   Widget _buildProgressIndicator() {
     return BlocBuilder<BookingBloc, BookingState>(
       builder: (context, state) {
-        if (state.currentStep == 4) return const SizedBox.shrink();
+        if (state.currentStep == 4) return SizedBox.shrink();
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           child: Row(
             children: List.generate(4, (index) {
               final isActive = index <= state.currentStep;
@@ -177,7 +177,7 @@ class _BookingFlowViewState extends State<BookingFlowView> {
                       Expanded(
                         child: Container(
                           height: 3,
-                          margin: const EdgeInsets.symmetric(horizontal: 6),
+                          margin: EdgeInsets.symmetric(horizontal: 6),
                           decoration: BoxDecoration(
                             color: isActive && index < state.currentStep
                                 ? AppColors.primaryDark

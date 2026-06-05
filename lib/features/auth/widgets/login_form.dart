@@ -245,23 +245,23 @@ class _LoginFormState extends State<LoginForm> {
                     : () {
                         Navigator.pushNamed(context, AppRoutes.forgotPassword);
                       },
-                child: const Text('Quên mật khẩu?'),
+                child: Text('Quên mật khẩu?'),
               ),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
             CustomButton(
               text: 'Đăng nhập',
               isLoading: _isLoading,
               onPressed: _handleLogin,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: _isLoading ? null : _startGuestExperience,
               style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
+                minimumSize: Size.fromHeight(52),
                 foregroundColor: AppColors.primaryDark,
-                backgroundColor: const Color(0xFFF7FBFF),
-                side: const BorderSide(color: AppColors.primaryDark),
+                backgroundColor: Color(0xFFF7FBFF),
+                side: BorderSide(color: AppColors.primaryDark),
                 textStyle: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,

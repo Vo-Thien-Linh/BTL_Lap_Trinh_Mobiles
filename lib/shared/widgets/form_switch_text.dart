@@ -6,7 +6,7 @@ class FormSwitchText extends StatelessWidget {
   final String actionText;
   final VoidCallback onTap;
 
-  const FormSwitchText({
+  FormSwitchText({
     super.key,
     required this.normalText,
     required this.actionText,
@@ -18,15 +18,12 @@ class FormSwitchText extends StatelessWidget {
     return Wrap(
       alignment: WrapAlignment.center,
       children: [
-        Text(
-          normalText,
-          style: const TextStyle(color: AppColors.hint),
-        ),
+        Text(normalText, style: TextStyle(color: AppColors.hint)),
         GestureDetector(
           onTap: onTap,
           child: Text(
             actionText,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.primaryDark,
               fontWeight: FontWeight.bold,
             ),

@@ -26,15 +26,15 @@ class SelectTimeSlotStep extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Row(
                 children: [
                   IconButton(
                     onPressed: () =>
                         context.read<BookingBloc>().add(StepBack()),
-                    icon: const Icon(Icons.arrow_back_ios_rounded, size: 18),
+                    icon: Icon(Icons.arrow_back_ios_rounded, size: 18),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Chọn ca và số thứ tự khám',
                       maxLines: 2,
@@ -49,24 +49,24 @@ class SelectTimeSlotStep extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20),
               child: Container(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: AppColors.secondary,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.info_outline_rounded,
                       color: AppColors.primaryDark,
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         'Bác sĩ ${state.selectedDoctor?.name ?? ''} nhận khám vào các ca còn slot dưới đây.',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                           color: AppColors.text,
@@ -79,7 +79,7 @@ class SelectTimeSlotStep extends StatelessWidget {
             ),
             if (state.hasScheduleConflict)
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                padding: EdgeInsets.fromLTRB(20, 0, 20, 16),
                 child: _buildConflictPanel(
                   state.conflictMessage ??
                       'Bạn đã có lịch khám trong ca này. Vui lòng chọn ngày, buổi hoặc bác sĩ khác.',
@@ -87,7 +87,7 @@ class SelectTimeSlotStep extends StatelessWidget {
               ),
             Expanded(
               child: activeSchedules.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Padding(
                         padding: EdgeInsets.all(24),
                         child: Text(
@@ -162,8 +162,8 @@ class SelectTimeSlotStep extends StatelessWidget {
     final maxSlots = schedule.maxSlots > 0 ? schedule.maxSlots : shift.maxSlots;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 20, left: 4, right: 4),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.only(bottom: 20, left: 4, right: 4),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.secondary.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(20),
@@ -171,7 +171,7 @@ class SelectTimeSlotStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Chọn số thứ tự khám (STT):',
             style: TextStyle(
               fontSize: 14,
@@ -179,8 +179,8 @@ class SelectTimeSlotStep extends StatelessWidget {
               color: AppColors.text,
             ),
           ),
-          const SizedBox(height: 6),
-          const Text(
+          SizedBox(height: 6),
+          Text(
             'Thời gian chỉ là dự kiến và có thể thay đổi theo thực tế khám.',
             style: TextStyle(fontSize: 12, color: AppColors.hint),
           ),
@@ -211,7 +211,7 @@ class SelectTimeSlotStep extends StatelessWidget {
                       },
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  padding: EdgeInsets.symmetric(horizontal: 6),
                   decoration: BoxDecoration(
                     color: isBookedByMe
                         ? AppColors.primaryDark
@@ -238,7 +238,7 @@ class SelectTimeSlotStep extends StatelessWidget {
                                     : AppColors.text),
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      SizedBox(height: 3),
                       Text(
                         timeRange,
                         textAlign: TextAlign.center,
@@ -268,7 +268,7 @@ class SelectTimeSlotStep extends StatelessWidget {
   Widget _buildConflictPanel(String message) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
@@ -277,12 +277,12 @@ class SelectTimeSlotStep extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.error_outline_rounded, color: AppColors.error),
-          const SizedBox(width: 10),
+          Icon(Icons.error_outline_rounded, color: AppColors.error),
+          SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.error,
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -368,8 +368,8 @@ class _ShiftListItem extends StatelessWidget {
       onTap: isAvailable ? onTap : null,
       borderRadius: BorderRadius.circular(18),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        margin: EdgeInsets.only(bottom: 12),
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primaryDark : Colors.white,
           borderRadius: BorderRadius.circular(18),
@@ -383,7 +383,7 @@ class _ShiftListItem extends StatelessWidget {
               Icons.access_time_rounded,
               color: isSelected ? Colors.white : AppColors.primaryDark,
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -397,7 +397,7 @@ class _ShiftListItem extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     isFinished
                         ? 'Ca này đã qua'

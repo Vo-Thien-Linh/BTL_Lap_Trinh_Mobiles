@@ -24,7 +24,7 @@ class _PatientPaymentsPageState extends State<PatientPaymentsPage> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      return const Scaffold(
+      return Scaffold(
         body: Center(child: Text('Vui lòng đăng nhập để xem thanh toán.')),
       );
     }
@@ -38,7 +38,7 @@ class _PatientPaymentsPageState extends State<PatientPaymentsPage> {
           foregroundColor: AppColors.textBody,
           elevation: 0,
           titleSpacing: 0,
-          title: const Column(
+          title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
@@ -56,7 +56,7 @@ class _PatientPaymentsPageState extends State<PatientPaymentsPage> {
               ),
             ],
           ),
-          bottom: const TabBar(
+          bottom: TabBar(
             isScrollable: true,
             labelColor: AppColors.primary,
             unselectedLabelColor: AppColors.textSecondary,
@@ -82,7 +82,7 @@ class _PatientPaymentsPageState extends State<PatientPaymentsPage> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting &&
                 !snapshot.hasData) {
-              return const _PaymentListSkeleton();
+              return _PaymentListSkeleton();
             }
 
             if (snapshot.hasError) {
@@ -200,7 +200,7 @@ class _PaymentCard extends StatelessWidget {
         arguments: payment,
       ),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(8),
@@ -218,12 +218,12 @@ class _PaymentCard extends StatelessWidget {
                     color: AppColors.primaryLight,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.receipt_long_rounded,
                     color: AppColors.primary,
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,18 +232,18 @@ class _PaymentCard extends StatelessWidget {
                         title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textBody,
                           fontSize: 15,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12,
                         ),
@@ -271,13 +271,13 @@ class _PaymentCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   '${NumberFormat('#,###').format(payment.amount)} ?',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textBody,
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
@@ -314,7 +314,7 @@ class _PaymentCard extends StatelessWidget {
 }
 
 class _MiniInfo extends StatelessWidget {
-  const _MiniInfo({required this.label, required this.value});
+  _MiniInfo({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -324,16 +324,13 @@ class _MiniInfo extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(color: AppColors.textHint, fontSize: 11),
-        ),
-        const SizedBox(height: 3),
+        Text(label, style: TextStyle(color: AppColors.textHint, fontSize: 11)),
+        SizedBox(height: 3),
         Text(
           value.isEmpty ? '-' : value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textBody,
             fontSize: 12,
             fontWeight: FontWeight.w800,
@@ -345,14 +342,14 @@ class _MiniInfo extends StatelessWidget {
 }
 
 class _PaymentListSkeleton extends StatelessWidget {
-  const _PaymentListSkeleton();
+  _PaymentListSkeleton();
 
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       itemCount: 5,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      separatorBuilder: (context, index) => SizedBox(height: 12),
       itemBuilder: (context, index) => Container(
         height: 132,
         decoration: BoxDecoration(

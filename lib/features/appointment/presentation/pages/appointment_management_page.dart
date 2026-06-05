@@ -57,11 +57,11 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage>
               surfaceTintColor: Colors.transparent,
               elevation: 0,
               flexibleSpace: FlexibleSpaceBar(
-                titlePadding: const EdgeInsets.symmetric(
+                titlePadding: EdgeInsets.symmetric(
                   horizontal: 20,
                   vertical: 16,
                 ),
-                title: const Text(
+                title: Text(
                   'LỊCH HẸN CỦA TÔI',
                   style: TextStyle(
                     color: AppColors.textBody,
@@ -77,20 +77,17 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage>
                 IconButton(
                   onPressed: () =>
                       Navigator.pushNamed(context, AppRoutes.booking),
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.add_circle_outline_rounded,
                     color: AppColors.primary,
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
               ],
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Container(
                   height: 50,
                   decoration: BoxDecoration(
@@ -144,13 +141,13 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage>
             .map((d) => HospitalAppointmentModel.fromFirestore(d))
             .where(
               (a) =>
-                  a.status != 'cancelled' &&
-                  a.status != 'completed' &&
+                  a.effectiveStatus != 'cancelled' &&
+                  a.effectiveStatus != 'completed' &&
                   a.appointmentDate.isAfter(DateTime.now()),
             )
             .toList();
 
-        if (appointments.isEmpty) return const SizedBox.shrink();
+        if (appointments.isEmpty) return SizedBox.shrink();
 
         appointments.sort(
           (a, b) => a.appointmentDate.compareTo(b.appointmentDate),
@@ -171,7 +168,7 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage>
               end: Alignment.bottomCenter,
             ),
           ),
-          padding: const EdgeInsets.fromLTRB(20, 40, 20, 60),
+          padding: EdgeInsets.fromLTRB(20, 40, 20, 60),
           alignment: Alignment.centerLeft,
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -186,20 +183,16 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage>
                   letterSpacing: 1,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(
-                    Icons.alarm_rounded,
-                    color: AppColors.primary,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
+                  Icon(Icons.alarm_rounded, color: AppColors.primary, size: 24),
+                  SizedBox(width: 12),
                   Text(
                     days > 0
                         ? 'Còn $days ngày $hours giờ'
                         : 'Còn $hours giờ nữa',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
                       color: AppColors.textBody,
@@ -216,7 +209,7 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage>
 
   Widget _buildViewToggle() {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.secondary,
         borderRadius: BorderRadius.circular(10),
@@ -287,15 +280,15 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage>
                   color: AppColors.primary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                todayTextStyle: const TextStyle(
+                todayTextStyle: TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.bold,
                 ),
-                selectedDecoration: const BoxDecoration(
+                selectedDecoration: BoxDecoration(
                   color: AppColors.primary,
                   shape: BoxShape.circle,
                 ),
-                markerDecoration: const BoxDecoration(
+                markerDecoration: BoxDecoration(
                   color: AppColors.success,
                   shape: BoxShape.circle,
                 ),
@@ -319,9 +312,7 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage>
 
   Widget _buildDayDetailList(List<HospitalAppointmentModel> allAppointments) {
     if (_selectedDay == null) {
-      return const Center(
-        child: Text('Vui lòng chọn một ngày để xem chi tiết'),
-      );
+      return Center(child: Text('Vui lòng chọn một ngày để xem chi tiết'));
     }
 
     final dayAppointments = allAppointments
@@ -338,8 +329,8 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage>
               size: 48,
               color: AppColors.textHint.withOpacity(0.3),
             ),
-            const SizedBox(height: 12),
-            const Text(
+            SizedBox(height: 12),
+            Text(
               'Không có lịch hẹn trong ngày này',
               style: TextStyle(color: AppColors.textHint),
             ),
@@ -382,12 +373,13 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage>
             [];
         final upcoming = allDocs.where((a) {
           final isActiveStatus = [
+            'scheduled',
             'pending',
             'confirmed',
             'cancel_requested',
             'calling',
             'ongoing',
-          ].contains(a.status);
+          ].contains(a.effectiveStatus);
           final startsAt = _appointmentDateTime(a.appointmentDate, a.timeSlot);
           final isFuture = startsAt.isAfter(DateTime.now());
           return isActiveStatus && isFuture;
@@ -441,7 +433,7 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage>
                 'cancelled',
                 'no_show',
                 'absent',
-              ].contains(a.status) ||
+              ].contains(a.effectiveStatus) ||
               startsAt.isBefore(DateTime.now());
         }).toList();
 
@@ -452,9 +444,9 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage>
         }
 
         return ListView.separated(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(20),
           itemCount: history.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 16),
+          separatorBuilder: (_, __) => SizedBox(height: 16),
           itemBuilder: (context, index) =>
               _CompactHistoryCard(appointment: history[index]),
         );
@@ -468,7 +460,7 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage>
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: AppColors.secondary,
               shape: BoxShape.circle,
@@ -479,7 +471,7 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage>
               color: AppColors.textHint.withOpacity(0.5),
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           Text(
             message,
             style: TextStyle(
@@ -487,7 +479,7 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage>
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           ElevatedButton(
             onPressed: () => Navigator.pushNamed(context, AppRoutes.booking),
             style: ElevatedButton.styleFrom(
@@ -497,7 +489,7 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage>
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('ĐẶT LỊCH NGAY'),
+            child: Text('ĐẶT LỊCH NGAY'),
           ),
         ],
       ),
@@ -507,7 +499,7 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage>
 
 class _MedicalTicketCard extends StatelessWidget {
   final HospitalAppointmentModel appointment;
-  const _MedicalTicketCard({required this.appointment});
+  _MedicalTicketCard({required this.appointment});
 
   @override
   Widget build(BuildContext context) {
@@ -533,7 +525,7 @@ class _MedicalTicketCard extends StatelessWidget {
           Column(
             children: [
               Padding(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.all(20),
                 child: Column(
                   children: [
                     Row(
@@ -559,29 +551,29 @@ class _MedicalTicketCard extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.medical_services_rounded,
                             color: Colors.white,
                             size: 28,
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 appointment.doctorName.toUpperCase(),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w900,
                                   fontSize: 16,
                                   color: AppColors.textBody,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Text(
                                 appointment.departmentName,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.textSecondary,
@@ -590,7 +582,7 @@ class _MedicalTicketCard extends StatelessWidget {
                             ],
                           ),
                         ),
-                        _StatusBadge(status: appointment.status),
+                        _StatusBadge(status: appointment.effectiveStatus),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -619,7 +611,7 @@ class _MedicalTicketCard extends StatelessWidget {
               ),
               _buildDottedDivider(),
               Padding(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.all(20),
                 child: Row(
                   children: [
                     Expanded(
@@ -628,15 +620,15 @@ class _MedicalTicketCard extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.location_on_rounded,
                                 color: AppColors.primary,
                                 size: 14,
                               ),
-                              const SizedBox(width: 6),
+                              SizedBox(width: 6),
                               Text(
                                 'PHÒNG: ${appointment.roomNumber}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w900,
                                   color: AppColors.textBody,
@@ -644,20 +636,20 @@ class _MedicalTicketCard extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16),
                           Row(
                             children: [
                               _ActionIcon(
                                 icon: Icons.map_outlined,
                                 onTap: () {},
                               ),
-                              const SizedBox(width: 12),
+                              SizedBox(width: 12),
                               _ActionIcon(
                                 icon: Icons.info_outline_rounded,
                                 color: AppColors.success,
                                 onTap: () => _showPrepGuide(context),
                               ),
-                              const SizedBox(width: 12),
+                              SizedBox(width: 12),
                               if (_canCancelAppointment())
                                 _ActionIcon(
                                   icon: Icons.cancel_outlined,
@@ -673,7 +665,7 @@ class _MedicalTicketCard extends StatelessWidget {
                     GestureDetector(
                       onTap: () => _showQRModal(context),
                       child: Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: AppColors.background,
                           borderRadius: BorderRadius.circular(16),
@@ -681,7 +673,7 @@ class _MedicalTicketCard extends StatelessWidget {
                         ),
                         child: Column(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.qr_code_2_rounded,
                               size: 34,
                               color: AppColors.textBody,
@@ -711,7 +703,10 @@ class _MedicalTicketCard extends StatelessWidget {
 
   bool _canCancelAppointment() {
     final isActiveStatus =
-        appointment.status == 'pending' || appointment.status == 'confirmed';
+        appointment.status == 'scheduled' ||
+        appointment.status == 'pending' ||
+        appointment.status == 'confirmed';
+    if (appointment.hasPendingCancelRequest) return false;
     final appointmentStart = _appointmentDateTime(
       appointment.appointmentDate,
       appointment.timeSlot,
@@ -753,7 +748,7 @@ class _MedicalTicketCard extends StatelessWidget {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('KHÔNG'),
+                child: Text('KHÔNG'),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -789,8 +784,17 @@ class _MedicalTicketCard extends StatelessWidget {
         final appointmentSnapshot = await transaction.get(appointmentRef);
         final appointmentData = appointmentSnapshot.data() ?? {};
         final currentStatus = appointmentData['status']?.toString() ?? '';
+        final currentCancelRequestStatus =
+            appointmentData['cancelRequestStatus']?.toString().toLowerCase() ??
+            '';
 
-        if (currentStatus != 'pending' && currentStatus != 'confirmed') {
+        if (currentCancelRequestStatus == 'pending') {
+          throw Exception('Yeu cau huy lich nay dang cho admin duyet.');
+        }
+
+        if (currentStatus != 'scheduled' &&
+            currentStatus != 'pending' &&
+            currentStatus != 'confirmed') {
           throw Exception('Lịch hẹn này không còn ở trạng thái có thể hủy.');
         }
 
@@ -802,7 +806,6 @@ class _MedicalTicketCard extends StatelessWidget {
             );
 
         transaction.update(appointmentRef, {
-          'status': 'cancel_requested',
           'statusBeforeCancelRequest': currentStatus,
           'cancelRequestCode': cancelRequestCode,
           'cancelRequestStatus': 'pending',
@@ -875,7 +878,7 @@ class _MedicalTicketCard extends StatelessWidget {
               Icons.attribution_rounded,
               'Mặc trang phục thoải mái để dễ dàng thăm khám.',
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               height: 54,
@@ -906,16 +909,16 @@ class _MedicalTicketCard extends StatelessWidget {
 
   Widget _buildGuideItem(IconData icon, String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: EdgeInsets.only(bottom: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: AppColors.primary, size: 20),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 color: AppColors.textBody,
                 height: 1.4,
@@ -933,7 +936,7 @@ class _MedicalTicketCard extends StatelessWidget {
         40,
         (index) => Expanded(
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 1.5),
+            margin: EdgeInsets.symmetric(horizontal: 1.5),
             height: 1.5,
             color: index % 2 == 0 ? Colors.transparent : AppColors.border,
           ),
@@ -957,7 +960,7 @@ class _MedicalTicketCard extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 'XÁC NHẬN ĐIỂM DANH',
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
@@ -965,8 +968,8 @@ class _MedicalTicketCard extends StatelessWidget {
                   letterSpacing: 1.5,
                 ),
               ),
-              const SizedBox(height: 12),
-              const Text(
+              SizedBox(height: 12),
+              Text(
                 'Vui lòng đưa mã này vào máy quét tại sảnh chờ',
                 style: TextStyle(
                   color: AppColors.textSecondary,
@@ -975,9 +978,9 @@ class _MedicalTicketCard extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(28),
@@ -993,20 +996,20 @@ class _MedicalTicketCard extends StatelessWidget {
                   data: appointment.id,
                   version: QrVersions.auto,
                   size: 220.0,
-                  eyeStyle: const QrEyeStyle(
+                  eyeStyle: QrEyeStyle(
                     eyeShape: QrEyeShape.circle,
                     color: AppColors.primary,
                   ),
-                  dataModuleStyle: const QrDataModuleStyle(
+                  dataModuleStyle: QrDataModuleStyle(
                     dataModuleShape: QrDataModuleShape.circle,
                     color: AppColors.primary,
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               Text(
                 'STT: #${appointment.queueNumber}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w900,
                   color: AppColors.primary,
                   fontSize: 18,
@@ -1035,7 +1038,7 @@ class _LiveBadgeState extends State<_LiveBadge>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 1),
+      duration: Duration(seconds: 1),
     )..repeat(reverse: true);
   }
 
@@ -1050,7 +1053,7 @@ class _LiveBadgeState extends State<_LiveBadge>
     return FadeTransition(
       opacity: _controller.drive(CurveTween(curve: Curves.easeInOut)),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: AppColors.error,
           borderRadius: BorderRadius.circular(8),
@@ -1071,7 +1074,7 @@ class _LiveBadgeState extends State<_LiveBadge>
 
 class _CompactHistoryCard extends StatelessWidget {
   final HospitalAppointmentModel appointment;
-  const _CompactHistoryCard({required this.appointment});
+  _CompactHistoryCard({required this.appointment});
 
   @override
   Widget build(BuildContext context) {
@@ -1087,7 +1090,7 @@ class _CompactHistoryCard extends StatelessWidget {
         }
       },
       child: Container(
-        padding: const EdgeInsets.all(18),
+        padding: EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(24),
@@ -1110,25 +1113,25 @@ class _CompactHistoryCard extends StatelessWidget {
                 size: 24,
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     appointment.doctorName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 15,
                       color: AppColors.textBody,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     DateFormat(
                       'dd/MM/yyyy â€¢ HH:mm',
                     ).format(appointment.appointmentDate),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
                       fontWeight: FontWeight.w600,
@@ -1137,7 +1140,7 @@ class _CompactHistoryCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios_rounded,
               color: AppColors.border,
               size: 14,
@@ -1151,7 +1154,7 @@ class _CompactHistoryCard extends StatelessWidget {
 
 class _StatusBadge extends StatelessWidget {
   final String status;
-  const _StatusBadge({required this.status});
+  _StatusBadge({required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -1220,7 +1223,7 @@ class _InfoColumn extends StatelessWidget {
   final String label;
   final String value;
   final bool isHighlight;
-  const _InfoColumn({
+  _InfoColumn({
     required this.label,
     required this.value,
     this.isHighlight = false,
@@ -1233,14 +1236,14 @@ class _InfoColumn extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 9,
             fontWeight: FontWeight.w900,
             color: AppColors.textHint,
             letterSpacing: 0.8,
           ),
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: 6),
         Text(
           value,
           style: TextStyle(
@@ -1258,7 +1261,7 @@ class _ActionIcon extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
   final Color? color;
-  const _ActionIcon({required this.icon, required this.onTap, this.color});
+  _ActionIcon({required this.icon, required this.onTap, this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -1266,7 +1269,7 @@ class _ActionIcon extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: (color ?? AppColors.primary).withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
