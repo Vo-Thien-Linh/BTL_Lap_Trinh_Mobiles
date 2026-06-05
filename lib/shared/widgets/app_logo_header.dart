@@ -27,20 +27,20 @@ class AppLogoHeader extends StatelessWidget {
               BoxShadow(
                 color: AppColors.primary.withOpacity(0.35),
                 blurRadius: 18,
-                offset: const Offset(0, 8),
+                offset: Offset(0, 8),
               ),
             ],
           ),
           clipBehavior: Clip.antiAlias,
           child: Padding(
-            padding: const EdgeInsets.all(10),
+            padding: EdgeInsets.all(10),
             child: Image.asset(
               'assets/images/logo_mark.png',
               fit: BoxFit.contain,
             ),
           ),
         ),
-        const SizedBox(height: 18),
+        SizedBox(height: 18),
         Text(
           brandName,
           textAlign: TextAlign.center,
@@ -49,21 +49,17 @@ class AppLogoHeader extends StatelessWidget {
             fontWeight: FontWeight.w900,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Text(
           title,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.titleLarge,
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Text(
           subtitle,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppColors.hint,
-            fontSize: 14,
-            height: 1.5,
-          ),
+          style: TextStyle(color: AppColors.hint, fontSize: 14, height: 1.5),
         ),
       ],
     );

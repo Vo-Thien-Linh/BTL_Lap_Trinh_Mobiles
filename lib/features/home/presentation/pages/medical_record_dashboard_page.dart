@@ -18,7 +18,7 @@ class _MedicalRecordDashboardPageState
     extends State<MedicalRecordDashboardPage> {
   Stream<DocumentSnapshot> _getUserStream(String uid) async* {
     final lowerRef = FirebaseFirestore.instance.collection('users').doc(uid);
-    final upperRef = FirebaseFirestore.instance.collection('users').doc(uid);
+    final upperRef = FirebaseFirestore.instance.collection('Users').doc(uid);
     final lowerSnap = await lowerRef.get();
     if (lowerSnap.exists) {
       yield* lowerRef.snapshots();
@@ -59,18 +59,17 @@ class _MedicalRecordDashboardPageState
               if (apptSnapshot.hasData && apptSnapshot.data!.docs.isNotEmpty) {
                 final docs = apptSnapshot.data!.docs.toList();
                 docs.sort((a, b) {
-                  final da =
-                      (a.data() as Map<String, dynamic>)['appointmentDate']
-                          as Timestamp;
-                  final db =
-                      (b.data() as Map<String, dynamic>)['appointmentDate']
-                          as Timestamp;
+                  final da = _readDate(
+                    (a.data() as Map<String, dynamic>)['appointmentDate'],
+                  );
+                  final db = _readDate(
+                    (b.data() as Map<String, dynamic>)['appointmentDate'],
+                  );
                   return db.compareTo(da);
                 });
                 final latestApptData =
                     docs.first.data() as Map<String, dynamic>;
-                vitals =
-                    latestApptData['vitals'] as Map<String, dynamic>? ?? {};
+                vitals = _readMap(latestApptData['vitals']);
               }
 
               return CustomScrollView(
@@ -95,7 +94,7 @@ class _MedicalRecordDashboardPageState
                           _buildSectionTitle('KHO DỮ LIỆU SỨC KHỎE'),
                           const SizedBox(height: 16),
                           _buildVaultNavigation(context),
-                          const SizedBox(height: 120),
+                          SizedBox(height: 120),
                         ],
                       ),
                     ),
@@ -132,13 +131,13 @@ class _MedicalRecordDashboardPageState
               ),
             );
           },
-          icon: const Icon(Icons.refresh_rounded),
+          icon: Icon(Icons.refresh_rounded),
           tooltip: 'Làm mới',
         ),
         IconButton(
           onPressed: () =>
               Navigator.pushNamed(context, AppRoutes.medicalEmergencyId),
-          icon: const Icon(Icons.qr_code_scanner_rounded),
+          icon: Icon(Icons.qr_code_scanner_rounded),
           tooltip: 'Mã QR Y tế',
         ),
       ],
@@ -147,7 +146,7 @@ class _MedicalRecordDashboardPageState
           fit: StackFit.expand,
           children: [
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [AppColors.primary, Color(0xFF3B82F6)],
                   begin: Alignment.topLeft,
@@ -274,24 +273,24 @@ class _MedicalRecordDashboardPageState
   Widget _buildEmergencyBanner(BuildContext context, UserModel user) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF2F2),
+        color: Color(0xFFFEF2F2),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFFEE2E2)),
+        border: Border.all(color: Color(0xFFFEE2E2)),
         boxShadow: [
           BoxShadow(
             color: AppColors.error.withOpacity(0.05),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
               color: AppColors.error,
               shape: BoxShape.circle,
             ),
@@ -413,7 +412,7 @@ class _MedicalRecordDashboardPageState
     String trend,
   ) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
@@ -421,7 +420,7 @@ class _MedicalRecordDashboardPageState
           BoxShadow(
             color: AppColors.primary.withOpacity(0.06),
             blurRadius: 15,
-            offset: const Offset(0, 8),
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -435,10 +434,10 @@ class _MedicalRecordDashboardPageState
               _buildTrendIndicator(trend),
             ],
           ),
-          const Spacer(),
+          Spacer(),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -450,16 +449,16 @@ class _MedicalRecordDashboardPageState
             children: [
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textBody,
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
               Text(
                 unit,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
@@ -474,18 +473,14 @@ class _MedicalRecordDashboardPageState
 
   Widget _buildTrendIndicator(String trend) {
     if (trend == 'up')
-      return const Icon(
-        Icons.trending_up_rounded,
-        color: Colors.redAccent,
-        size: 16,
-      );
+      return Icon(Icons.trending_up_rounded, color: Colors.redAccent, size: 16);
     if (trend == 'down')
-      return const Icon(
+      return Icon(
         Icons.trending_down_rounded,
         color: AppColors.success,
         size: 16,
       );
-    return const Icon(
+    return Icon(
       Icons.trending_flat_rounded,
       color: AppColors.textHint,
       size: 16,
@@ -495,7 +490,7 @@ class _MedicalRecordDashboardPageState
   Widget _buildClinicalSection(UserModel user) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(32),
@@ -503,7 +498,7 @@ class _MedicalRecordDashboardPageState
           BoxShadow(
             color: AppColors.primary.withOpacity(0.05),
             blurRadius: 20,
-            offset: const Offset(0, 10),
+            offset: Offset(0, 10),
           ),
         ],
       ),
@@ -514,7 +509,7 @@ class _MedicalRecordDashboardPageState
             'Bệnh mãn tính',
             user.chronicConditions?.join(", ") ?? "Không có dữ liệu",
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Divider(color: AppColors.border),
           ),
@@ -522,7 +517,7 @@ class _MedicalRecordDashboardPageState
             'Bảo hiểm y tế',
             user.healthInsuranceNumber ?? "--- --- --- ---",
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Divider(color: AppColors.border),
           ),
@@ -541,17 +536,17 @@ class _MedicalRecordDashboardPageState
       children: [
         Text(
           label.toUpperCase(),
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textHint,
             fontSize: 10,
             fontWeight: FontWeight.w900,
             letterSpacing: 1,
           ),
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: 6),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textBody,
             fontSize: 13,
             fontWeight: FontWeight.w700,
@@ -624,7 +619,7 @@ class _MedicalRecordDashboardPageState
       },
       borderRadius: BorderRadius.circular(24),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(24),
@@ -639,14 +634,14 @@ class _MedicalRecordDashboardPageState
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(icon, color: color, size: 24),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -655,18 +650,18 @@ class _MedicalRecordDashboardPageState
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textBody,
                       fontWeight: FontWeight.w900,
                       fontSize: 15,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     subtitle,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 11,
                       height: 1.25,
@@ -676,7 +671,7 @@ class _MedicalRecordDashboardPageState
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios_rounded,
               color: AppColors.textHint,
               size: 14,
@@ -698,10 +693,10 @@ class _MedicalRecordDashboardPageState
             borderRadius: BorderRadius.circular(2),
           ),
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 12,
             fontWeight: FontWeight.w900,
@@ -726,5 +721,18 @@ class _MedicalRecordDashboardPageState
     } catch (e) {
       return dob;
     }
+  }
+
+  DateTime _readDate(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return DateTime.tryParse(value?.toString() ?? '') ?? DateTime(1900);
+  }
+
+  Map<String, dynamic> _readMap(dynamic value) {
+    if (value is Map) {
+      return value.map((key, item) => MapEntry(key.toString(), item));
+    }
+    return const {};
   }
 }

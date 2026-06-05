@@ -7,7 +7,7 @@ class AppointmentCard extends StatelessWidget {
   final AppointmentEntity appointment;
   final VoidCallback? onTap;
 
-  const AppointmentCard({super.key, required this.appointment, this.onTap});
+  AppointmentCard({super.key, required this.appointment, this.onTap});
 
   Color _getStatusColor(String status) {
     switch (status) {
@@ -78,7 +78,7 @@ class AppointmentCard extends StatelessWidget {
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
               blurRadius: 12,
-              offset: const Offset(0, 4),
+              offset: Offset(0, 4),
             ),
           ],
         ),
@@ -107,7 +107,7 @@ class AppointmentCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             // Doctor Info
             Expanded(
               child: Column(
@@ -115,18 +115,18 @@ class AppointmentCard extends StatelessWidget {
                 children: [
                   Text(
                     appointment.doctorName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: AppColors.text,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     appointment.specialization,
-                    style: const TextStyle(fontSize: 13, color: AppColors.hint),
+                    style: TextStyle(fontSize: 13, color: AppColors.hint),
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6),
                   Row(
                     children: [
                       Icon(
@@ -134,27 +134,21 @@ class AppointmentCard extends StatelessWidget {
                         size: 12,
                         color: AppColors.hint,
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4),
                       Text(
                         formattedDate,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.hint,
-                        ),
+                        style: TextStyle(fontSize: 12, color: AppColors.hint),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Icon(
                         Icons.access_time_rounded,
                         size: 12,
                         color: AppColors.hint,
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4),
                       Text(
                         appointment.time,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.hint,
-                        ),
+                        style: TextStyle(fontSize: 12, color: AppColors.hint),
                       ),
                     ],
                   ),

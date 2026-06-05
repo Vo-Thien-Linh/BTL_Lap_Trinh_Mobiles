@@ -263,7 +263,8 @@ class _DoctorInvoicePageState extends State<DoctorInvoicePage> {
       if (widget.appointmentId != null && widget.appointmentId!.isNotEmpty) {
         final appointmentUpdate = {
           'patientId': patientId,
-          'status': 'waiting_payment',
+          'status': 'completed',
+          'completedAt': FieldValue.serverTimestamp(),
           'paymentStatus': 'unpaid',
           'lastInvoiceId': invoiceRef.id,
           'lastInvoiceAmount': billing.finalAmount,

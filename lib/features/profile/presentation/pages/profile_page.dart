@@ -99,7 +99,7 @@ class _ProfilePageState extends State<ProfilePage>
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: AppColors.background,
         body: Center(
           child: CircularProgressIndicator(color: AppColors.primary),
@@ -108,7 +108,7 @@ class _ProfilePageState extends State<ProfilePage>
     }
 
     if (_userModel == null) {
-      return const Scaffold(
+      return Scaffold(
         body: Center(child: Text('Không tìm thấy thông tin hồ sơ.')),
       );
     }
@@ -155,7 +155,7 @@ class _ProfilePageState extends State<ProfilePage>
           controller: _tabController,
           children: [
             _buildInfoTab(_userModel!),
-            const ExaminationHistoryPage(
+            ExaminationHistoryPage(
               isSubPage: true,
               defaultFilter: 'Hoàn thành',
             ),
@@ -166,7 +166,7 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildPremiumSliverAppBar() {
-    return const SliverAppBar(
+    return SliverAppBar(
       pinned: true,
       elevation: 0,
       backgroundColor: AppColors.primary,
@@ -250,11 +250,11 @@ class _ProfilePageState extends State<ProfilePage>
                       ),
                     ],
                   ),
-                  const Spacer(),
+                  Spacer(),
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(3),
+                        padding: EdgeInsets.all(3),
                         decoration: BoxDecoration(
                           border: Border.all(
                             color: AppColors.primaryLight,
@@ -380,11 +380,11 @@ class _ProfilePageState extends State<ProfilePage>
     }
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'CHỈ SỐ SỨC KHỎE',
             style: TextStyle(
               fontSize: 11,
@@ -405,19 +405,19 @@ class _ProfilePageState extends State<ProfilePage>
                   bmiColor,
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: _buildInteractiveVitalCard(
                   'NHÓM MÁU',
                   hasBloodType ? user.bloodType! : '--',
                   hasBloodType ? 'Do bác sĩ cập nhật' : 'Chưa cập nhật',
                   Icons.water_drop_rounded,
-                  hasBloodType ? const Color(0xFFEF4444) : AppColors.textHint,
+                  hasBloodType ? Color(0xFFEF4444) : AppColors.textHint,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -428,10 +428,10 @@ class _ProfilePageState extends State<ProfilePage>
                       : '-- cm',
                   hasHeight ? 'Do bác sĩ cập nhật' : 'Chưa cập nhật',
                   Icons.straighten_rounded,
-                  hasHeight ? const Color(0xFF3B82F6) : AppColors.textHint,
+                  hasHeight ? Color(0xFF3B82F6) : AppColors.textHint,
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: _buildInteractiveVitalCard(
                   'CÂN NẶNG',
@@ -440,7 +440,7 @@ class _ProfilePageState extends State<ProfilePage>
                       : '-- kg',
                   hasWeight ? 'Do bác sĩ cập nhật' : 'Chưa cập nhật',
                   Icons.monitor_weight_rounded,
-                  hasWeight ? const Color(0xFF10B981) : AppColors.textHint,
+                  hasWeight ? Color(0xFF10B981) : AppColors.textHint,
                 ),
               ),
             ],
@@ -458,7 +458,7 @@ class _ProfilePageState extends State<ProfilePage>
     Color color,
   ) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
@@ -494,10 +494,10 @@ class _ProfilePageState extends State<ProfilePage>
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w800,
               color: AppColors.textHint,
@@ -507,7 +507,7 @@ class _ProfilePageState extends State<ProfilePage>
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w900,
               color: AppColors.textBody,
@@ -522,7 +522,7 @@ class _ProfilePageState extends State<ProfilePage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
+        Padding(
           padding: EdgeInsets.symmetric(horizontal: 20),
           child: Text(
             'GIA ĐÌNH CỦA BẠN',
@@ -539,7 +539,7 @@ class _ProfilePageState extends State<ProfilePage>
           height: 90,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: EdgeInsets.symmetric(horizontal: 20),
             itemCount: _familyMembers.length + 1,
             itemBuilder: (context, index) {
               if (index == _familyMembers.length) {
@@ -547,7 +547,7 @@ class _ProfilePageState extends State<ProfilePage>
               }
               final member = _familyMembers[index];
               return Padding(
-                padding: const EdgeInsets.only(right: 20),
+                padding: EdgeInsets.only(right: 20),
                 child: Column(
                   children: [
                     CircleAvatar(
@@ -557,13 +557,13 @@ class _ProfilePageState extends State<ProfilePage>
                           : null,
                       backgroundColor: AppColors.primaryLight,
                       child: member['avatarUrl'] == null
-                          ? const Icon(Icons.person)
+                          ? Icon(Icons.person)
                           : null,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Text(
                       member['relationship'] ?? 'Người thân',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBody,
@@ -575,7 +575,7 @@ class _ProfilePageState extends State<ProfilePage>
             },
           ),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
       ],
     );
   }
@@ -594,10 +594,10 @@ class _ProfilePageState extends State<ProfilePage>
             color: AppColors.primary.withOpacity(0.05),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.add_rounded, color: AppColors.primary),
+          child: Icon(Icons.add_rounded, color: AppColors.primary),
         ),
-        const SizedBox(height: 8),
-        const Text(
+        SizedBox(height: 8),
+        Text(
           'Thêm mới',
           style: TextStyle(
             fontSize: 10,
@@ -611,7 +611,7 @@ class _ProfilePageState extends State<ProfilePage>
 
   Widget _buildInfoTab(UserModel user) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       child: Column(
         children: [
           _buildMenuSection(
@@ -670,7 +670,7 @@ class _ProfilePageState extends State<ProfilePage>
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           _buildMenuSection(
             title: 'HỒ SƠ BẢO HIỂM & KHẨN CẤP',
             items: [
@@ -730,10 +730,10 @@ class _ProfilePageState extends State<ProfilePage>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 8, bottom: 12),
+          padding: EdgeInsets.only(left: 8, bottom: 12),
           child: Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w900,
               color: AppColors.textHint,
@@ -774,30 +774,30 @@ class _ProfilePageState extends State<ProfilePage>
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: iconColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(icon, color: iconColor, size: 20),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textHint,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     value,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
                       color: AppColors.textBody,
@@ -806,7 +806,7 @@ class _ProfilePageState extends State<ProfilePage>
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
               color: AppColors.border,
               size: 20,
@@ -825,7 +825,7 @@ class _ProfilePageState extends State<ProfilePage>
           BoxShadow(
             color: AppColors.primary.withOpacity(0.2),
             blurRadius: 15,
-            offset: const Offset(0, 8),
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -850,7 +850,7 @@ class _ProfilePageState extends State<ProfilePage>
           ),
           elevation: 0,
         ),
-        child: const Text(
+        child: Text(
           'CẬP NHẬT HỒ SƠ',
           style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5),
         ),
@@ -864,14 +864,14 @@ class _ProfilePageState extends State<ProfilePage>
         Navigator.pushNamed(context, AppRoutes.settings);
       },
       style: OutlinedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 54),
-        side: const BorderSide(color: AppColors.primary),
+        minimumSize: Size(double.infinity, 54),
+        side: BorderSide(color: AppColors.primary),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
-      icon: const Icon(Icons.settings_outlined, color: AppColors.primary),
+      icon: Icon(Icons.settings_outlined, color: AppColors.primary),
       label: Text(
         context.tr('profile.settings'),
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.primary,
           fontWeight: FontWeight.w900,
           fontSize: 13,
@@ -887,7 +887,7 @@ class _ProfilePageState extends State<ProfilePage>
         await FirebaseAuth.instance.signOut();
         if (mounted) Navigator.pushReplacementNamed(context, AppRoutes.login);
       },
-      child: const Text(
+      child: Text(
         'ĐĂNG XUẤT HỎI HỆ THỐNG',
         style: TextStyle(
           color: AppColors.error,
@@ -919,11 +919,11 @@ class _ProfilePageState extends State<ProfilePage>
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
         child: Padding(
-          padding: const EdgeInsets.all(32.0),
+          padding: EdgeInsets.all(32.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 'MÃ BỆNH NHÂN',
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
@@ -931,38 +931,35 @@ class _ProfilePageState extends State<ProfilePage>
                   letterSpacing: 2,
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: AppColors.border),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.qr_code_2_rounded,
                   size: 200,
                   color: AppColors.textBody,
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               Text(
                 user.fullName.toUpperCase(),
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
               ),
               Text(
                 'ID: ${user.uid.toUpperCase()}',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
                   color: AppColors.textHint,
                   fontFamily: 'monospace',
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(

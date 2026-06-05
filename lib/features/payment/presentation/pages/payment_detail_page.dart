@@ -88,7 +88,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
               _Card(child: PaymentTimeline(payment: payment)),
               const SizedBox(height: 16),
               _buildActionSection(payment),
-              const SizedBox(height: 28),
+              SizedBox(height: 28),
             ],
           ),
         );
@@ -102,7 +102,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Thanh to?n th?nh c?ng',
               style: TextStyle(
                 color: AppColors.success,
@@ -125,8 +125,8 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
                 AppRoutes.digitalReceipt,
                 arguments: _toInvoice(payment),
               ),
-              icon: const Icon(Icons.receipt_long_rounded),
-              label: const Text('Xem bi?n nh?n'),
+              icon: Icon(Icons.receipt_long_rounded),
+              label: Text('Xem bi?n nh?n'),
             ),
           ],
         ),
@@ -138,7 +138,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Thanh to?n t?i qu?y',
               style: TextStyle(
                 color: AppColors.textBody,
@@ -146,17 +146,17 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
                 fontWeight: FontWeight.w900,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             SelectableText(
               payment.paymentCode,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.primary,
                 fontSize: 28,
                 fontWeight: FontWeight.w900,
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               'Vui l?ng ??a m? h?a ??n n?y cho nh?n vi?n t?i qu?y. Nh?n vi?n s? x?c nh?n ?? thanh to?n sau khi thu ti?n.',
               style: TextStyle(color: AppColors.textSecondary, height: 1.45),
             ),
@@ -170,12 +170,12 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               '?ang ch? thanh to?n payOS',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               'Sau khi b?n thanh to?n, backend/webhook s? c?p nh?t tr?ng th?i. App s? t? ??i sang th?nh c?ng.',
               style: TextStyle(color: AppColors.textSecondary, height: 1.45),
             ),
@@ -187,11 +187,11 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
               icon: const Icon(Icons.open_in_new_rounded),
               label: const Text('M? l?i trang thanh to?n'),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: () => setState(() {}),
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('L?m m?i tr?ng th?i'),
+              icon: Icon(Icons.refresh_rounded),
+              label: Text('L?m m?i tr?ng th?i'),
             ),
           ],
         ),
@@ -201,7 +201,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Ch?n ph??ng th?c',
           style: TextStyle(
             color: AppColors.textBody,
@@ -209,7 +209,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
             fontWeight: FontWeight.w900,
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         PaymentMethodCard(
           icon: Icons.qr_code_2_rounded,
           title: 'Thanh to?n qua payOS',
@@ -219,7 +219,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
           enabled: payment.canStartPayos && !_isCreatingPayosLink,
           onTap: () => _createPayosLink(payment),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         PaymentMethodCard(
           icon: Icons.payments_rounded,
           title: 'Thanh to?n ti?n m?t t?i qu?y',
@@ -247,7 +247,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
       await _openCheckoutUrl(checkoutUrl);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
             'Sau khi thanh to?n, tr?ng th?i s? t? c?p nh?t trong app.',
           ),
@@ -272,9 +272,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
       await _repository.markPayAtCounter(payment);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('?? chuy?n sang ch? thanh to?n t?i qu?y.'),
-        ),
+        SnackBar(content: Text('?? chuy?n sang ch? thanh to?n t?i qu?y.')),
       );
     } catch (e) {
       if (!mounted) return;
@@ -303,7 +301,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: AppColors.success,
           content: Text('Thanh to?n th?nh c?ng.'),
         ),
@@ -335,14 +333,14 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
 }
 
 class _StatusHeader extends StatelessWidget {
-  const _StatusHeader({required this.payment});
+  _StatusHeader({required this.payment});
 
   final PatientPaymentModel payment;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(8),
@@ -366,23 +364,23 @@ class _StatusHeader extends StatelessWidget {
               color: PaymentStatusBadge.statusColor(payment.status),
             ),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   PaymentStatusBadge.statusLabel(payment.status),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textBody,
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   '${NumberFormat('#,###').format(payment.amount)} ?',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.primary,
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
@@ -418,8 +416,7 @@ class _PriceCard extends StatelessWidget {
               : 'BHYT hỗ trợ',
           '${NumberFormat('#,###').format(payment.insuranceCoveredAmount)} đ',
         ),
-        if (payment.insuranceApplied)
-          const _InfoRow('Bảo hiểm', 'Đã áp ?ụng BHYT'),
+        if (payment.insuranceApplied) _InfoRow('Bảo hiểm', 'Đã áp ?ụng BHYT'),
         _InfoRow(
           'Bệnh nhân cần thanh toán',
           '${NumberFormat('#,###').format(payment.patientPayAmount == 0 ? payment.amount : payment.patientPayAmount)} đ',
@@ -430,7 +427,7 @@ class _PriceCard extends StatelessWidget {
 }
 
 class _InfoCard extends StatelessWidget {
-  const _InfoCard({required this.title, required this.rows});
+  _InfoCard({required this.title, required this.rows});
 
   final String title;
   final List<_InfoRow> rows;
@@ -443,7 +440,7 @@ class _InfoCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textBody,
               fontSize: 16,
               fontWeight: FontWeight.w900,
@@ -458,7 +455,7 @@ class _InfoCard extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow(this.label, this.value);
+  _InfoRow(this.label, this.value);
 
   final String label;
   final String value;
@@ -466,7 +463,7 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 7),
+      padding: EdgeInsets.symmetric(vertical: 7),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -474,17 +471,14 @@ class _InfoRow extends StatelessWidget {
             width: 118,
             child: Text(
               label,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 13,
-              ),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
           ),
           Expanded(
             child: Text(
               value,
               textAlign: TextAlign.right,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textBody,
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
@@ -498,7 +492,7 @@ class _InfoRow extends StatelessWidget {
 }
 
 class _Card extends StatelessWidget {
-  const _Card({required this.child});
+  _Card({required this.child});
 
   final Widget child;
 
@@ -506,7 +500,7 @@ class _Card extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(8),

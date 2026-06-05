@@ -15,18 +15,68 @@ class _DoctorSearchPageState extends State<DoctorSearchPage> {
 
   // Data Collections
   final List<Map<String, dynamic>> _allPatients = [
-    {'name': 'Nguyễn Văn Anh', 'id': 'BN10293', 'status': 'Đang chờ', 'color': Colors.blue, 'type': 'patient'},
-    {'name': 'Trần Thị Bảo', 'id': 'BN10294', 'status': 'Hoàn tất', 'color': Colors.green, 'type': 'patient'},
-    {'name': 'Lê Hoàng Cường', 'id': 'BN10295', 'status': 'Khẩn cấp', 'color': Colors.red, 'type': 'patient'},
-    {'name': 'Phạm Thị Diễm', 'id': 'BN10296', 'status': 'Đang khám', 'color': Colors.orange, 'type': 'patient'},
-    {'name': 'Vũ Hoàng Nam', 'id': 'BN10297', 'status': 'Đang chờ', 'color': Colors.blue, 'type': 'patient'},
+    {
+      'name': 'Nguyễn Văn Anh',
+      'id': 'BN10293',
+      'status': 'Đang chờ',
+      'color': Colors.blue,
+      'type': 'patient',
+    },
+    {
+      'name': 'Trần Thị Bảo',
+      'id': 'BN10294',
+      'status': 'Hoàn tất',
+      'color': Colors.green,
+      'type': 'patient',
+    },
+    {
+      'name': 'Lê Hoàng Cường',
+      'id': 'BN10295',
+      'status': 'Khẩn cấp',
+      'color': Colors.red,
+      'type': 'patient',
+    },
+    {
+      'name': 'Phạm Thị Diễm',
+      'id': 'BN10296',
+      'status': 'Đang khám',
+      'color': Colors.orange,
+      'type': 'patient',
+    },
+    {
+      'name': 'Vũ Hoàng Nam',
+      'id': 'BN10297',
+      'status': 'Đang chờ',
+      'color': Colors.blue,
+      'type': 'patient',
+    },
   ];
 
   final List<Map<String, dynamic>> _allMeds = [
-    {'name': 'Amoxicillin 500mg', 'category': 'Kháng sinh', 'info': 'Còn 200 viên', 'type': 'medicine'},
-    {'name': 'Paracetamol 500mg', 'category': 'Giảm đau', 'info': 'Còn 500 viên', 'type': 'medicine'},
-    {'name': 'Ibuprofen 400mg', 'category': 'Kháng viêm', 'info': 'Hết hàng', 'type': 'medicine'},
-    {'name': 'Ceftriaxone 1g', 'category': 'Kháng sinh tiêm', 'info': 'Còn 50 ống', 'type': 'medicine'},
+    {
+      'name': 'Amoxicillin 500mg',
+      'category': 'Kháng sinh',
+      'info': 'Còn 200 viên',
+      'type': 'medicine',
+    },
+    {
+      'name': 'Paracetamol 500mg',
+      'category': 'Giảm đau',
+      'info': 'Còn 500 viên',
+      'type': 'medicine',
+    },
+    {
+      'name': 'Ibuprofen 400mg',
+      'category': 'Kháng viêm',
+      'info': 'Hết hàng',
+      'type': 'medicine',
+    },
+    {
+      'name': 'Ceftriaxone 1g',
+      'category': 'Kháng sinh tiêm',
+      'info': 'Còn 50 ống',
+      'type': 'medicine',
+    },
   ];
 
   final List<Map<String, dynamic>> _allICD = [
@@ -42,7 +92,7 @@ class _DoctorSearchPageState extends State<DoctorSearchPage> {
       setState(() => _searchQuery = _searchController.text.toLowerCase());
     });
     // Auto-focus logic
-    Future.delayed(const Duration(milliseconds: 300), () {
+    Future.delayed(Duration(milliseconds: 300), () {
       if (mounted) _focusNode.requestFocus();
     });
   }
@@ -63,7 +113,11 @@ class _DoctorSearchPageState extends State<DoctorSearchPage> {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF202637), size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Color(0xFF202637),
+            size: 20,
+          ),
         ),
         title: Hero(
           tag: 'doctor_search_bar',
@@ -72,10 +126,18 @@ class _DoctorSearchPageState extends State<DoctorSearchPage> {
             child: TextField(
               controller: _searchController,
               focusNode: _focusNode,
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: Color(0xFF131826)),
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF131826),
+              ),
               decoration: const InputDecoration(
                 hintText: 'Tìm bệnh nhân, thuốc, mã ICD...',
-                hintStyle: TextStyle(color: Color(0xFF8B92A6), fontWeight: FontWeight.bold, fontSize: 13),
+                hintStyle: TextStyle(
+                  color: Color(0xFF8B92A6),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
                 border: InputBorder.none,
               ),
             ),
@@ -93,7 +155,9 @@ class _DoctorSearchPageState extends State<DoctorSearchPage> {
         children: [
           const Divider(height: 1, thickness: 1, color: Color(0xFFF1F4F9)),
           Expanded(
-            child: _searchQuery.isEmpty ? _buildSuggestions() : _buildSearchResults(),
+            child: _searchQuery.isEmpty
+                ? _buildSuggestions()
+                : _buildSearchResults(),
           ),
         ],
       ),
@@ -108,7 +172,12 @@ class _DoctorSearchPageState extends State<DoctorSearchPage> {
         children: [
           const Text(
             'BÁC SĨ THƯỜNG DÙNG',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF8B92A6), letterSpacing: 1.2),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF8B92A6),
+              letterSpacing: 1.2,
+            ),
           ),
           const SizedBox(height: 16),
           Wrap(
@@ -124,11 +193,24 @@ class _DoctorSearchPageState extends State<DoctorSearchPage> {
           const SizedBox(height: 32),
           const Text(
             'HỒ SƠ VỪA XỬ LÝ',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF8B92A6), letterSpacing: 1.2),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF8B92A6),
+              letterSpacing: 1.2,
+            ),
           ),
-          const SizedBox(height: 16),
-          _suggestionItem('Nguyễn Văn Anh', 'Cấp thuốc - 14:00', Icons.history_rounded),
-          _suggestionItem('Lê Hoàng Cường', 'Chờ kết quả XN', Icons.history_rounded),
+          SizedBox(height: 16),
+          _suggestionItem(
+            'Nguyễn Văn Anh',
+            'Cấp thuốc - 14:00',
+            Icons.history_rounded,
+          ),
+          _suggestionItem(
+            'Lê Hoàng Cường',
+            'Chờ kết quả XN',
+            Icons.history_rounded,
+          ),
         ],
       ),
     );
@@ -143,20 +225,27 @@ class _DoctorSearchPageState extends State<DoctorSearchPage> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: Color(0xFFE8EBF4)),
+        side: BorderSide(color: Color(0xFFE8EBF4)),
       ),
-      labelStyle: const TextStyle(color: Color(0xFF131826), fontWeight: FontWeight.w600, fontSize: 13),
+      labelStyle: TextStyle(
+        color: Color(0xFF131826),
+        fontWeight: FontWeight.w600,
+        fontSize: 13,
+      ),
     );
   }
 
   Widget _suggestionItem(String title, String subtitle, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: EdgeInsets.only(bottom: 16),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: const Color(0xFFF0F4FF), borderRadius: BorderRadius.circular(12)),
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Color(0xFFF0F4FF),
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Icon(icon, color: AppColors.primary, size: 20),
           ),
           const SizedBox(width: 14),
@@ -164,8 +253,22 @@ class _DoctorSearchPageState extends State<DoctorSearchPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: Color(0xFF131826))),
-                Text(subtitle, style: const TextStyle(color: Color(0xFF8B92A6), fontSize: 11, fontWeight: FontWeight.w800)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14.5,
+                    color: Color(0xFF131826),
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: Color(0xFF8B92A6),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ],
             ),
           ),
@@ -175,9 +278,19 @@ class _DoctorSearchPageState extends State<DoctorSearchPage> {
   }
 
   Widget _buildSearchResults() {
-    final List<Map<String, dynamic>> patients = _allPatients.where((p) => p['name'].toString().toLowerCase().contains(_searchQuery)).toList();
-    final List<Map<String, dynamic>> meds = _allMeds.where((m) => m['name'].toString().toLowerCase().contains(_searchQuery)).toList();
-    final List<Map<String, dynamic>> icds = _allICD.where((i) => i['name'].toString().toLowerCase().contains(_searchQuery) || i['code'].toString().toLowerCase().contains(_searchQuery)).toList();
+    final List<Map<String, dynamic>> patients = _allPatients
+        .where((p) => p['name'].toString().toLowerCase().contains(_searchQuery))
+        .toList();
+    final List<Map<String, dynamic>> meds = _allMeds
+        .where((m) => m['name'].toString().toLowerCase().contains(_searchQuery))
+        .toList();
+    final List<Map<String, dynamic>> icds = _allICD
+        .where(
+          (i) =>
+              i['name'].toString().toLowerCase().contains(_searchQuery) ||
+              i['code'].toString().toLowerCase().contains(_searchQuery),
+        )
+        .toList();
 
     if (patients.isEmpty && meds.isEmpty && icds.isEmpty) {
       return Center(
@@ -186,7 +299,13 @@ class _DoctorSearchPageState extends State<DoctorSearchPage> {
           children: [
             Icon(Icons.search_off_rounded, size: 64, color: Colors.grey[300]),
             const SizedBox(height: 16),
-            const Text('Không thấy thông tin phù hợp', style: TextStyle(color: Color(0xFF8B92A6), fontWeight: FontWeight.w600)),
+            const Text(
+              'Không thấy thông tin phù hợp',
+              style: TextStyle(
+                color: Color(0xFF8B92A6),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       );
@@ -197,17 +316,38 @@ class _DoctorSearchPageState extends State<DoctorSearchPage> {
       children: [
         if (patients.isNotEmpty) ...[
           _buildSectionHeader('BỆNH NHÂN'),
-          ...patients.map((p) => _resultItem(p['name'] as String, 'Mã BN: ${p['id']}', Icons.person_rounded, p['color'] as Color)),
+          ...patients.map(
+            (p) => _resultItem(
+              p['name'] as String,
+              'Mã BN: ${p['id']}',
+              Icons.person_rounded,
+              p['color'] as Color,
+            ),
+          ),
           const SizedBox(height: 20),
         ],
         if (meds.isNotEmpty) ...[
           _buildSectionHeader('KHO THUỐC'),
-          ...meds.map((m) => _resultItem(m['name'] as String, '${m['category']} - ${m['info']}', Icons.medication_rounded, Colors.indigo)),
+          ...meds.map(
+            (m) => _resultItem(
+              m['name'] as String,
+              '${m['category']} - ${m['info']}',
+              Icons.medication_rounded,
+              Colors.indigo,
+            ),
+          ),
           const SizedBox(height: 20),
         ],
         if (icds.isNotEmpty) ...[
           _buildSectionHeader('MÃ BỆNH ICD-10'),
-          ...icds.map((i) => _resultItem(i['name'] as String, 'Mã ICD: ${i['code']}', Icons.biotech_rounded, Colors.teal)),
+          ...icds.map(
+            (i) => _resultItem(
+              i['name'] as String,
+              'Mã ICD: ${i['code']}',
+              Icons.biotech_rounded,
+              Colors.teal,
+            ),
+          ),
         ],
       ],
     );
@@ -218,12 +358,22 @@ class _DoctorSearchPageState extends State<DoctorSearchPage> {
       padding: const EdgeInsets.only(bottom: 12, left: 4),
       child: Text(
         title,
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF8B92A6), letterSpacing: 1.0),
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+          color: Color(0xFF8B92A6),
+          letterSpacing: 1.0,
+        ),
       ),
     );
   }
 
-  Widget _resultItem(String title, String subtitle, IconData icon, Color color) {
+  Widget _resultItem(
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -232,14 +382,21 @@ class _DoctorSearchPageState extends State<DoctorSearchPage> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFF1F4F9)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(14),
+            ),
             child: Icon(icon, color: color, size: 24),
           ),
           const SizedBox(width: 16),
@@ -247,9 +404,22 @@ class _DoctorSearchPageState extends State<DoctorSearchPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF131826))),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    color: Color(0xFF131826),
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(subtitle, style: const TextStyle(color: Color(0xFF5C6477), fontSize: 13)),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: Color(0xFF5C6477),
+                    fontSize: 13,
+                  ),
+                ),
               ],
             ),
           ),

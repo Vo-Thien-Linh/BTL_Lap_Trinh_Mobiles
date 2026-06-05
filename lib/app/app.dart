@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'routes/app_routes.dart';
 import 'settings/app_settings_controller.dart';
+import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
 
 class HospitalBookingApp extends StatelessWidget {
@@ -19,11 +20,20 @@ class HospitalBookingApp extends StatelessWidget {
     return AnimatedBuilder(
       animation: settingsController,
       builder: (context, _) {
+        final platformBrightness =
+            WidgetsBinding.instance.platformDispatcher.platformBrightness;
+        final effectiveBrightness = switch (settingsController.themeMode) {
+          ThemeMode.dark => Brightness.dark,
+          ThemeMode.light => Brightness.light,
+          ThemeMode.system => platformBrightness,
+        };
+        AppColors.configure(brightness: effectiveBrightness);
+
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           title: 'Bệnh viện LPHV',
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
+          theme: AppTheme.lightTheme(),
+          darkTheme: AppTheme.darkTheme(),
           themeMode: settingsController.themeMode,
           locale: Locale(settingsController.languageCode),
           supportedLocales: const [Locale('vi'), Locale('en')],

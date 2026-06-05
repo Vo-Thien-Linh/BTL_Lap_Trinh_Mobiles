@@ -5,7 +5,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../data/models/payment_model.dart';
 
 class PaymentSummaryCard extends StatelessWidget {
-  const PaymentSummaryCard({super.key, required this.payments});
+  PaymentSummaryCard({super.key, required this.payments});
 
   final List<PatientPaymentModel> payments;
 
@@ -19,8 +19,8 @@ class PaymentSummaryCard extends StatelessWidget {
         .fold<double>(0, (sum, payment) => sum + payment.amount);
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-      padding: const EdgeInsets.all(18),
+      margin: EdgeInsets.fromLTRB(20, 16, 20, 12),
+      padding: EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(8),
@@ -42,7 +42,7 @@ class PaymentSummaryCard extends StatelessWidget {
 }
 
 class _Metric extends StatelessWidget {
-  const _Metric({required this.label, required this.amount});
+  _Metric({required this.label, required this.amount});
 
   final String label;
   final double amount;
@@ -50,22 +50,22 @@ class _Metric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: EdgeInsets.symmetric(horizontal: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
             '${NumberFormat('#,###').format(amount)} đ',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textBody,
               fontSize: 18,
               fontWeight: FontWeight.w900,

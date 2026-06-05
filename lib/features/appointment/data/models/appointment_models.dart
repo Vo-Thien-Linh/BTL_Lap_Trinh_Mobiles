@@ -320,6 +320,7 @@ class HospitalAppointmentModel extends HospitalAppointment {
     super.labResults,
     super.vitals,
     required super.status,
+    super.cancelRequestStatus,
     super.paymentStatus,
     required super.paymentMethod,
     required super.createdAt,
@@ -332,42 +333,38 @@ class HospitalAppointmentModel extends HospitalAppointment {
       appointmentCode:
           _firstText(data, const ['appointmentCode', 'code', 'bookingCode']) ??
           doc.id,
-      patientId: data['patientId'] ?? '',
+      patientId: _text(data['patientId']),
       patientCode: _firstText(data, const ['patientCode', 'userCode']) ?? '',
-      patientDOB: data['patientDOB'] as String?,
-      patientGender: data['patientGender'] as String?,
-      patientName: data['patientName'] ?? '',
-      doctorId: data['doctorId'] ?? '',
+      patientDOB: _nullableText(data['patientDOB']),
+      patientGender: _nullableText(data['patientGender']),
+      patientName: _text(data['patientName']),
+      doctorId: _text(data['doctorId']),
       doctorCode: _firstText(data, const ['doctorCode']) ?? '',
-      doctorName: data['doctorName'] ?? '',
-      departmentId: data['departmentId'] ?? '',
-      departmentName: data['departmentName'] ?? '',
-      appointmentDate:
-          (data['appointmentDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      scheduleId: data['scheduleId'] as String?,
-      shiftId: data['shiftId'] ?? '',
-      timeSlot: data['timeSlot'] ?? '',
+      doctorName: _text(data['doctorName']),
+      departmentId: _text(data['departmentId']),
+      departmentName: _text(data['departmentName']),
+      appointmentDate: _date(data['appointmentDate']),
+      scheduleId: _nullableText(data['scheduleId']),
+      shiftId: _text(data['shiftId']),
+      timeSlot: _text(data['timeSlot']),
       queueNumber: int.tryParse(data['queueNumber']?.toString() ?? '0') ?? 0,
       queueOrder: int.tryParse(data['queueOrder']?.toString() ?? ''),
-      roomNumber: data['roomNumber'] ?? '',
-      consultationFee: (data['consultationFee'] ?? 0.0).toDouble(),
-      insuranceNumber: data['insuranceNumber'] as String?,
-      symptoms: data['symptoms'] ?? '',
-      diagnosis: data['diagnosis'] as String?,
-      physicalExam: data['physicalExam'] as String?,
-      treatment: data['treatment'] as String?,
-      notes: data['notes'] as String?,
-      prescription: (data['prescription'] as List<dynamic>?)
-          ?.map((e) => e as Map<String, dynamic>)
-          .toList(),
-      labResults: (data['labResults'] as List<dynamic>?)
-          ?.map((e) => e as Map<String, dynamic>)
-          .toList(),
-      vitals: data['vitals'] as Map<String, dynamic>?,
-      status: data['status'] ?? 'pending',
+      roomNumber: _text(data['roomNumber']),
+      consultationFee: _double(data['consultationFee']),
+      insuranceNumber: _nullableText(data['insuranceNumber']),
+      symptoms: _text(data['symptoms']),
+      diagnosis: _nullableText(data['diagnosis']),
+      physicalExam: _nullableText(data['physicalExam']),
+      treatment: _nullableText(data['treatment']),
+      notes: _nullableText(data['notes']),
+      prescription: _mapList(data['prescription']),
+      labResults: _mapList(data['labResults']),
+      vitals: _map(data['vitals']),
+      status: _text(data['status'], fallback: 'pending'),
+      cancelRequestStatus: data['cancelRequestStatus']?.toString() ?? '',
       paymentStatus: data['paymentStatus']?.toString() ?? '',
-      paymentMethod: data['paymentMethod'] ?? 'CASH',
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      paymentMethod: _text(data['paymentMethod'], fallback: 'BANK_TRANSFER'),
+      createdAt: _date(data['createdAt']),
     );
   }
 
@@ -402,6 +399,9 @@ class HospitalAppointmentModel extends HospitalAppointment {
       'labResults': labResults,
       'vitals': vitals,
       'status': status,
+      'cancelRequestStatus': cancelRequestStatus.isEmpty
+          ? null
+          : cancelRequestStatus,
       'paymentStatus': paymentStatus.isEmpty ? null : paymentStatus,
       'paymentMethod': paymentMethod,
       'createdAt': createdAt,
@@ -414,5 +414,43 @@ class HospitalAppointmentModel extends HospitalAppointment {
       if (value != null && value.isNotEmpty) return value;
     }
     return null;
+  }
+
+  static String _text(dynamic value, {String fallback = ''}) {
+    final text = value?.toString().trim() ?? '';
+    return text.isEmpty ? fallback : text;
+  }
+
+  static String? _nullableText(dynamic value) {
+    final text = value?.toString().trim();
+    return text == null || text.isEmpty ? null : text;
+  }
+
+  static double _double(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0.0;
+  }
+
+  static DateTime _date(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return DateTime.tryParse(value?.toString() ?? '') ?? DateTime.now();
+  }
+
+  static Map<String, dynamic>? _map(dynamic value) {
+    if (value is Map) {
+      return value.map((key, item) => MapEntry(key.toString(), item));
+    }
+    return null;
+  }
+
+  static List<Map<String, dynamic>>? _mapList(dynamic value) {
+    if (value is! Iterable) return null;
+    return value
+        .whereType<Map>()
+        .map(
+          (item) => item.map((key, value) => MapEntry(key.toString(), value)),
+        )
+        .toList();
   }
 }

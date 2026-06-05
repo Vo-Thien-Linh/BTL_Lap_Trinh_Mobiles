@@ -9,7 +9,7 @@ import '../../../../app/theme/app_colors.dart';
 
 class InvoiceDetailPage extends StatefulWidget {
   final InvoiceModel invoice;
-  const InvoiceDetailPage({super.key, required this.invoice});
+  InvoiceDetailPage({super.key, required this.invoice});
 
   @override
   State<InvoiceDetailPage> createState() => _InvoiceDetailPageState();
@@ -34,20 +34,16 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
       SnackBar(
         content: Row(
           children: [
-            const Icon(
-              Icons.check_circle_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 12),
+            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+            SizedBox(width: 12),
             Text('Đã sao chép $label'),
           ],
         ),
         backgroundColor: AppColors.textBody,
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
+        duration: Duration(seconds: 2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(20),
+        margin: EdgeInsets.all(20),
       ),
     );
   }
@@ -64,14 +60,14 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.textBody,
             size: 18,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'CHI TIẾT HÓA ĐƠN',
           style: TextStyle(
             color: AppColors.textBody,
@@ -87,7 +83,7 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
               !isPaid &&
               !isWaitingApproval) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
+              SnackBar(
                 content: Text(
                   'Đã gửi xác nhận thanh toán. Vui lòng chờ nhân viên duyệt.',
                 ),
@@ -112,10 +108,10 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
               _buildMainInfoSection(),
               const SizedBox(height: 24),
               _buildPriceSection(),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               if (!isPaid && !isWaitingApproval) _buildPaymentMethodSection(),
               if (isWaitingApproval) _buildWaitingApprovalSection(),
-              const SizedBox(height: 40),
+              SizedBox(height: 40),
             ],
           ),
         ),
@@ -128,7 +124,7 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
 
   Widget _buildMainInfoSection() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(32),
@@ -136,7 +132,7 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
           BoxShadow(
             color: AppColors.textBody.withOpacity(0.04),
             blurRadius: 20,
-            offset: const Offset(0, 10),
+            offset: Offset(0, 10),
           ),
         ],
         border: Border.all(color: AppColors.border.withOpacity(0.5)),
@@ -149,7 +145,7 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
             widget.invoice.id,
             highlight: true,
           ),
-          const Divider(height: 32, color: AppColors.border),
+          Divider(height: 32, color: AppColors.border),
           _buildInfoRow(
             Icons.calendar_today_rounded,
             'Ngày',
@@ -187,32 +183,32 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
     bool highlight = false,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: EdgeInsets.symmetric(vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: AppColors.background,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: AppColors.textSecondary, size: 18),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textHint,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(
                   value,
                   style: TextStyle(
@@ -231,10 +227,10 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
 
   Widget _buildPriceSection() {
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: EdgeInsets.all(28),
       decoration: BoxDecoration(
         color: AppColors.primary,
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           colors: [AppColors.primary, Color(0xFF3B82F6)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -344,7 +340,7 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Chọn phương thức thanh toán',
           style: TextStyle(
             fontSize: 16,
@@ -390,9 +386,9 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
   Widget _buildPaymentMethodCard(Map<String, dynamic> method) {
     bool isSelected = _selectedPaymentMethod == method['label'];
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: 12),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
+        duration: Duration(milliseconds: 300),
         curve: Curves.easeInOut,
         decoration: BoxDecoration(
           color: isSelected
@@ -420,11 +416,11 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
                   setState(() => _selectedPaymentMethod = method['label']),
               borderRadius: BorderRadius.circular(20),
               child: Container(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.all(20),
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? method['color']
@@ -439,7 +435,7 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
                         size: 22,
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    SizedBox(width: 16),
                     Expanded(
                       child: Text(
                         method['label'],
@@ -473,14 +469,14 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
     final transferContent = 'THANH TOAN HD ${widget.invoice.id}';
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
       child: Column(
         children: [
-          const Divider(height: 1, color: AppColors.border),
-          const SizedBox(height: 20),
+          Divider(height: 1, color: AppColors.border),
+          SizedBox(height: 20),
           // QR Code Simulation
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(24),
@@ -494,7 +490,7 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    image: const DecorationImage(
+                    image: DecorationImage(
                       image: NetworkImage(
                         'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=PREMIUM_HOSPITAL_PAYMENT',
                       ),
@@ -502,7 +498,7 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Text(
                   'Quét mã QR để thanh toán nhanh',
                   style: TextStyle(
@@ -526,7 +522,7 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
           _buildCopyableInfoRow('Nội dung', transferContent),
 
           Padding(
-            padding: const EdgeInsets.only(top: 16),
+            padding: EdgeInsets.only(top: 16),
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -567,13 +563,13 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
     bool copyable = true,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -583,7 +579,7 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
             children: [
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textBody,
                   fontWeight: FontWeight.w900,
                   fontSize: 13,
@@ -592,13 +588,13 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
               if (copyable && value != 'N/A')
                 IconButton(
                   onPressed: () => _copyToClipboard(value, label),
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.copy_rounded,
                     size: 16,
                     color: AppColors.primary,
                   ),
-                  padding: const EdgeInsets.only(left: 8),
-                  constraints: const BoxConstraints(),
+                  padding: EdgeInsets.only(left: 8),
+                  constraints: BoxConstraints(),
                 ),
             ],
           ),
@@ -609,15 +605,15 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
 
   Widget _buildBottomActions() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+      padding: EdgeInsets.fromLTRB(24, 16, 24, 40),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 20,
-            offset: const Offset(0, -5),
+            offset: Offset(0, -5),
           ),
         ],
       ),
@@ -627,13 +623,13 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
             child: OutlinedButton(
               onPressed: () => Navigator.pop(context),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                side: const BorderSide(color: AppColors.border),
+                padding: EdgeInsets.symmetric(vertical: 16),
+                side: BorderSide(color: AppColors.border),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'Đóng',
                 style: TextStyle(
                   color: AppColors.textSecondary,
@@ -642,7 +638,7 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: ElevatedButton(
               onPressed: () {

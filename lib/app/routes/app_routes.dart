@@ -144,10 +144,10 @@ class AppRoutes {
         );
 
       case termsOfUse:
-        return _buildRoute(const TermsOfUsePage());
+        return _buildRoute(TermsOfUsePage());
 
       case privacyPolicy:
-        return _buildRoute(const PrivacyPolicyPage());
+        return _buildRoute(PrivacyPolicyPage());
 
       case home:
         return _buildRoute(const HomePage());
@@ -287,10 +287,10 @@ class AppRoutes {
         return _buildRoute(const MedicalRecordDashboardPage());
 
       case medicalEmergencyId:
-        return _buildRoute(const MedicalEmergencyIdPage());
+        return _buildRoute(MedicalEmergencyIdPage());
 
       case paymentManagement:
-        return _buildRoute(const PatientPaymentsPage());
+        return _buildRoute(PatientPaymentsPage());
 
       case invoiceDetail:
         final args = routeSettings.arguments;

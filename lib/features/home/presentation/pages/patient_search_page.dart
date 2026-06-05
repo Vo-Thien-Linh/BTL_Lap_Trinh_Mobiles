@@ -412,14 +412,14 @@ class _PatientSearchPageState extends State<PatientSearchPage> {
           onTap: onTap,
           borderRadius: BorderRadius.circular(20),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             child: Row(
               children: [
                 Container(
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF7F8FC),
+                    color: Color(0xFFF7F8FC),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: imageUrl != null

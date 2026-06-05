@@ -13,14 +13,14 @@ class SelectDepartmentStep extends StatelessWidget {
       builder: (context, state) {
         if (state.status == BookingStatus.loading &&
             state.departments.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(child: CircularProgressIndicator());
         }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Text(
                 'Chọn chuyên khoa',
                 style: TextStyle(
@@ -91,7 +91,7 @@ class _DepartmentCard extends StatelessWidget {
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
               blurRadius: 10,
-              offset: const Offset(0, 4),
+              offset: Offset(0, 4),
             ),
           ],
         ),
@@ -99,14 +99,14 @@ class _DepartmentCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: AppColors.primaryDark, size: 30),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
             Text(
               name,
               textAlign: TextAlign.center,

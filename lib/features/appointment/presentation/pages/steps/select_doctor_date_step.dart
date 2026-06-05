@@ -41,15 +41,15 @@ class _SelectDoctorDateStepState extends State<SelectDoctorDateStep> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Row(
                 children: [
                   IconButton(
                     onPressed: () =>
                         context.read<BookingBloc>().add(StepBack()),
-                    icon: const Icon(Icons.arrow_back_ios_rounded, size: 18),
+                    icon: Icon(Icons.arrow_back_ios_rounded, size: 18),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Chọn ngày, buổi và bác sĩ',
                       style: TextStyle(
@@ -64,7 +64,7 @@ class _SelectDoctorDateStepState extends State<SelectDoctorDateStep> {
             ),
             _DatePicker(selectedDate: state.selectedDate),
             _SessionPicker(selectedSession: state.selectedSession),
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(20, 20, 20, 10),
               child: Text(
                 'Bác sĩ có lịch trống',
@@ -77,9 +77,9 @@ class _SelectDoctorDateStepState extends State<SelectDoctorDateStep> {
             ),
             Expanded(
               child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? Center(child: CircularProgressIndicator())
                   : waitingForFilters
-                  ? const Center(
+                  ? Center(
                       child: Padding(
                         padding: EdgeInsets.all(24),
                         child: Text(
@@ -94,7 +94,7 @@ class _SelectDoctorDateStepState extends State<SelectDoctorDateStep> {
                       ),
                     )
                   : state.doctors.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Padding(
                         padding: EdgeInsets.all(24),
                         child: Text(
@@ -150,9 +150,9 @@ class _DatePicker extends StatelessWidget {
     return SizedBox(
       height: 100,
       child: ListView.builder(
-        physics: const BouncingScrollPhysics(),
+        physics: BouncingScrollPhysics(),
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(20, 10, 8, 0),
+        padding: EdgeInsets.fromLTRB(20, 10, 8, 0),
         itemCount: 14,
         itemBuilder: (context, index) {
           final date = DateTime.now().add(Duration(days: index));
@@ -164,7 +164,7 @@ class _DatePicker extends StatelessWidget {
                 context.read<BookingBloc>().add(SelectAppointmentDate(date)),
             child: Container(
               width: 64,
-              margin: const EdgeInsets.only(right: 12, top: 4, bottom: 4),
+              margin: EdgeInsets.only(right: 12, top: 4, bottom: 4),
               decoration: BoxDecoration(
                 color: selected ? AppColors.primaryDark : Colors.white,
                 borderRadius: BorderRadius.circular(16),
@@ -172,7 +172,7 @@ class _DatePicker extends StatelessWidget {
                   BoxShadow(
                     color: Colors.black.withOpacity(0.04),
                     blurRadius: 8,
-                    offset: const Offset(0, 4),
+                    offset: Offset(0, 4),
                   ),
                 ],
               ),
@@ -187,7 +187,7 @@ class _DatePicker extends StatelessWidget {
                       color: selected ? Colors.white70 : AppColors.hint,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     DateFormat('dd').format(date),
                     style: TextStyle(
@@ -229,20 +229,20 @@ class _SessionPicker extends StatelessWidget {
     ];
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+      padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
       child: Row(
         children: sessions.map((option) {
           final selected = selectedSession == option.id;
           return Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(right: 10),
+              padding: EdgeInsets.only(right: 10),
               child: InkWell(
                 onTap: () => context.read<BookingBloc>().add(
                   SelectAppointmentSession(option.id),
                 ),
                 borderRadius: BorderRadius.circular(16),
                 child: Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: selected ? AppColors.primaryDark : Colors.white,
                     borderRadius: BorderRadius.circular(16),
@@ -259,7 +259,7 @@ class _SessionPicker extends StatelessWidget {
                         color: selected ? Colors.white : AppColors.primaryDark,
                         size: 22,
                       ),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,7 +272,7 @@ class _SessionPicker extends StatelessWidget {
                                 color: selected ? Colors.white : AppColors.text,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            SizedBox(height: 2),
                             Text(
                               option.time,
                               style: TextStyle(
@@ -317,7 +317,7 @@ class _DoctorListItem extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _DoctorListItem({
+  _DoctorListItem({
     required this.doctor,
     required this.availableSlots,
     required this.isSelected,
@@ -331,7 +331,7 @@ class _DoctorListItem extends StatelessWidget {
         : 'Bác sĩ chưa cập nhật tên';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: isSelected ? AppColors.secondary : Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -343,13 +343,13 @@ class _DoctorListItem extends StatelessWidget {
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
       child: ListTile(
         onTap: onTap,
-        contentPadding: const EdgeInsets.all(12),
+        contentPadding: EdgeInsets.all(12),
         leading: CircleAvatar(
           radius: 28,
           backgroundColor: AppColors.primary.withOpacity(0.2),
@@ -357,15 +357,12 @@ class _DoctorListItem extends StatelessWidget {
               ? NetworkImage(doctor.imageUrl!)
               : null,
           child: doctor.imageUrl == null
-              ? const Icon(
-                  Icons.person_outline_rounded,
-                  color: AppColors.primaryDark,
-                )
+              ? Icon(Icons.person_outline_rounded, color: AppColors.primaryDark)
               : null,
         ),
         title: Text(
           doctorName,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 15,
             color: AppColors.text,
@@ -374,15 +371,15 @@ class _DoctorListItem extends StatelessWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               '${doctor.specialization} - ${doctor.yearsOfExperience} năm KN',
-              style: const TextStyle(fontSize: 13, color: AppColors.hint),
+              style: TextStyle(fontSize: 13, color: AppColors.hint),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               'Còn $availableSlots chỗ - Phí khám: ${NumberFormat.decimalPattern().format(doctor.consultationFee)} đ',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AppColors.success,
@@ -391,11 +388,8 @@ class _DoctorListItem extends StatelessWidget {
           ],
         ),
         trailing: isSelected
-            ? const Icon(
-                Icons.check_circle_rounded,
-                color: AppColors.primaryDark,
-              )
-            : const Icon(
+            ? Icon(Icons.check_circle_rounded, color: AppColors.primaryDark)
+            : Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 14,
                 color: AppColors.hint,
