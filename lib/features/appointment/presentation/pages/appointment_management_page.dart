@@ -650,12 +650,13 @@ class _MedicalTicketCard extends StatelessWidget {
                                 onTap: () => _showPrepGuide(context),
                               ),
                               SizedBox(width: 12),
-                              if (_canCancelAppointment())
+                              if (_shouldShowCancelAction())
                                 _ActionIcon(
                                   icon: Icons.cancel_outlined,
-                                  color: AppColors.error,
-                                  onTap: () =>
-                                      _confirmCancelAppointment(context),
+                                  color: _canCancelAppointment()
+                                      ? AppColors.error
+                                      : AppColors.textHint,
+                                  onTap: () => _handleCancelTap(context),
                                 ),
                             ],
                           ),
@@ -702,10 +703,7 @@ class _MedicalTicketCard extends StatelessWidget {
   }
 
   bool _canCancelAppointment() {
-    final isActiveStatus =
-        appointment.status == 'scheduled' ||
-        appointment.status == 'pending' ||
-        appointment.status == 'confirmed';
+    final isActiveStatus = _isPatientCancelableStatus();
     if (appointment.hasPendingCancelRequest) return false;
     final appointmentStart = _appointmentDateTime(
       appointment.appointmentDate,
@@ -713,6 +711,49 @@ class _MedicalTicketCard extends StatelessWidget {
     );
     final remaining = appointmentStart.difference(DateTime.now());
     return isActiveStatus && remaining >= const Duration(hours: 24);
+  }
+
+  bool _shouldShowCancelAction() {
+    return _isPatientCancelableStatus() || appointment.hasPendingCancelRequest;
+  }
+
+  bool _isPatientCancelableStatus() {
+    return appointment.status == 'scheduled' ||
+        appointment.status == 'pending' ||
+        appointment.status == 'confirmed';
+  }
+
+  void _handleCancelTap(BuildContext context) {
+    final message = _cancelUnavailableMessage();
+    if (message != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+      );
+      return;
+    }
+
+    _confirmCancelAppointment(context);
+  }
+
+  String? _cancelUnavailableMessage() {
+    if (appointment.hasPendingCancelRequest) {
+      return 'Yêu cầu hủy lịch này đang chờ admin duyệt.';
+    }
+
+    if (!_isPatientCancelableStatus()) {
+      return 'Lịch hẹn này không còn ở trạng thái có thể yêu cầu hủy.';
+    }
+
+    final appointmentStart = _appointmentDateTime(
+      appointment.appointmentDate,
+      appointment.timeSlot,
+    );
+    final remaining = appointmentStart.difference(DateTime.now());
+    if (remaining < const Duration(hours: 24)) {
+      return 'Chỉ được yêu cầu hủy lịch trước giờ khám ít nhất 24 giờ.';
+    }
+
+    return null;
   }
 
   Future<void> _confirmCancelAppointment(BuildContext context) async {
@@ -831,11 +872,11 @@ class _MedicalTicketCard extends StatelessWidget {
   }
 
   DateTime _appointmentDateTime(DateTime date, String time) {
-    final parts = time.trim().split(':');
-    if (parts.length < 2) return date;
+    final match = RegExp(r'(\d{1,2}):(\d{2})').firstMatch(time);
+    if (match == null) return date;
 
-    final hour = int.tryParse(parts[0]) ?? 0;
-    final minute = int.tryParse(parts[1]) ?? 0;
+    final hour = int.tryParse(match.group(1) ?? '') ?? 0;
+    final minute = int.tryParse(match.group(2) ?? '') ?? 0;
     return DateTime(date.year, date.month, date.day, hour, minute);
   }
 
@@ -1281,10 +1322,10 @@ class _ActionIcon extends StatelessWidget {
 }
 
 DateTime _appointmentDateTime(DateTime date, String time) {
-  final parts = time.trim().split(':');
-  if (parts.length < 2) return date;
+  final match = RegExp(r'(\d{1,2}):(\d{2})').firstMatch(time);
+  if (match == null) return date;
 
-  final hour = int.tryParse(parts[0]) ?? 0;
-  final minute = int.tryParse(parts[1]) ?? 0;
+  final hour = int.tryParse(match.group(1) ?? '') ?? 0;
+  final minute = int.tryParse(match.group(2) ?? '') ?? 0;
   return DateTime(date.year, date.month, date.day, hour, minute);
 }

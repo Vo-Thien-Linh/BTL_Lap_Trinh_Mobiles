@@ -49,14 +49,14 @@ class _TimelineEvent {
 }
 
 class _TimelineRow extends StatelessWidget {
-  _TimelineRow({required this.event});
+  const _TimelineRow({required this.event});
 
   final _TimelineEvent event;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
           Container(
@@ -67,7 +67,7 @@ class _TimelineRow extends StatelessWidget {
               shape: BoxShape.circle,
             ),
           ),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               event.title,

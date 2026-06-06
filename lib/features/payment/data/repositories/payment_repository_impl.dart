@@ -168,7 +168,7 @@ class PatientPaymentRepositoryImpl implements PatientPaymentRepository {
     final decoded = jsonDecode(response.body);
     final checkoutUrl = _findCheckoutUrl(decoded);
     if (checkoutUrl.isEmpty) {
-      throw Exception('Backend chua tra ve checkoutUrl payOS.');
+      throw Exception('Backend chưa trả về checkoutUrl payOS.');
     }
     return checkoutUrl;
   }
