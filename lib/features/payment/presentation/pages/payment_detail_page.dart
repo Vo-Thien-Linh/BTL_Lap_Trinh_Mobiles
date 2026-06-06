@@ -24,7 +24,6 @@ class PaymentDetailPage extends StatefulWidget {
 class _PaymentDetailPageState extends State<PaymentDetailPage> {
   final _repository = PatientPaymentRepositoryImpl();
   bool _isCreatingPayosLink = false;
-  bool _isChoosingCash = false;
   bool _successNotified = false;
 
   @override
@@ -43,12 +42,12 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
             foregroundColor: AppColors.textBody,
             elevation: 0,
             title: const Text(
-              'Chi ti?t thanh to?n',
+              'Chi tiết thanh toán',
               style: TextStyle(fontWeight: FontWeight.w900),
             ),
             actions: [
               IconButton(
-                tooltip: 'L?m m?i tr?ng th?i',
+                tooltip: 'Làm mới trạng thái',
                 onPressed: () => setState(() {}),
                 icon: const Icon(Icons.refresh_rounded),
               ),
@@ -60,22 +59,22 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
               _StatusHeader(payment: payment),
               const SizedBox(height: 16),
               _InfoCard(
-                title: 'Thong tin cuoc hen',
+                title: 'Thông tin cuộc hẹn',
                 rows: [
-                  _InfoRow('M? thanh to?n', payment.paymentCode),
+                  _InfoRow('Mã thanh toán', payment.paymentCode),
                   if (payment.invoiceCode.isNotEmpty &&
                       payment.invoiceCode != payment.paymentCode)
-                    _InfoRow('M? h?a ??n', payment.invoiceCode),
+                    _InfoRow('Mã hóa đơn', payment.invoiceCode),
                   _InfoRow(
-                    'B?c s?',
+                    'Bác sĩ',
                     payment.doctorName.isEmpty ? '-' : payment.doctorName,
                   ),
                   _InfoRow(
-                    'Chuy?n khoa',
+                    'Chuyên khoa',
                     payment.specialtyName.isEmpty ? '-' : payment.specialtyName,
                   ),
                   _InfoRow(
-                    'Ng?y kh?m',
+                    'Ngày khám',
                     DateFormat(
                       'dd/MM/yyyy HH:mm',
                     ).format(payment.appointmentDate ?? payment.createdAt),
@@ -103,7 +102,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Thanh to?n th?nh c?ng',
+              'Thanh toán thành công',
               style: TextStyle(
                 color: AppColors.success,
                 fontSize: 18,
@@ -111,13 +110,13 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
               ),
             ),
             const SizedBox(height: 10),
-            Text('S? ti?n: ${NumberFormat('#,###').format(payment.amount)} ?'),
+            Text('Số tiền: ${NumberFormat('#,###').format(payment.amount)} đ'),
             if (payment.paidAt != null)
               Text(
-                'Th?i gian: ${DateFormat('dd/MM/yyyy HH:mm').format(payment.paidAt!)}',
+                'Thời gian: ${DateFormat('dd/MM/yyyy HH:mm').format(payment.paidAt!)}',
               ),
             if (payment.gatewayTransactionId.isNotEmpty)
-              Text('M? giao ??ch: ${payment.gatewayTransactionId}'),
+              Text('Mã giao dịch: ${payment.gatewayTransactionId}'),
             const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: () => Navigator.pushNamed(
@@ -126,7 +125,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
                 arguments: _toInvoice(payment),
               ),
               icon: Icon(Icons.receipt_long_rounded),
-              label: Text('Xem bi?n nh?n'),
+              label: Text('Xem biên nhận'),
             ),
           ],
         ),
@@ -139,7 +138,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Thanh to?n t?i qu?y',
+              'Thanh toán tại quầy',
               style: TextStyle(
                 color: AppColors.textBody,
                 fontSize: 18,
@@ -157,7 +156,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
             ),
             SizedBox(height: 8),
             Text(
-              'Vui l?ng ??a m? h?a ??n n?y cho nh?n vi?n t?i qu?y. Nh?n vi?n s? x?c nh?n ?? thanh to?n sau khi thu ti?n.',
+              'Vui lòng đưa mã hóa đơn này cho nhân viên tại quầy. Nhân viên sẽ xác nhận đã thanh toán sau khi thu tiền.',
               style: TextStyle(color: AppColors.textSecondary, height: 1.45),
             ),
           ],
@@ -171,12 +170,12 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '?ang ch? thanh to?n payOS',
+              'Đang chờ thanh toán payOS',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
             ),
             SizedBox(height: 8),
             Text(
-              'Sau khi b?n thanh to?n, backend/webhook s? c?p nh?t tr?ng th?i. App s? t? ??i sang th?nh c?ng.',
+              'Sau khi bạn thanh toán, backend/webhook sẽ cập nhật trạng thái. App sẽ tự đổi sang thành công.',
               style: TextStyle(color: AppColors.textSecondary, height: 1.45),
             ),
             const SizedBox(height: 16),
@@ -185,13 +184,13 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
                   ? null
                   : () => _openCheckoutUrl(payment.checkoutUrl),
               icon: const Icon(Icons.open_in_new_rounded),
-              label: const Text('M? l?i trang thanh to?n'),
+              label: const Text('Mở lại trang thanh toán'),
             ),
             SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: () => setState(() {}),
               icon: Icon(Icons.refresh_rounded),
-              label: Text('L?m m?i tr?ng th?i'),
+              label: Text('Làm mới trạng thái'),
             ),
           ],
         ),
@@ -202,7 +201,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Ch?n ph??ng th?c',
+          'Chọn phương thức',
           style: TextStyle(
             color: AppColors.textBody,
             fontSize: 16,
@@ -212,22 +211,12 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
         SizedBox(height: 12),
         PaymentMethodCard(
           icon: Icons.qr_code_2_rounded,
-          title: 'Thanh to?n qua payOS',
+          title: 'Thanh toán qua payOS',
           subtitle:
-              'M? checkoutUrl ?o backend t?o. Flutter kh?ng ch?a secret key payOS.',
+              'Mở trang thanh toán do backend tạo. Flutter không chứa secret key payOS.',
           color: AppColors.primary,
           enabled: payment.canStartPayos && !_isCreatingPayosLink,
           onTap: () => _createPayosLink(payment),
-        ),
-        SizedBox(height: 12),
-        PaymentMethodCard(
-          icon: Icons.payments_rounded,
-          title: 'Thanh to?n ti?n m?t t?i qu?y',
-          subtitle:
-              'Chuy?n sang ch? thanh to?n t?i qu?y. Nh?n vi?n v?n l? ngu?n x?c nh?n paid.',
-          color: AppColors.success,
-          enabled: payment.canChooseCash && !_isChoosingCash,
-          onTap: () => _markPayAtCounter(payment),
         ),
       ],
     );
@@ -249,7 +238,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Sau khi thanh to?n, tr?ng th?i s? t? c?p nh?t trong app.',
+            'Sau khi thanh toán, trạng thái sẽ tự cập nhật trong app.',
           ),
         ),
       );
@@ -258,7 +247,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AppColors.error,
-          content: Text('Kh?ng t?o ???c link payOS: $e'),
+          content: Text('Không tạo được link payOS: $e'),
         ),
       );
     } finally {
@@ -266,33 +255,12 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
     }
   }
 
-  Future<void> _markPayAtCounter(PatientPaymentModel payment) async {
-    setState(() => _isChoosingCash = true);
-    try {
-      await _repository.markPayAtCounter(payment);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('?? chuy?n sang ch? thanh to?n t?i qu?y.')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: AppColors.error,
-          content: Text('Kh?ng c?p nh?t ???c thanh to?n t?i qu?y: $e'),
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _isChoosingCash = false);
-    }
-  }
-
   Future<void> _openCheckoutUrl(String checkoutUrl) async {
     final uri = Uri.tryParse(checkoutUrl);
-    if (uri == null) throw Exception('checkoutUrl kh?ng h?p l?.');
+    if (uri == null) throw Exception('checkoutUrl không hợp lệ.');
 
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!opened) throw Exception('Kh?ng m? ???c trang thanh to?n payOS.');
+    if (!opened) throw Exception('Không mở được trang thanh toán payOS.');
   }
 
   void _notifyPaidOnce(PatientPaymentModel payment) {
@@ -303,7 +271,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AppColors.success,
-          content: Text('Thanh to?n th?nh c?ng.'),
+          content: Text('Thanh toán thành công.'),
         ),
       );
     });
@@ -315,10 +283,10 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
       appointmentId: payment.appointmentId,
       patientId: payment.patientId,
       expenseType: payment.expenseType.isEmpty
-          ? 'D?ch v? y t?'
+          ? 'Dịch vụ y tế'
           : payment.expenseType,
       serviceContent: payment.serviceContent.isEmpty
-          ? 'Thanh to?n kh?m b?nh'
+          ? 'Thanh toán khám bệnh'
           : payment.serviceContent,
       doctorName: payment.doctorName,
       departmentName: payment.specialtyName,
@@ -379,7 +347,7 @@ class _StatusHeader extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  '${NumberFormat('#,###').format(payment.amount)} ?',
+                  '${NumberFormat('#,###').format(payment.amount)} đ',
                   style: TextStyle(
                     color: AppColors.primary,
                     fontSize: 20,
@@ -416,7 +384,7 @@ class _PriceCard extends StatelessWidget {
               : 'BHYT hỗ trợ',
           '${NumberFormat('#,###').format(payment.insuranceCoveredAmount)} đ',
         ),
-        if (payment.insuranceApplied) _InfoRow('Bảo hiểm', 'Đã áp ?ụng BHYT'),
+        if (payment.insuranceApplied) _InfoRow('Bảo hiểm', 'Đã áp dụng BHYT'),
         _InfoRow(
           'Bệnh nhân cần thanh toán',
           '${NumberFormat('#,###').format(payment.patientPayAmount == 0 ? payment.amount : payment.patientPayAmount)} đ',
