@@ -11,6 +11,7 @@ class PaymentMethodCard extends StatelessWidget {
     required this.color,
     required this.onTap,
     this.enabled = true,
+    this.isLoading = false,
   });
 
   final IconData icon;
@@ -19,6 +20,7 @@ class PaymentMethodCard extends StatelessWidget {
   final Color color;
   final VoidCallback onTap;
   final bool enabled;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -68,10 +70,17 @@ class PaymentMethodCard extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: enabled ? AppColors.textSecondary : AppColors.textHint,
-            ),
+            if (isLoading)
+              SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            else
+              Icon(
+                Icons.chevron_right_rounded,
+                color: enabled ? AppColors.textSecondary : AppColors.textHint,
+              ),
           ],
         ),
       ),

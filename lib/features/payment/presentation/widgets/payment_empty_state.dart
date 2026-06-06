@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../app/theme/app_colors.dart';
 
 class PaymentEmptyState extends StatelessWidget {
-  PaymentEmptyState({super.key, required this.message});
+  const PaymentEmptyState({super.key, required this.message});
 
   final String message;
 

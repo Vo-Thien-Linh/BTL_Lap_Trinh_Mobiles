@@ -24,6 +24,7 @@ class PaymentDetailPage extends StatefulWidget {
 class _PaymentDetailPageState extends State<PaymentDetailPage> {
   final _repository = PatientPaymentRepositoryImpl();
   bool _isCreatingPayosLink = false;
+  bool _isMarkingCounter = false;
   bool _successNotified = false;
 
   @override
@@ -212,20 +213,37 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
         PaymentMethodCard(
           icon: Icons.qr_code_2_rounded,
           title: 'Thanh toán qua payOS',
-          subtitle:
-              'Mở trang thanh toán do backend tạo. Flutter không chứa secret key payOS.',
+          subtitle: 'Thanh toán trực tuyến an toàn qua payOS.',
           color: AppColors.primary,
           enabled: payment.canStartPayos && !_isCreatingPayosLink,
+          isLoading: _isCreatingPayosLink,
           onTap: () => _createPayosLink(payment),
         ),
+        if (payment.canChooseCash) ...[
+          SizedBox(height: 10),
+          PaymentMethodCard(
+            icon: Icons.payments_rounded,
+            title: 'Thanh toán tại quầy',
+            subtitle:
+                'Giữ mã hóa đơn để nhân viên xác nhận khi bạn thanh toán.',
+            color: AppColors.warning,
+            enabled: !_isMarkingCounter && !_isCreatingPayosLink,
+            isLoading: _isMarkingCounter,
+            onTap: () => _markPayAtCounter(payment),
+          ),
+        ],
       ],
     );
   }
 
   Future<void> _createPayosLink(PatientPaymentModel payment) async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      _showError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      return;
+    }
 
+    if (_isCreatingPayosLink) return;
     setState(() => _isCreatingPayosLink = true);
     try {
       final checkoutUrl = await _repository.createPayosCheckoutLink(
@@ -244,14 +262,27 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: AppColors.error,
-          content: Text('Không tạo được link payOS: $e'),
-        ),
-      );
+      _showError(e.toString());
     } finally {
       if (mounted) setState(() => _isCreatingPayosLink = false);
+    }
+  }
+
+  Future<void> _markPayAtCounter(PatientPaymentModel payment) async {
+    if (_isMarkingCounter) return;
+
+    setState(() => _isMarkingCounter = true);
+    try {
+      await _repository.markPayAtCounter(payment);
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Đã chọn thanh toán tại quầy.')));
+    } catch (_) {
+      if (!mounted) return;
+      _showError('Không cập nhật được phương thức thanh toán tại quầy.');
+    } finally {
+      if (mounted) setState(() => _isMarkingCounter = false);
     }
   }
 
@@ -261,6 +292,13 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
 
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened) throw Exception('Không mở được trang thanh toán payOS.');
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(backgroundColor: AppColors.error, content: Text(message)),
+    );
   }
 
   void _notifyPaidOnce(PatientPaymentModel payment) {
@@ -301,7 +339,7 @@ class _PaymentDetailPageState extends State<PaymentDetailPage> {
 }
 
 class _StatusHeader extends StatelessWidget {
-  _StatusHeader({required this.payment});
+  const _StatusHeader({required this.payment});
 
   final PatientPaymentModel payment;
 
@@ -395,7 +433,7 @@ class _PriceCard extends StatelessWidget {
 }
 
 class _InfoCard extends StatelessWidget {
-  _InfoCard({required this.title, required this.rows});
+  const _InfoCard({required this.title, required this.rows});
 
   final String title;
   final List<_InfoRow> rows;
@@ -423,7 +461,7 @@ class _InfoCard extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  _InfoRow(this.label, this.value);
+  const _InfoRow(this.label, this.value);
 
   final String label;
   final String value;
@@ -460,7 +498,7 @@ class _InfoRow extends StatelessWidget {
 }
 
 class _Card extends StatelessWidget {
-  _Card({required this.child});
+  const _Card({required this.child});
 
   final Widget child;
 

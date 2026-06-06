@@ -132,8 +132,8 @@ class PatientPaymentRepositoryImpl implements PatientPaymentRepository {
   }) async {
     final baseUrl = AppConstants.paymentApiBaseUrl.trim();
     if (baseUrl.isEmpty) {
-      throw Exception(
-        'Chưa cấu hình PAYMENT_API_BASE_URL để tạo link thanh toán payOS.',
+      throw const PaymentRequestException(
+        'Chưa cấu hình địa chỉ máy chủ thanh toán.',
       );
     }
 
@@ -141,34 +141,62 @@ class PatientPaymentRepositoryImpl implements PatientPaymentRepository {
         ? payment.paymentId
         : payment.id;
     final paymentId = Uri.encodeComponent(backendPaymentId);
-    final uri = Uri.parse(
-      '${baseUrl.replaceAll(RegExp(r"/+$"), '')}/api/payments/$paymentId/payos/create-link',
-    );
+    final endpoint =
+        '${baseUrl.replaceAll(RegExp(r"/+$"), '')}/api/payments/$paymentId/payos/create-link';
+    final uri = Uri.tryParse(endpoint);
+    if (uri == null || !uri.hasScheme || !uri.hasAuthority) {
+      throw const PaymentRequestException(
+        'Chưa cấu hình địa chỉ máy chủ thanh toán.',
+      );
+    }
+
     final token = await FirebaseAuth.instance.currentUser?.getIdToken();
-    final response = await _httpClient.post(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'patientId': patientId,
-        'sourceCollection': payment.sourceCollection,
-        'sourcePath': payment.sourcePath,
-        'paymentId': backendPaymentId,
-        'invoiceId': payment.invoiceId,
-        'appointmentId': payment.appointmentId,
-      }),
-    );
+    late final http.Response response;
+    try {
+      response = await _httpClient
+          .post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              if (token != null && token.isNotEmpty)
+                'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({
+              'patientId': patientId,
+              'sourceCollection': payment.sourceCollection,
+              'sourcePath': payment.sourcePath,
+              'paymentId': backendPaymentId,
+              'invoiceId': payment.invoiceId,
+              'appointmentId': payment.appointmentId,
+            }),
+          )
+          .timeout(const Duration(seconds: 20));
+    } on TimeoutException {
+      throw const PaymentRequestException(
+        'Không kết nối được máy chủ thanh toán. Vui lòng kiểm tra Web Admin/backend hoặc ngrok.',
+      );
+    } on http.ClientException {
+      throw const PaymentRequestException(
+        'Không kết nối được máy chủ thanh toán. Vui lòng kiểm tra Web Admin/backend hoặc ngrok.',
+      );
+    } catch (_) {
+      throw const PaymentRequestException(
+        'Không kết nối được máy chủ thanh toán. Vui lòng kiểm tra Web Admin/backend hoặc ngrok.',
+      );
+    }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(_extractError(response.body));
+      throw PaymentRequestException(
+        _extractError(response.statusCode, response.body),
+      );
     }
 
     final decoded = jsonDecode(response.body);
     final checkoutUrl = _findCheckoutUrl(decoded);
     if (checkoutUrl.isEmpty) {
-      throw Exception('Backend chưa trả về checkoutUrl payOS.');
+      throw const PaymentRequestException(
+        'Không tạo được liên kết thanh toán.',
+      );
     }
     return checkoutUrl;
   }
@@ -240,15 +268,58 @@ class PatientPaymentRepositoryImpl implements PatientPaymentRepository {
     return '';
   }
 
-  String _extractError(String body) {
+  String _extractError(int statusCode, String body) {
+    switch (statusCode) {
+      case 401:
+        return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+      case 403:
+        return 'Bạn không có quyền thanh toán hóa đơn này.';
+      case 404:
+        return 'Không tìm thấy hóa đơn thanh toán.';
+      case 409:
+        return 'Hóa đơn đã được thanh toán hoặc không còn hợp lệ.';
+      case 503:
+        return 'Máy chủ chưa cấu hình payOS.';
+    }
+
     try {
       final decoded = jsonDecode(body);
       if (decoded is Map<String, dynamic>) {
-        return (decoded['message'] ?? decoded['error'] ?? body).toString();
+        final message = (decoded['message'] ?? decoded['error'] ?? '')
+            .toString()
+            .trim();
+        if (_looksLikeMissingPayOsConfig(message)) {
+          return 'Máy chủ chưa cấu hình payOS.';
+        }
+        if (message.isNotEmpty) return message;
       }
     } catch (_) {
       // Keep the raw backend message below.
     }
-    return body.isEmpty ? 'Không tạo được link thanh toán payOS.' : body;
+
+    if (_looksLikeMissingPayOsConfig(body)) {
+      return 'Máy chủ chưa cấu hình payOS.';
+    }
+
+    return 'Không tạo được liên kết thanh toán.';
   }
+
+  bool _looksLikeMissingPayOsConfig(String value) {
+    final text = value.toLowerCase();
+    return text.contains('payos') &&
+        (text.contains('thiếu') ||
+            text.contains('thieu') ||
+            text.contains('config') ||
+            text.contains('cấu hình') ||
+            text.contains('cau hinh'));
+  }
+}
+
+class PaymentRequestException implements Exception {
+  const PaymentRequestException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }

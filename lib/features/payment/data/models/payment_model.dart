@@ -84,6 +84,7 @@ class PatientPaymentModel {
     final rawStatus = _readString(data, ['paymentStatus', 'status']);
     final rawMethod = _readString(data, ['paymentMethod', 'method']);
     final amount = _readDouble(data, [
+      'patientPayAmount',
       'finalAmount',
       'amountDue',
       'payableAmount',
@@ -155,6 +156,8 @@ class PatientPaymentModel {
       patientPayAmount: _readDouble(data, [
         'patientPayAmount',
         'finalAmount',
+        'amountDue',
+        'payableAmount',
         'amount',
       ]),
       status: normalizeStatus(rawStatus),
