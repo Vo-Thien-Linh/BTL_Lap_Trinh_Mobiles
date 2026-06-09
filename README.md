@@ -93,12 +93,21 @@ Hiện app đọc key trong `lib/constants.dart`. Thay thế geminiApiKey bằng
 
 ------------------------------------------------------------------
 | Tài khoản                     | Mật khẩu     | Loại            |
-|-------------------------------|--------------------------------|
+|-------------------------------|--------------|-----------------|
 | `phivu6605@gmail.com`         | 123456a      | Bệnh nhân       |
 | `tranthib@gmail.com`          | 123456a      | Bác sĩ          |   
 | `vothienlinh2@gmail.com`      | 123456a      | Amin (web)      |
 | `nguyenquocviet9a8@gmail.com` | Viet2005     | nhân viên (web) |
 ------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Service           | Chức năng                                                                                                                              |
+| ------------------| ---------------------------------------------------------------------------------------------------------------------------------------|
+| `webhook-service` | Nhận webhook từ Facebook, xác thực request và publish event vào Kafka topic `raw_events`.                                              |
+| `core-service`    | Consume `raw_events`, phát hiện spam, phân loại intent/sentiment, quyết định reply hoặc moderation, lưu comment vào SQL Server.        |
+| `api-service`     | Consume `reply_commands`, `moderation_commands`, `send_retry`; gọi Facebook Graph API; lưu idempotency; publish lỗi vào `send_failed`. |
+| `retry-service`   | Consume `send_failed`, retry theo exponential backoff, publish lại vào `send_retry`, hoặc đưa vào `dead_letter` khi quá số lần retry.  |
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Điều kiện để bác sĩ đăng nhập app:
 
