@@ -251,13 +251,3 @@ Các document mẫu tối thiểu cần có để app hoạt động:
 }
 ```
 
-## Lưu ý nghiệp vụ
-
-- Mobile không tự sinh lịch làm việc bác sĩ. App chỉ đọc `DoctorSchedules` có `isActive = true`.
-- Khi bệnh nhân đặt lịch, app phải ghi `scheduleId` để liên kết lịch hẹn với ca làm việc cụ thể.
-- `queueNumber` và `availableSlots` cần xử lý bằng transaction để tránh trùng số thứ tự và vượt slot.
-- Bệnh nhân được yêu cầu hủy lịch trước giờ khám ít nhất 24 giờ. App chỉ tạo yêu cầu hủy, Web Admin duyệt hủy.
-- Khi bác sĩ khám xong, lịch hẹn chuyển sang trạng thái đã khám/completed, không cần nhân viên xác nhận lại.
-- Thanh toán trên app chỉ dùng chuyển khoản/payOS. Tiền mặt hoặc duyệt thủ công, nếu có, thuộc Web Admin.
-- Backend/Web Admin phải thống nhất schema với app, đặc biệt các collection `Appointments`, `Payments`, `Invoices`, `DoctorSchedules`, `MedicalRecords`, `Prescriptions`.
-
