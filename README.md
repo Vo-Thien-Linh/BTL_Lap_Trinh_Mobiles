@@ -71,8 +71,9 @@ flutter pub get
 6. Chạy app:
 
 ```bash
-flutter run --dart-define=PAYMENT_API_BASE_URL=https://btllaptrinhmobileswebadmin-production-ab3d.up.railway.app (phải chạy đầy đủ thì tính năng payOS mới hoạt động được)
+flutter run --dart-define=PAYMENT_API_BASE_URL=https://btllaptrinhmobileswebadmin-production-ab3d.up.railway.app 
 ```
+(phải chạy đầy đủ thì tính năng payOS mới hoạt động được)
 
 ## Chạy thanh toán payOS
 
@@ -105,7 +106,9 @@ Hiện app đọc key trong `lib/constants.dart`. Thay thế geminiApiKey bằng
 
 ## Trang web admin 
 
-Backend Web Admin đã deploy tại: btllaptrinhmobileswebadmin-production-ab3d.up.railway.app
+Backend Web Admin đã deploy tại: 
+
+`btllaptrinhmobileswebadmin-production-ab3d.up.railway.app`
 
 ## Firestore collections chính
 
