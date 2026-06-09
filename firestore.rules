@@ -1,0 +1,257 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
+    }
+
+    function hasUserDoc(uid) {
+      return exists(/databases/$(database)/documents/users/$(uid));
+    }
+
+    function currentUser() {
+      return userDoc(request.auth.uid).data;
+    }
+
+    function isActiveUser() {
+      return signedIn()
+        && hasUserDoc(request.auth.uid)
+        && currentUser().status == "active";
+    }
+
+    function hasRole(role) {
+      return isActiveUser() && currentUser().role == role;
+    }
+
+    function isAdmin() {
+      return hasRole("admin");
+    }
+
+    function isPatient() {
+      return hasRole("patient");
+    }
+
+    function isDoctor() {
+      return hasRole("doctor");
+    }
+
+    function isVerifiedDoctor() {
+      return isDoctor()
+        && exists(/databases/$(database)/documents/Doctors/$(request.auth.uid))
+        && get(/databases/$(database)/documents/Doctors/$(request.auth.uid)).data.isActive == true
+        && get(/databases/$(database)/documents/Doctors/$(request.auth.uid)).data.verificationStatus == "verified";
+    }
+
+    function ownsUser(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function isAppointmentOwner() {
+      return signedIn() && resource.data.patientId == request.auth.uid;
+    }
+
+    function isNewAppointmentOwner() {
+      return signedIn() && request.resource.data.patientId == request.auth.uid;
+    }
+
+    function isAppointmentDoctor() {
+      return isDoctor()
+        && (
+          resource.data.doctorUserId == request.auth.uid
+          || resource.data.userId == request.auth.uid
+          || exists(/databases/$(database)/documents/Doctors/$(resource.data.doctorId))
+             && get(/databases/$(database)/documents/Doctors/$(resource.data.doctorId)).data.userId == request.auth.uid
+        );
+    }
+
+    function isNewAppointmentDoctor() {
+      return isDoctor()
+        && (
+          request.resource.data.doctorUserId == request.auth.uid
+          || request.resource.data.userId == request.auth.uid
+          || exists(/databases/$(database)/documents/Doctors/$(request.resource.data.doctorId))
+             && get(/databases/$(database)/documents/Doctors/$(request.resource.data.doctorId)).data.userId == request.auth.uid
+        );
+    }
+
+    match /users/{userId} {
+      allow read: if ownsUser(userId) || isAdmin() || isDoctor();
+      allow create: if ownsUser(userId)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.role in ["patient", "doctor"]
+        && request.resource.data.status == "active";
+      allow update: if ownsUser(userId)
+        && !request.resource.data.diff(resource.data).changedKeys()
+          .hasAny(["role", "status", "emailVerified", "createdAt"]);
+      allow update, delete: if isAdmin();
+
+      match /FamilyMembers/{memberId} {
+        allow read, write: if ownsUser(userId) || isAdmin();
+      }
+
+      match /fcmTokens/{tokenId} {
+        allow read, write: if ownsUser(userId) || isAdmin();
+      }
+    }
+
+    match /Doctors/{doctorId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /Departments/{departmentId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /Shifts/{shiftId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /DoctorSchedules/{scheduleId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /Appointments/{appointmentId} {
+      allow read: if isAdmin() || isAppointmentOwner() || isAppointmentDoctor();
+      allow create: if isPatient() && isNewAppointmentOwner();
+      allow update: if isAdmin()
+        || isAppointmentDoctor()
+        || (
+          isAppointmentOwner()
+          && request.resource.data.diff(resource.data).changedKeys()
+            .hasOnly([
+              "cancelRequestCode",
+              "cancelRequestStatus",
+              "cancelReason",
+              "cancelRequestedBy",
+              "cancelRequestedAt",
+              "statusBeforeCancelRequest",
+              "updatedAt"
+            ])
+          && request.resource.data.cancelRequestStatus == "pending"
+          && request.resource.data.cancelRequestedBy == "patient"
+        );
+      allow delete: if isAdmin();
+    }
+
+    match /health_insurances/{insuranceId} {
+      allow read: if isAdmin() || ownsUser(insuranceId) || resource.data.userId == request.auth.uid;
+      allow create: if isPatient()
+        && (insuranceId == request.auth.uid || request.resource.data.userId == request.auth.uid);
+      allow update: if isAdmin()
+        || (
+          isPatient()
+          && resource.data.userId == request.auth.uid
+          && !request.resource.data.diff(resource.data).changedKeys()
+            .hasAny(["status", "verifiedAt", "verifiedBy", "rejectReason"])
+        );
+      allow delete: if isAdmin();
+    }
+
+    match /Invoices/{invoiceId} {
+      allow read: if isAdmin() || resource.data.patientId == request.auth.uid || isDoctor();
+      allow create, update: if isAdmin() || isDoctor();
+      allow delete: if isAdmin();
+    }
+
+    match /Payments/{paymentId} {
+      allow read: if isAdmin() || resource.data.patientId == request.auth.uid || isDoctor();
+      allow create: if isPatient() && request.resource.data.patientId == request.auth.uid;
+      allow update: if isAdmin()
+        || (
+          signedIn()
+          && resource.data.patientId == request.auth.uid
+          && request.resource.data.diff(resource.data).changedKeys()
+            .hasOnly(["status", "paidAt", "confirmedBy", "confirmedAt", "updatedAt", "checkoutUrl", "payosOrderCode"])
+        );
+      allow delete: if isAdmin();
+    }
+
+    match /MedicalRecords/{recordId} {
+      allow read: if isAdmin() || resource.data.patientId == request.auth.uid || isDoctor();
+      allow create, update: if isAdmin() || isDoctor();
+      allow delete: if isAdmin();
+    }
+
+    match /Prescriptions/{prescriptionId} {
+      allow read: if isAdmin() || resource.data.patientId == request.auth.uid || isDoctor();
+      allow create, update: if isAdmin() || isDoctor();
+      allow delete: if isAdmin();
+    }
+
+    match /LabOrders/{labOrderId} {
+      allow read: if isAdmin() || resource.data.patientId == request.auth.uid || isDoctor();
+      allow create, update: if isAdmin() || isDoctor();
+      allow delete: if isAdmin();
+    }
+
+    match /Medicines/{medicineId} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin() || isDoctor();
+      allow delete: if isAdmin();
+    }
+
+    match /Notifications/{notificationId} {
+      allow read: if isAdmin()
+        || resource.data.userId == request.auth.uid
+        || resource.data.patientId == request.auth.uid
+        || resource.data.doctorId == request.auth.uid;
+      allow create: if signedIn();
+      allow update: if isAdmin()
+        || (
+          signedIn()
+          && (
+            resource.data.userId == request.auth.uid
+            || resource.data.patientId == request.auth.uid
+            || resource.data.doctorId == request.auth.uid
+          )
+          && request.resource.data.diff(resource.data).changedKeys()
+            .hasOnly(["isRead", "readAt", "updatedAt"])
+        );
+      allow delete: if isAdmin();
+    }
+
+    match /notification_templates/{templateId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /Counters/{counterId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /PatientScheduleLocks/{lockId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin() || isDoctor();
+    }
+
+    match /ServiceRequests/{requestId} {
+      allow read: if isAdmin() || isDoctor() || resource.data.patientId == request.auth.uid;
+      allow create: if isAdmin() || isDoctor();
+      allow update: if isAdmin() || isDoctor();
+      allow delete: if isAdmin();
+    }
+
+    match /patients/{patientId} {
+      allow read: if isAdmin() || isDoctor() || ownsUser(patientId);
+      allow write: if isAdmin();
+    }
+
+    match /Users/{userId} {
+      allow read: if ownsUser(userId) || isAdmin() || isDoctor();
+      allow write: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
