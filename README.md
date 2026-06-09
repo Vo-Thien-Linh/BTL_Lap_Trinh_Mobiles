@@ -91,14 +91,14 @@ Hiện app đọc key trong `lib/constants.dart`. Thay thế geminiApiKey bằng
 
 ## Tài khoản test
 
-----------------------------------------------------------------
-| Tài khoản                   | Mật khẩu     | Loại            |
-----------------------------------------------------------------
-| phivu6605@gmail.com         | 123456a      | Bệnh nhân       |
-| tranthib@gmail.com          | 123456a      | Bác sĩ          |   
-| vothienlinh2@gmail.com      | 123456a      | Amin (web)      |
-| nguyenquocviet9a8@gmail.com | Viet2005@    | nhân viên (web) |
-----------------------------------------------------------------
+------------------------------------------------------------------
+| Tài khoản                     | Mật khẩu     | Loại            |
+|-------------------------------|--------------------------------|
+| 'phivu6605@gmail.com'         | 123456a      | Bệnh nhân       |
+| 'tranthib@gmail.com'          | 123456a      | Bác sĩ          |   
+| 'vothienlinh2@gmail.com'      | 123456a      | Amin (web)      |
+| 'nguyenquocviet9a8@gmail.com' | Viet2005@    | nhân viên (web) |
+------------------------------------------------------------------
 
 Điều kiện để bác sĩ đăng nhập app:
 
