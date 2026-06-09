@@ -100,15 +100,6 @@ Hiện app đọc key trong `lib/constants.dart`. Thay thế geminiApiKey bằng
 | `nguyenquocviet9a8@gmail.com` | Viet2005     | nhân viên (web) |
 ------------------------------------------------------------------
 
---------------------------------------------------------------------------------------------------------------------------------------------------------------
-| Service           | Chức năng                                                                                                                              |
-| ------------------| ---------------------------------------------------------------------------------------------------------------------------------------|
-| `webhook-service` | Nhận webhook từ Facebook, xác thực request và publish event vào Kafka topic `raw_events`.                                              |
-| `core-service`    | Consume `raw_events`, phát hiện spam, phân loại intent/sentiment, quyết định reply hoặc moderation, lưu comment vào SQL Server.        |
-| `api-service`     | Consume `reply_commands`, `moderation_commands`, `send_retry`; gọi Facebook Graph API; lưu idempotency; publish lỗi vào `send_failed`. |
-| `retry-service`   | Consume `send_failed`, retry theo exponential backoff, publish lại vào `send_retry`, hoặc đưa vào `dead_letter` khi quá số lần retry.  |
---------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 Điều kiện để bác sĩ đăng nhập app:
 
 - `users/{uid}.role = "doctor"`
@@ -132,26 +123,13 @@ App đang đọc/ghi các collection chính:
 - `MedicalRecords`, `Prescriptions`, `LabOrders`, `Medicines`: kết quả khám, đơn thuốc, xét nghiệm và kho thuốc
 - `Notifications`, `notification_templates`: thông báo
 
-## Cấu hình Firebase cho giảng viên
+## Cấu hình Firebase 
 
 Project dùng Firebase nên khi nộp/chạy cần có cấu hình Firebase hợp lệ.
 
 File cấu hình hiện có trong repo:
 
 - Android: `android/app/google-services.json`\
-
-Nếu không upload file cấu hình Firebase, người chạy cần tự cấu hình:
-
-1. Tạo project trên Firebase Console.
-2. Bật Authentication, chọn Email/Password.
-3. Bật Cloud Firestore.
-4. Bật Firebase Storage nếu dùng upload ảnh đại diện.
-5. Bật Cloud Messaging nếu test thông báo đẩy.
-6. Thêm Android app với package name đúng theo project.
-7. Tải `google-services.json` và đặt vào `android/app/google-services.json`.
-8. Nếu chạy iOS, thêm iOS app trong Firebase, tải `GoogleService-Info.plist` và đặt vào `ios/Runner/GoogleService-Info.plist`.
-9. Publish Firestore Rules từ file `firestore.rules`.
-10. Publish Storage Rules từ file `storage.rules`.
 
 Các document mẫu tối thiểu cần có để app hoạt động:
 
