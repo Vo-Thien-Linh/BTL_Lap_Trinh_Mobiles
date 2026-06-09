@@ -108,7 +108,7 @@ Hiện app đọc key trong `lib/constants.dart`. Thay thế geminiApiKey bằng
 
 Backend Web Admin đã deploy tại: 
 
-`btllaptrinhmobileswebadmin-production-ab3d.up.railway.app`
+```btllaptrinhmobileswebadmin-production-ab3d.up.railway.app```
 
 ## Firestore collections chính
 
