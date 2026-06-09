@@ -7,7 +7,6 @@
 - Flutter, Dart
 - Firebase Authentication
 - Cloud Firestore
-- Firebase Storage
 - Firebase Cloud Messaging và local notifications
 - BLoC / Cubit cho quản lý state
 - payOS thông qua backend Web Admin
@@ -72,22 +71,18 @@ flutter pub get
 6. Chạy app:
 
 ```bash
-flutter run
+flutter run --dart-define=PAYMENT_API_BASE_URL=https://btllaptrinhmobileswebadmin-production-ab3d.up.railway.app (phải chạy đầy đủ thì tính năng payOS mới hoạt động được)
 ```
 
 ## Chạy thanh toán payOS
 
-Chạy ngrok theo câu lệnh: ngrok http 5071
-Ngrok sẽ hiện URL dạng https://xxxxx.ngrok-free.dev (Ví dụ :https://prelaw-rental-pug.ngrok-free.dev)
-copy https://xxxxx.ngrok-free.dev (đường dẫn này tuy vào máy mà sẽ hơi khác nhau)
+Hiện tại payOS đã tích hợp, cần chạy app đúng câu lệnh để hoạt động tốt.
 
-chạy flutter run --dart-define=PAYMENT_API_BASE_URL=https://xxxxx.ngrok-free.dev
-thay thế đường dẫn https://xxxxx.ngrok-free.dev theo máy
 ## Cấu hình AI chatbot
 
 Chatbot dùng Gemini API. 
 
-Hiện app đọc key trong `lib/constants.dart`. Thay thế geminiApiKey bằng "AQ.Ab8RN6JOQqgYg2BBgyqoLwqR54oVxtDdnoHMwEXc7_2YgG7Otg"
+Hiện app đọc key trong `lib/constants.dart`. Thay thế geminiApiKey bằng "..." trong file text nộp bài để hoạt động.
 
 ## Tài khoản test
 
@@ -107,6 +102,10 @@ Hiện app đọc key trong `lib/constants.dart`. Thay thế geminiApiKey bằng
 - `Doctors/{doctorId}.userId = uid`
 - `Doctors/{doctorId}.isActive = true`
 - `Doctors/{doctorId}.verificationStatus = "verified"`
+
+## Trang web admin 
+
+Backend Web Admin đã deploy tại: btllaptrinhmobileswebadmin-production-ab3d.up.railway.app
 
 ## Firestore collections chính
 
@@ -203,6 +202,14 @@ Các document mẫu tối thiểu cần có để app hoạt động:
   name: "Ca sáng",
   startTime: "07:30",
   endTime: "11:30",
+  maxSlots: 20,
+  isActive: true
+}
+
+{
+  name: "Ca chiều",
+  startTime: "13:30",
+  endTime: "17:00",
   maxSlots: 20,
   isActive: true
 }
