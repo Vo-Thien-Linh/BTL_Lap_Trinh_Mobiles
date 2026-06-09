@@ -47,7 +47,7 @@ class _PatientPaymentsPageState extends State<PatientPaymentsPage> {
               ),
               SizedBox(height: 2),
               Text(
-                'Theo ?õi hóa đơn và lịch sử thanh toán của bạn.',
+                'Theo dõi hóa đơn và lịch sử thanh toán của bạn.',
                 style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,
@@ -259,13 +259,13 @@ class _PaymentCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _MiniInfo(
-                    label: 'M? h?a ??n',
+                    label: 'Mã hóa đơn',
                     value: payment.paymentCode,
                   ),
                 ),
                 Expanded(
                   child: _MiniInfo(
-                    label: 'Ng?y kh?m',
+                    label: 'Ngày khám',
                     value: DateFormat('dd/MM/yyyy').format(date),
                   ),
                 ),
@@ -276,7 +276,7 @@ class _PaymentCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '${NumberFormat('#,###').format(payment.amount)} ?',
+                  '${NumberFormat('#,###').format(payment.amount)} đ',
                   style: TextStyle(
                     color: AppColors.textBody,
                     fontSize: 20,
@@ -301,7 +301,7 @@ class _PaymentCard extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    payment.status == 'paid' ? 'Xem chi tiet' : 'Thanh toan',
+                    payment.status == 'paid' ? 'Xem chi tiết' : 'Thanh toán',
                   ),
                 ),
               ],
@@ -314,7 +314,7 @@ class _PaymentCard extends StatelessWidget {
 }
 
 class _MiniInfo extends StatelessWidget {
-  _MiniInfo({required this.label, required this.value});
+  const _MiniInfo({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -342,7 +342,7 @@ class _MiniInfo extends StatelessWidget {
 }
 
 class _PaymentListSkeleton extends StatelessWidget {
-  _PaymentListSkeleton();
+  const _PaymentListSkeleton();
 
   @override
   Widget build(BuildContext context) {

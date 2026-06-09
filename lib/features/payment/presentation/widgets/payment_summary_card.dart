@@ -5,7 +5,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../data/models/payment_model.dart';
 
 class PaymentSummaryCard extends StatelessWidget {
-  PaymentSummaryCard({super.key, required this.payments});
+  const PaymentSummaryCard({super.key, required this.payments});
 
   final List<PatientPaymentModel> payments;
 
@@ -42,7 +42,7 @@ class PaymentSummaryCard extends StatelessWidget {
 }
 
 class _Metric extends StatelessWidget {
-  _Metric({required this.label, required this.amount});
+  const _Metric({required this.label, required this.amount});
 
   final String label;
   final double amount;

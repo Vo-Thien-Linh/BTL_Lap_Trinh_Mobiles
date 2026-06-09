@@ -72,90 +72,30 @@ flutter pub get
 6. Chạy app:
 
 ```bash
-flutter run
+flutter run --dart-define=PAYMENT_API_BASE_URL=https://btllaptrinhmobileswebadmin-production-ab3d.up.railway.app 
 ```
+(phải chạy đầy đủ thì tính năng payOS mới hoạt động được)
 
 ## Chạy thanh toán payOS
 
-App Flutter không giữ secret key payOS. App gọi backend Web Admin để tạo link thanh toán.
-
-Backend cần chạy ở port `5071`:
-
-```bash
-dotnet run --urls http://0.0.0.0:5071
-```
-
-Khi chạy bằng Android Emulator, app mặc định gọi backend qua:
-
-```text
-http://10.0.2.2:5071
-```
-
-Nếu chạy trên điện thoại thật hoặc cần callback/webhook public, dùng ngrok:
-
-```bash
-ngrok http 5071
-flutter run --dart-define=PAYMENT_API_BASE_URL=https://your-ngrok-url.ngrok-free.app
-```
-
-Nếu ngrok đổi URL, cần chạy lại app với URL mới.
-
-## Deploy Web Admin / Railway cho payOS
-
-Nếu backend Web Admin đã deploy lên Railway, cấu hình các biến môi trường trong Railway thay vì hard-code trong source.
-
-Vào Railway:
-
-```text
-Project -> Service Web Admin -> Variables
-```
-
-Ví dụ với domain deploy:
-
-```text
-https://btllaptrinhmobileswebadmin-production-ab3d.up.railway.app
-```
-
-Các biến nên cấu hình:
-
-```env
-APP_BASE_URL=https://btllaptrinhmobileswebadmin-production-ab3d.up.railway.app
-
-PAYOS_CLIENT_ID=your_payos_client_id
-PAYOS_API_KEY=your_payos_api_key
-PAYOS_CHECKSUM_KEY=your_payos_checksum_key
-
-PAYOS_RETURN_URL=https://btllaptrinhmobileswebadmin-production-ab3d.up.railway.app/api/payments/payos/return
-PAYOS_CANCEL_URL=https://btllaptrinhmobileswebadmin-production-ab3d.up.railway.app/api/payments/payos/cancel
-PAYOS_WEBHOOK_URL=https://btllaptrinhmobileswebadmin-production-ab3d.up.railway.app/api/payments/payos/webhook
-```
-
-Khi dùng backend Railway, chạy app Flutter với domain gốc của backend:
-
-```bash
-flutter run --dart-define=PAYMENT_API_BASE_URL=https://btllaptrinhmobileswebadmin-production-ab3d.up.railway.app
-```
-
-`PAYMENT_API_BASE_URL` chỉ là domain gốc, không thêm `/api/...`. App sẽ tự gọi endpoint tạo link:
-
-```text
-/api/payments/{paymentId}/payos/create-link
-```
-
-Không đưa `PAYOS_API_KEY` hoặc `PAYOS_CHECKSUM_KEY` vào Flutter app.
+Hiện tại payOS đã tích hợp, cần chạy app đúng câu lệnh để hoạt động tốt.
 
 ## Cấu hình AI chatbot
 
-Chatbot dùng Gemini API. Không nên commit API key thật lên GitHub.
+Chatbot dùng Gemini API. 
 
-Hiện app đọc key trong `lib/constants.dart`. Trước khi public/nộp GitHub, nên đổi key thật về placeholder hoặc chuyển sang cấu hình an toàn hơn như `--dart-define`, backend proxy hoặc file cấu hình không commit.
+Hiện app đọc key trong `lib/constants.dart`. Thay thế geminiApiKey bằng "..." trong file text nộp bài để hoạt động.
 
 ## Tài khoản test
 
-Source không cấu hình sẵn tài khoản test cố định.
-
-- Bệnh nhân: tạo tài khoản trực tiếp từ màn đăng ký của app.
-- Bác sĩ: tài khoản nội bộ do Web Admin tạo bằng Firebase Auth, sau đó tạo `users/{uid}` và `Doctors/{doctorId}` tương ứng.
+------------------------------------------------------------------
+| Tài khoản                     | Mật khẩu     | Loại            |
+|-------------------------------|--------------|-----------------|
+| `phivu6605@gmail.com`         | 123456a      | Bệnh nhân       |
+| `tranthib@gmail.com`          | 123456a      | Bác sĩ          |   
+| `vothienlinh2@gmail.com`      | 123456a      | Amin (web)      |
+| `nguyenquocviet9a8@gmail.com` | Viet2005     | nhân viên (web) |
+------------------------------------------------------------------
 
 Điều kiện để bác sĩ đăng nhập app:
 
@@ -164,6 +104,14 @@ Source không cấu hình sẵn tài khoản test cố định.
 - `Doctors/{doctorId}.userId = uid`
 - `Doctors/{doctorId}.isActive = true`
 - `Doctors/{doctorId}.verificationStatus = "verified"`
+
+## Trang web admin 
+
+Backend Web Admin đã deploy tại: 
+
+```bash
+btllaptrinhmobileswebadmin-production-ab3d.up.railway.app
+```
 
 ## Firestore collections chính
 
@@ -180,27 +128,13 @@ App đang đọc/ghi các collection chính:
 - `MedicalRecords`, `Prescriptions`, `LabOrders`, `Medicines`: kết quả khám, đơn thuốc, xét nghiệm và kho thuốc
 - `Notifications`, `notification_templates`: thông báo
 
-## Cấu hình Firebase cho giảng viên
+## Cấu hình Firebase 
 
 Project dùng Firebase nên khi nộp/chạy cần có cấu hình Firebase hợp lệ.
 
 File cấu hình hiện có trong repo:
 
-- Android: `android/app/google-services.json`
-- iOS: hiện chưa có `ios/Runner/GoogleService-Info.plist`
-
-Nếu không upload file cấu hình Firebase, người chạy cần tự cấu hình:
-
-1. Tạo project trên Firebase Console.
-2. Bật Authentication, chọn Email/Password.
-3. Bật Cloud Firestore.
-4. Bật Firebase Storage nếu dùng upload ảnh đại diện.
-5. Bật Cloud Messaging nếu test thông báo đẩy.
-6. Thêm Android app với package name đúng theo project.
-7. Tải `google-services.json` và đặt vào `android/app/google-services.json`.
-8. Nếu chạy iOS, thêm iOS app trong Firebase, tải `GoogleService-Info.plist` và đặt vào `ios/Runner/GoogleService-Info.plist`.
-9. Publish Firestore Rules từ file `firestore.rules`.
-10. Publish Storage Rules từ file `storage.rules`.
+- Android: `android/app/google-services.json`\
 
 Các document mẫu tối thiểu cần có để app hoạt động:
 
@@ -274,6 +208,14 @@ Các document mẫu tối thiểu cần có để app hoạt động:
   name: "Ca sáng",
   startTime: "07:30",
   endTime: "11:30",
+  maxSlots: 20,
+  isActive: true
+}
+
+{
+  name: "Ca chiều",
+  startTime: "13:30",
+  endTime: "17:00",
   maxSlots: 20,
   isActive: true
 }
